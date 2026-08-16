@@ -1,7 +1,6 @@
 ;;; -*- lexical-binding: t -*-
 (use-package auth-source
   :ensure nil
-  :defer nil
   :custom
   (user-full-name "zhaodaniu")
   (user-mail-address "zhaodaniu1@gmail.com"))
@@ -119,7 +118,6 @@
 
 (use-package rcirc
   :ensure nil
-  :defer t
   :custom
   (rcirc-debug t)
   (rcirc-default-nick user-full-name)
@@ -156,7 +154,10 @@
   (erc-server-reconnect-timeout 3)
   (erc-fill-function 'erc-fill-wrap)
   ;; EMACS-31 and or needs https://debbugs.gnu.org/cgi/bugreport.cgi?bug=79665 patch
-  (erc-log-insert-log-on-open 'erc-log-new-target-buffer-p)
+  (erc-log-insert-log-on-open
+   (if (fboundp 'erc-log-new-target-buffer-p)
+       'erc-log-new-target-buffer-p
+     t))
   (erc-save-buffer-on-part t)
   (erc-save-queries-on-quit t)
   (erc-log-write-after-send t)
@@ -165,6 +166,9 @@
   :config
   (make-directory (expand-file-name "erc/images/" nn-directory) t)
   (make-directory (expand-file-name "erc/log-channels/" nn-directory) t)
+
+  (setopt erc-sasl-mechanism 'external)
+
   (defun my-erc-get-color-for-nick (nick)
     "Return a Catppuccin Mocha Like color string for NICK based on its hash."
     (let* ((colors '("#f38ba8" "#a6e3a1" "#f9e2af" "#89b4fa"
@@ -184,28 +188,26 @@
                              'face `(:foreground ,color :weight bold))))))
 
   (add-to-list 'erc-modules 'log)
-  (erc-spelling-mode 1)
-  :config
-  (setopt erc-sasl-mechanism 'external)
-
+  (add-to-list 'erc-modules 'sasl)
   ;; EMACS-31 (no more dependency between scrolltobottom and erc-fill-wrap THX!!!)
   (when (< emacs-major-version 31)
     (add-to-list 'erc-modules 'scrolltobottom))
 
   (defun erc-liberachat ()
     (interactive)
-    (with-eval-after-load 'erc
-      (add-to-list 'erc-modules 'sasl))
-    (let ((buf (erc-tls :server "irc.libera.chat"
-                        :port 6697
-                        :user user-full-name
-                        :password ""
-                        :client-certificate
-                        (list
-                         (expand-file-name "cert.pem" user-emacs-directory)
-                         (expand-file-name "cert.pem" user-emacs-directory)))))
+    (let ((buf
+           (erc-tls
+            :server "irc.libera.chat"
+            :port 6697
+            :user user-full-name
+            :password ""
+            :client-certificate
+            `(,(expand-file-name "cert.pem" user-emacs-directory)
+              ,(expand-file-name "cert.pem" user-emacs-directory)))))
       (when (bufferp buf)
-        (pop-to-buffer buf)))))
+        (pop-to-buffer buf))))
+
+  (erc-spelling-mode 1))
 
 (use-package smtpmail
   :ensure nil
@@ -244,7 +246,7 @@
   (gnus-use-cross-reference nil)
   (gnus-nov-is-evil nil)
   (gnus-group-line-format "%1M%5y : %(%-50,50G%)\12")
-  (gnus-logo-colors '("#2fdbde" "#c0c0c0"))
+  (gnus-logo-colors '("#ff5591" "#c0c0c0"))
   (gnus-permanently-visible-groups ".*")
   (gnus-summary-insert-entire-threads t)
   (gnus-thread-sort-functions
@@ -274,20 +276,43 @@
      (nnimap "imap.qq.com"
              (nnimap-expunge t)
              (nnimap-server-port 993)
-             (nnimap-stream ssl))) ) )
+             (nnimap-stream ssl)))))
 
 (use-package gnus-modern
   :ensure nil
   :hook (gnus-mode . gnus-modern-mode))
 
-;; (use-package telega
-;;   :config
-;;   (add-hook 'telega-before-auth-hook
-;;             (lambda ()
-;;               (telega--addProxy
-;;                '(:server "127.0.0.1"
-;;                  :port 7897
-;;                  :type (:@type "proxyTypeHttp"))
-;;                :enable-p 'enable))))
+(use-package telega
+  :hook (telega-before-auth . my-telega-proxy)
+  :custom
+  (telega-server-libs-prefix "D:/local")
+  (telega-avatar-workaround-gaps-for (when (display-graphic-p) '(return t)))
+  :config
+  (defun my-telega-proxy ()
+    (telega--addProxy
+        '(:server "localhost"
+          :port 7897
+          :type (:@type "proxyTypeSocks5"))
+      :enable-p 'enable))
+
+  (when (eq system-type 'windows-nt)
+    (define-advice telega-server--start (:around (fn &rest args) isolate-stderr)
+      (apply fn args)
+      (let* ((buf telega-server--buffer)
+             (cmd (process-command (get-buffer-process buf))))
+        (delete-process (get-buffer-process buf))
+        (make-process
+         :coding '(binary . utf-8)
+         :name "telega-server"
+         :buffer buf
+         :command cmd
+         :noquery t
+         :sentinel #'telega-server--sentinel
+         :filter #'telega-server--filter
+         :connection-type 'pipe
+         :stderr (make-pipe-process
+                  :name "telega-server--stderr"
+                  :buffer " *telega-server--stderr*" ;; hide buffer
+                  :noquery t))))))
 
 (provide 'init-www)

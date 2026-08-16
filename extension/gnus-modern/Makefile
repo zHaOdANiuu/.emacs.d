@@ -6,10 +6,8 @@ EMACS ?= emacs
 test-entry :=
 el-args := gnus-modern.el gnus-modern-core.el gnus-modern-custom.el \
            gnus-modern-renderer.el \
-           gnus-modern-update-manager.el gnus-modern-update-worker.el \
-           gnus-modern-update-apply.el gnus-modern-update.el \
            gnus-modern-group-format.el gnus-modern-group.el \
-           gnus-modern-summary-format.el gnus-modern-summary-navigate.el \
+           gnus-modern-summary-format.el \
            gnus-modern-summary.el
 elc-args := $(el-args:.el=.elc)
 
@@ -49,7 +47,7 @@ checkdoc: $(el-args)
         (checkdoc-verb-check-experimental-flag nil)\
         (ok t))\
     (dolist (f '($(call elisp-string-list,$(el-args))))\
-      (ignore-errors (kill-buffer \"*Warnings*\"))\
+      (when (get-buffer \"*Warnings*\") (kill-buffer \"*Warnings*\"))\
       (let ((inhibit-message t))\
         (checkdoc-file f))\
       (when (get-buffer \"*Warnings*\")\

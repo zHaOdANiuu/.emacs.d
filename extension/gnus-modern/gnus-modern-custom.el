@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2026 Bingshan Chang
 
-;; Author: Bingshan Chang <chang@bingshan.org>
+;; Author: zdn <zhaodaniu1@gmail.com>
 ;; Keywords: extensions
 ;; Version: 0.1.0
 
@@ -11,6 +11,7 @@
 ;;; Commentary:
 
 ;; Faces and user options shared by the gnus-modern modules.
+
 
 ;;; Code:
 
@@ -105,11 +106,6 @@
 (defface gnus-modern-header-label-face
   '((t :inherit header-line :weight bold))
   "Face used for labels in Gnus header lines."
-  :group 'gnus-modern)
-
-(defface gnus-modern-update-value-face
-  '((t :inherit font-lock-keyword-face :slant italic))
-  "Face used for update times and progress values."
   :group 'gnus-modern)
 
 (defface gnus-modern-summary-group-face
@@ -219,8 +215,7 @@
   :group 'gnus-modern)
 
 (defcustom gnus-modern-summary-thread-count-digits 4
-  "Minimum columns reserved for complete thread article-count labels.
-The width includes separators and a trailing context marker."
+  "Minimum columns reserved for complete thread article-count labels."
   :type 'natnum
   :group 'gnus-modern)
 
@@ -234,56 +229,13 @@ The width includes separators and a trailing context marker."
   :type 'natnum
   :group 'gnus-modern)
 
-(defcustom gnus-modern-summary-auto-extend-count 100
-  "Number of older articles inserted when Summary movement reaches its end.
-A value of zero disables batch insertion without changing
-`gnus-auto-extend-newsgroup'."
-  :type 'natnum
-  :group 'gnus-modern)
-
-(defcustom gnus-modern-summary-follow-visible-article nil
-  "Whether Summary navigation follows point in a visible Article buffer."
-  :type 'boolean
-  :group 'gnus-modern)
-
-(defcustom gnus-modern-context-buffer-name "*Gnus Thread Context*"
-  "Name of the buffer containing the latest Gnus context."
-  :type 'string
-  :group 'gnus-modern)
-
-(defcustom gnus-modern-today-context-maximum-length 900000
-  "Maximum number of characters in a Gnus today context.
-Article bodies share the available space equally after reserving
-space for context, thread, and article metadata.  This keeps the
-result below provider limits while retaining every article."
-  :type 'natnum
-  :group 'gnus-modern)
-
-(defcustom gnus-modern-summary-display-thread-context nil
-  "Whether to display the generated thread context buffer.
-When nil, keep the buffer named by `gnus-modern-context-buffer-name'
-hidden and select the current Summary row.  When non-nil, display
-that buffer and select all of its text."
-  :type 'boolean
-  :group 'gnus-modern)
-
-(defcustom gnus-modern-summary-thread-context-hook nil
-  "Hook run after preparing a Gnus context.
-The hook runs in the originating Summary or Group buffer while the
-buffer named by `gnus-modern-context-buffer-name' contains the selected
-subthread or today's articles."
-  :type 'hook
-  :group 'gnus-modern)
-
 (defcustom gnus-modern-group-count-width 9
   "Minimum total columns reserved for a Group buffer article count."
   :type 'natnum
   :group 'gnus-modern)
 
 (defcustom gnus-modern-group-source-names nil
-  "Alist mapping NNTP server addresses to Group buffer source labels.
-Each element has the form (ADDRESS . NAME).  NNTP servers absent
-from the alist use the label `Usenet'."
+  "Alist mapping NNTP server addresses to Group buffer source labels."
   :type '(alist :key-type string :value-type string)
   :group 'gnus-modern)
 
@@ -300,30 +252,6 @@ from the alist use the label `Usenet'."
 (defcustom gnus-modern-header-bottom-spacing 0.5
   "Relative line height reserved below Gnus header lines."
   :type 'number
-  :group 'gnus-modern)
-
-(defcustom gnus-modern-update-interval (* 30 60)
-  "Seconds between complete background Gnus updates."
-  :type 'natnum
-  :group 'gnus-modern)
-
-(defcustom gnus-modern-update-download-bodies t
-  "Whether background updates download unread article bodies.
-When nil, updates still retrieve overview data needed for group state.
-Article bodies remain available on demand through
-the configured Gnus method."
-  :type 'boolean
-  :group 'gnus-modern)
-
-(defcustom gnus-modern-update-retry-delays '(300 900 1800)
-  "Seconds to wait after consecutive background update failures.
-After exhausting the list, continue using its final delay."
-  :type '(repeat natnum)
-  :group 'gnus-modern)
-
-(defcustom gnus-modern-update-stall-timeout 120
-  "Seconds without worker output before an update is considered stalled."
-  :type 'natnum
   :group 'gnus-modern)
 
 (provide 'gnus-modern-custom)

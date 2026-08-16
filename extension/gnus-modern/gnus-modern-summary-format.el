@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2026 Bingshan Chang
 
-;; Author: Bingshan Chang <chang@bingshan.org>
+;; Author: zdn <zhaodaniu1@gmail.com>
 ;; Keywords: extensions
 ;; Version: 0.1.0
 
@@ -14,83 +14,22 @@
 ;; renderer: thread splitting and month data, title and context lines,
 ;; mark faces and alignment, fold overlays, and decoration removal.
 ;; The buffer-local renderer and its methods live in
-;; `gnus-modern-summary.el'; navigation and today-context commands in
-;; `gnus-modern-summary-navigate.el'.
+;; `gnus-modern-summary.el'.
 
 ;;; Code:
 
 (require 'cl-lib)
-(require 'seq)
-(require 'subr-x)
 (require 'mail-parse)
+(require 'nnheader)
+(require 'hl-line)
 (require 'gnus)
+(require 'gnus-sum)
 (require 'gnus-modern-core)
 (require 'gnus-modern-custom)
 (require 'gnus-modern-renderer)
 
-(declare-function mail-header-date "nnheader" (header))
-(declare-function mail-header-from "nnheader" (header))
-(declare-function mail-header-id "nnheader" (header))
-(declare-function mail-header-number "nnheader" (header))
-(declare-function mail-header-references "nnheader" (header))
-(declare-function mail-header-subject "nnheader" (header))
-(declare-function mail-header-parse-address-lax "mail-parse" (address))
-(declare-function gnus-data-find "gnus-sum" (number))
-(declare-function gnus-data-header "gnus-sum" (data))
-(declare-function gnus-data-level "gnus-sum" (data))
-(declare-function gnus-data-mark "gnus-sum" (data))
-(declare-function gnus-data-number "gnus-sum" (data))
-(declare-function gnus-data-pos "gnus-sum" (data))
-(declare-function gnus-summary-article-number "gnus-sum" ())
-(declare-function gnus-summary-goto-subject
-                  "gnus-sum" (article &optional force silent))
-(declare-function gnus-split-references "gnus-sum" (references))
-(declare-function hl-line-highlight "hl-line" ())
-(declare-function hl-line-move "hl-line" (overlay))
-
-(defvar gnus-newsgroup-ancient)
-(defvar gnus-newsgroup-dependencies)
-(defvar gnus-newsgroup-data)
-(defvar gnus-newsgroup-processable)
-(defvar gnus-newsgroup-sparse)
-(defvar gnus-summary-line-format)
-(defvar gnus-summary-mark-positions)
-(defvar gnus-tmp-thread-tree-header-string)
-(defvar gnus-tmp-unread)
-(defvar hl-line-mode)
-(defvar hl-line-overlay)
-(defvar gnus-unread-mark)
-(defvar gnus-ticked-mark)
-(defvar gnus-dormant-mark)
-(defvar gnus-ancient-mark)
-(defvar gnus-expirable-mark)
-(defvar gnus-del-mark)
-(defvar gnus-read-mark)
-(defvar gnus-catchup-mark)
-(defvar gnus-sparse-mark)
-(defvar gnus-killed-mark)
-(defvar gnus-spam-mark)
-(defvar gnus-kill-file-mark)
-(defvar gnus-low-score-mark)
-(defvar gnus-canceled-mark)
-(defvar gnus-duplicate-mark)
-(defvar gnus-process-mark)
-(defvar gnus-cached-mark)
-(defvar gnus-saved-mark)
-(defvar gnus-replied-mark)
-(defvar gnus-forwarded-mark)
-(defvar gnus-unseen-mark)
-(defvar gnus-downloaded-mark)
-(defvar gnus-undownloaded-mark)
-(defvar gnus-downloadable-mark)
-(defvar gnus-unsendable-mark)
-(defvar gnus-score-over-mark)
-(defvar gnus-score-below-mark)
-
 (defconst gnus-modern--summary-prefix-width 10
   "Columns reserved before the thread-tree prefix.")
-
-;;; Display and sizing
 
 (defun gnus-modern--summary-space (width &optional face)
   "Return spacing WIDTH character widths wide using optional FACE."
@@ -112,8 +51,6 @@
   "Return the display width for the current Summary buffer."
   (gnus-modern--renderer-width
    (current-buffer) gnus-modern-summary-fallback-width))
-
-;;; Correspondent and date fields
 
 (defun gnus-modern--summary-contact-name (address)
   "Return a compact display name for ADDRESS."
@@ -140,15 +77,21 @@
 
 (defun gnus-modern--summary-date (header)
   "Return the formatted date from HEADER."
-  (let ((date (mail-header-date header)))
-    (condition-case nil
-        (format-time-string
-         gnus-modern-summary-date-format
-         (date-to-time date))
-      (error
-       (gnus-modern--sanitize-single-line date)))))
-
-;;; Article and thread predicates
+  (let* ((date (mail-header-date header))
+         (blank
+          (make-string
+           (string-width
+            (format-time-string gnus-modern-summary-date-format '(0 0)))
+           ?\s)))
+    (if (and (stringp date) (not (string-empty-p date)))
+        (condition-case err
+            (format-time-string gnus-modern-summary-date-format
+                                (date-to-time date))
+          (error
+           (message "gnus-modern: unparseable date %S: %s"
+                    date (error-message-string err))
+           blank))
+      blank)))
 
 (defun gnus-modern--summary-context-article-p (article)
   "Return non-nil when ARTICLE exists only as thread context."
@@ -194,13 +137,10 @@
       (sort result #'<))))
 
 (defun gnus-modern--summary-thread-subtree-path (thread target)
-  "Return the headers leading from THREAD to TARGET.
-The return value begins with a non-nil sentinel, followed by the
-headers preceding TARGET.  Return nil when TARGET is not a subtree
-of THREAD."
+  "Return the headers leading from THREAD to TARGET."
   (cond
    ((eq thread target)
-    (list t))
+    '(t))
    ((consp thread)
     (cl-loop
      for child in (cdr thread)
@@ -217,8 +157,6 @@ of THREAD."
         (= mark gnus-dormant-mark)
         (memq number gnus-newsgroup-processable))))
 
-;;; Thread and month analysis
-
 (defun gnus-modern--summary-threads ()
   "Return `gnus-newsgroup-data' split into top-level threads."
   (let (current threads)
@@ -232,12 +170,15 @@ of THREAD."
     (nreverse threads)))
 
 (defun gnus-modern--summary-root-date (thread)
-  "Return THREAD's root-article date, or nil when it is invalid."
-  (condition-case nil
-      (date-to-time
-       (mail-header-date
-        (gnus-data-header (car thread))))
-    (error nil)))
+  "Return THREAD's root-article date, or nil when it has none."
+  (let ((date (mail-header-date (gnus-data-header (car thread)))))
+    (when (and (stringp date) (not (string-empty-p date)))
+      (condition-case err
+          (date-to-time date)
+        (error
+         (message "gnus-modern: unparseable root date %S: %s"
+                  date (error-message-string err))
+         nil)))))
 
 (defun gnus-modern--summary-root-month (thread)
   "Return the month key and title of THREAD's root article."
@@ -258,10 +199,7 @@ of THREAD."
     ordered-p))
 
 (defun gnus-modern--summary-month-data (threads)
-  "Return month boundaries and preceding breaks for THREADS.
-The car is a hash table mapping root article numbers to month
-labels and first-boundary flags.  The cdr marks root articles after
-which the ordinary thread separator should be omitted."
+  "Return month boundaries and preceding breaks for THREADS."
   (let ((boundaries (make-hash-table :test #'eql))
         (breaks (make-hash-table :test #'eql))
         previous
@@ -290,8 +228,6 @@ which the ordinary thread separator should be omitted."
           (= (gnus-data-mark data) gnus-unread-mark)))
    thread))
 
-;;; Decoration lines
-
 (defun gnus-modern--summary-decoration-line (string article kind)
   "Return a decoration line containing STRING for ARTICLE and KIND."
   (propertize
@@ -302,7 +238,7 @@ which the ordinary thread separator should be omitted."
 
 (defun gnus-modern--summary-month-line (title article first-p)
   "Return a month separator for TITLE anchored to ARTICLE.
-FIRST-P says that this is the first month in the Summary buffer."
+FIRST-P controls spacing."
   (let* ((top-spacing
           (+ gnus-modern-summary-month-line-spacing
              (if first-p gnus-modern-header-bottom-spacing 0)))
@@ -349,8 +285,6 @@ FIRST-P says that this is the first month in the Summary buffer."
     (propertize
      (concat prefix name padding date)
      'face 'gnus-modern-summary-context-face)))
-
-;;; Overlay and mark management
 
 (defun gnus-modern--summary-remove-fold-overlays ()
   "Remove fold overlays owned by the custom Summary renderer."
@@ -518,8 +452,6 @@ FIRST-P says that this is the first month in the Summary buffer."
            (line-beginning-position 2))
         (forward-line 1)))))
 
-;;; Thread navigation and folds
-
 (defun gnus-modern--summary-thread-for-article (article)
   "Return the thread containing ARTICLE."
   (cl-find-if
@@ -589,8 +521,6 @@ FIRST-P says that this is the first month in the Summary buffer."
           (overlay-put overlay 'evaporate t)
           (overlay-put overlay 'gnus-modern-context-overlay t))))))
 
-;;; Selection preservation
-
 (defun gnus-modern--summary-refresh-hl-line ()
   "Move the current Summary buffer's Hl-Line overlay to point."
   (when (bound-and-true-p hl-line-mode)
@@ -641,8 +571,6 @@ FIRST-P says that this is the first month in the Summary buffer."
          position end 'gnus-modern-correspondent-face face)
         (put-text-property position end 'face (cons face faces))
         (setq position end)))))
-
-;;; Buffer operations
 
 (defun gnus-modern--summary-article-buffer-p ()
   "Return non-nil when the current buffer is a Gnus Summary buffer."

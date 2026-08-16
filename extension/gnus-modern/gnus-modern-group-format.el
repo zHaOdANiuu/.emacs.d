@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2026 Bingshan Chang
 
-;; Author: Bingshan Chang <chang@bingshan.org>
+;; Author: zdn <zhaodaniu1@gmail.com>
 ;; Keywords: extensions
 ;; Version: 0.1.0
 
@@ -12,24 +12,18 @@
 
 ;; Stateless formatting helpers of the custom Gnus Group renderer:
 ;; source labels, right-aligned unread/total counts, Topic rows, root
-;; statistics, the update-status header line, and decoration removal.
+;; statistics, and decoration removal.
 ;; The buffer-local renderer and its methods live in
 ;; `gnus-modern-group.el'.
 
 ;;; Code:
 
-(require 'cl-lib)
 (require 'gnus)
+(require 'gnus-group)
+(require 'gnus-topic)
 (require 'gnus-modern-core)
 (require 'gnus-modern-custom)
 (require 'gnus-modern-renderer)
-(require 'gnus-modern-update)
-
-(declare-function gnus-group-entry "gnus-group" (group))
-(declare-function gnus-group-real-name "gnus-group" (group))
-
-(defvar gnus-topic-alist)
-(defvar gnus-topic-indent-level)
 
 (defun gnus-modern--group-width ()
   "Return the display width for the current Group buffer."
@@ -114,8 +108,7 @@
 
 (defun gnus-modern--group-format-row
     (group unread indentation width count-widths)
-  "Format GROUP with UNREAD articles and INDENTATION for WIDTH.
-COUNT-WIDTHS contains the unread, total, and indentation widths."
+  "Format GROUP with UNREAD articles and INDENTATION for WIDTH using COUNT-WIDTHS."
   (let* ((unread-width
           (+ (nth 0 count-widths)
              (max
@@ -160,7 +153,7 @@ COUNT-WIDTHS contains the unread, total, and indentation widths."
             name-width)
            'face 'gnus-modern-group-name-face))
          (padding
-          (gnus-modern--right-padding source 2)))
+          (make-string 2 ?\s)))
     (concat prefix name padding source)))
 
 (defun gnus-modern--group-root-statistics (unread)
@@ -211,14 +204,12 @@ COUNT-WIDTHS contains the unread, total, and indentation widths."
       0)))
 
 (defun gnus-modern--group-header ()
-  "Return update status and right-aligned Group statistics."
-  (let* ((status (gnus-modern--header-status gnus-modern--update-manager))
-         (statistics
+  "Return right-aligned Group statistics."
+  (let* ((statistics
           (gnus-modern--group-root-statistics
            (gnus-modern--group-root-unread)))
          (header
           (concat
-           status
            (gnus-modern--right-padding statistics)
            statistics)))
     (add-face-text-property
@@ -228,8 +219,7 @@ COUNT-WIDTHS contains the unread, total, and indentation widths."
 (defun gnus-modern--group-format-topic
     (topic level unread visible width)
   "Format TOPIC at LEVEL with UNREAD articles for WIDTH.
-
-VISIBLE says whether the topic is expanded."
+VISIBLE controls expansion."
   (let* ((prefix
           (if visible
               "  "
@@ -304,8 +294,7 @@ VISIBLE says whether the topic is expanded."
     groups))
 
 (defun gnus-modern--group-add-topic-spacing (position trailing)
-  "Add spacing around the Topic row at POSITION.
-TRAILING says to add spacing below the row as well."
+  "Add spacing around the Topic row at POSITION; TRAILING controls the lower gap."
   (save-excursion
     (goto-char position)
     (let* ((newline (line-end-position))

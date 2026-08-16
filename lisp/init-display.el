@@ -104,12 +104,12 @@
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
-(use-package minibuffer-frame
-  :vc (:url "https://github.com/zHaOdANiuu/minibuffer-frame" :rev :newest)
-  :init (minibuffer-frame-mode 1)
-  :config
-  (with-eval-after-load 'corfu
-    (setq global-corfu-minibuffer nil)))
+;; (use-package minibuffer-frame
+;;   :vc (:url "https://github.com/zHaOdANiuu/minibuffer-frame" :rev :newest)
+;;   :init (minibuffer-frame-mode 1)
+;;   :config
+;;   (with-eval-after-load 'corfu
+;;     (setq global-corfu-minibuffer nil)))
 
 (use-package color-picker
   :vc (:url "https://github.com/zHaOdANiuu/color-picker.el" :rev :newest)

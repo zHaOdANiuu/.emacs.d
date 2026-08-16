@@ -69,6 +69,7 @@
    `(custom-button          ((t (:box (:line-width 2 :color ,bright)))))
    `(custom-button-mouse    ((t (:inherit highlight :box (:line-width 2 :color ,bright)))))
    `(custom-button-unraised ((t (:underline t))))
+   `(widget-field           ((t (:background ,secondary))))
 
    `(cursor         ((t :background ,pink)))
    `(mc/cursor-face ((t :inherit cursor)))

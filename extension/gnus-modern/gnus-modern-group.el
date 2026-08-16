@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2026 Bingshan Chang
 
-;; Author: Bingshan Chang <chang@bingshan.org>
+;; Author: zdn <zhaodaniu1@gmail.com>
 ;; Keywords: extensions
 ;; Version: 0.1.0
 
@@ -19,40 +19,14 @@
 
 ;;; Code:
 
-(require 'cl-lib)
-(require 'eieio)
 (require 'gnus)
+(require 'gnus-group)
+(require 'gnus-topic)
+(require 'nntp)
 (require 'gnus-modern-core)
 (require 'gnus-modern-custom)
 (require 'gnus-modern-renderer)
 (require 'gnus-modern-group-format)
-
-(declare-function gnus-topic-fold "gnus-topic" (&optional insert topic))
-(declare-function gnus-topic-goto-topic "gnus-topic" (topic))
-(declare-function gnus-topic-indent "gnus-topic" ())
-(declare-function gnus-topic-unindent "gnus-topic" ())
-(declare-function gnus-topic-update-topic-line
-                  "gnus-topic" (topic-name &optional reads))
-(declare-function gnus-group-list-groups
-                  "gnus-group"
-                  (&optional level unread lowest update-level))
-(declare-function nntp-list-active-group "nntp" (group &optional server))
-
-(defvar gnus-group-list-mode)
-(defvar gnus-group-mode-map)
-(defvar gnus-topic-alist)
-(defvar gnus-topic-indent-level)
-(defvar gnus-topic-mode)
-(defvar gnus-topic-topology)
-(defvar nntp-server-buffer)
-
-;;; Renderer class
-
-(defclass gnus-modern-group-renderer (gnus-modern-renderer)
-  ((original-header-line-format :initform nil
-                                :documentation
-                                "Header line format saved before enabling."))
-  :documentation "Buffer-local Group renderer of gnus-modern.")
 
 (defvar-local gnus-modern--group-renderer nil
   "Group renderer instance of the current buffer.")
@@ -65,46 +39,10 @@
   "NNTP posting statuses cached by full Gnus group name.")
 
 (defun gnus-modern--current-group-renderer ()
-  "Return the Group renderer instance of the current buffer.
-Create it on demand."
+  "Return the Group renderer instance of the current buffer."
   (or gnus-modern--group-renderer
       (setq gnus-modern--group-renderer
             (make-instance 'gnus-modern-group-renderer))))
-
-;;; Renderer methods
-
-(cl-defmethod gnus-modern--configure-buffer
-  ((renderer gnus-modern-group-renderer))
-  "Configure the current Gnus Group buffer with RENDERER."
-  (unless (oref renderer configured-p)
-    (oset renderer original-header-line-format header-line-format))
-  (setq-local header-line-format
-              '(:eval (gnus-modern--group-header)))
-  (cl-call-next-method)
-  (add-hook 'kill-buffer-hook #'gnus-modern--group-cancel-timers nil t))
-
-(cl-defmethod gnus-modern--decorate ((renderer gnus-modern-group-renderer))
-  "Decorate the current native Gnus Group buffer with RENDERER."
-  (when (and gnus-modern--group-installed-p
-             (derived-mode-p 'gnus-group-mode)
-             (bound-and-true-p gnus-topic-mode))
-    (let ((topic
-           (get-text-property
-            (line-beginning-position) 'gnus-topic))
-          (column (current-column))
-          (width (gnus-modern--group-width))
-          (count-widths (gnus-modern--group-count-widths))
-          (inhibit-read-only t))
-      (save-excursion
-        (gnus-modern--group-remove-decorations)
-        (gnus-modern--group-decorate-lines width count-widths)
-        (dolist (row (gnus-modern--group-topic-rows))
-          (gnus-modern--group-add-topic-spacing
-           (car row) (cdr row))))
-      (oset renderer render-width width)
-      (force-mode-line-update)
-      (when (and topic (gnus-topic-goto-topic topic))
-        (move-to-column column)))))
 
 (defun gnus-modern--group-decorate-lines (width count-widths)
   "Decorate every Group and Topic row with WIDTH and COUNT-WIDTHS."
@@ -147,28 +85,6 @@ Create it on demand."
           count-widths))))
       (forward-line 1))))
 
-(cl-defmethod gnus-modern--decorate-p ((renderer gnus-modern-group-renderer))
-  "Return non-nil when RENDERER should decorate the current buffer."
-  (oref renderer configured-p))
-
-(cl-defmethod gnus-modern--rerender-p ((_renderer gnus-modern-group-renderer))
-  "Return non-nil when RENDERER should re-render the current buffer."
-  gnus-modern--group-installed-p)
-
-(cl-defmethod gnus-modern--fallback-width
-  ((_renderer gnus-modern-group-renderer))
-  "Return the width used when no Group window is live."
-  gnus-modern-group-fallback-width)
-
-(cl-defmethod cl-print-object ((object gnus-modern-group-renderer) stream)
-  "Print a compact description of OBJECT to STREAM."
-  (princ (format "#<group-renderer %s width=%s>"
-                 (if (oref object configured-p) "configured" "idle")
-                 (or (oref object render-width) "-"))
-         stream))
-
-;;; Hook and advice wrappers
-
 (defun gnus-modern--group-mode-hook ()
   "Configure the current Group buffer's renderer."
   (gnus-modern--configure-buffer
@@ -210,8 +126,6 @@ Create it on demand."
   (when gnus-modern--group-renderer
     (gnus-modern--cancel-timers gnus-modern--group-renderer)))
 
-;;; Installation
-
 (defun gnus-modern--group-install ()
   "Install the custom Gnus Group renderer."
   (unless gnus-modern--group-installed-p
@@ -240,11 +154,68 @@ Create it on demand."
          (gnus-modern--current-group-renderer)))))
   t)
 
+(defclass gnus-modern-group-renderer (gnus-modern-renderer)
+  ((original-header-line-format :initform nil
+                                :documentation
+                                "Header line format saved before enabling."))
+  :documentation "Buffer-local Group renderer of gnus-modern.")
+
+(cl-defmethod gnus-modern--configure-buffer
+  ((renderer gnus-modern-group-renderer))
+  "Configure the current Gnus Group buffer with RENDERER."
+  (unless (oref renderer configured-p)
+    (oset renderer original-header-line-format header-line-format))
+  (setq-local header-line-format
+              '(:eval (gnus-modern--group-header)))
+  (cl-call-next-method)
+  (add-hook 'kill-buffer-hook #'gnus-modern--group-cancel-timers nil t))
+
+(cl-defmethod gnus-modern--decorate ((renderer gnus-modern-group-renderer))
+  "Decorate the current native Gnus Group buffer with RENDERER."
+  (when (and gnus-modern--group-installed-p
+             (derived-mode-p 'gnus-group-mode)
+             (bound-and-true-p gnus-topic-mode))
+    (let ((topic
+           (get-text-property
+            (line-beginning-position) 'gnus-topic))
+          (column (current-column))
+          (width (gnus-modern--group-width))
+          (count-widths (gnus-modern--group-count-widths))
+          (inhibit-read-only t))
+      (save-excursion
+        (gnus-modern--group-remove-decorations)
+        (gnus-modern--group-decorate-lines width count-widths)
+        (dolist (row (gnus-modern--group-topic-rows))
+          (gnus-modern--group-add-topic-spacing
+           (car row) (cdr row))))
+      (oset renderer render-width width)
+      (force-mode-line-update)
+      (when (and topic (gnus-topic-goto-topic topic))
+        (move-to-column column)))))
+
+(cl-defmethod gnus-modern--decorate-p ((renderer gnus-modern-group-renderer))
+  "Return non-nil when RENDERER should decorate the current buffer."
+  (oref renderer configured-p))
+
+(cl-defmethod gnus-modern--rerender-p ((_renderer gnus-modern-group-renderer))
+  "Return non-nil when RENDERER should re-render the current buffer."
+  gnus-modern--group-installed-p)
+
+(cl-defmethod gnus-modern--fallback-width
+  ((_renderer gnus-modern-group-renderer))
+  "Return the width used when no Group window is live."
+  gnus-modern-group-fallback-width)
+
+(cl-defmethod cl-print-object ((object gnus-modern-group-renderer) stream)
+  "Print a compact description of OBJECT to STREAM."
+  (princ (format "#<group-renderer %s width=%s>"
+                 (if (oref object configured-p) "configured" "idle")
+                 (or (oref object render-width) "-"))
+         stream))
+
 ;;;###autoload
 (defun gnus-modern-group-disable ()
-  "Restore Gnus's native Group renderer.
-
-This is an emergency and debugging command, not a minor mode."
+  "Restore Gnus's native Group renderer."
   (interactive)
   (when gnus-modern--group-installed-p
     (setq gnus-modern--group-installed-p nil)
@@ -296,15 +267,9 @@ This is an emergency and debugging command, not a minor mode."
     (user-error "No topic at point"))
   (gnus-topic-fold))
 
-;;; Posting status
-
 ;;;###autoload
 (defun gnus-modern-group-posting-status (group &optional refresh)
-  "Return the NNTP posting status for GROUP.
-The result is one of the characters `?y', `?m', or `?n', as
-reported by `LIST ACTIVE'.  GROUP is a full Gnus group name.
-Reuse a status cached during this Emacs session unless REFRESH is
-non-nil."
+  "Return NNTP posting status for GROUP, refreshing when REFRESH is non-nil."
   (or (and (not refresh)
            (gethash group gnus-modern--group-posting-status-cache))
       (let* ((method (gnus-find-method-for-group group))

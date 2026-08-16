@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2026 Bingshan Chang
 
-;; Author: Bingshan Chang <chang@bingshan.org>
+;; Author: zdn <zhaodaniu1@gmail.com>
 ;; Keywords: extensions
 ;; Version: 0.1.0
 
@@ -30,7 +30,15 @@
 
 (require 'cl-lib)
 (require 'eieio)
-(require 'subr-x)
+
+(defun gnus-modern--renderer-width (buffer &optional fallback)
+  "Return the display width of BUFFER, falling back to FALLBACK."
+  (if-let* ((window
+             (or (and (eq (window-buffer (selected-window)) buffer)
+                      (selected-window))
+                 (get-buffer-window buffer t))))
+      (window-body-width window)
+    (or fallback 100)))
 
 (defclass gnus-modern-renderer ()
   ((decoration-timer :initform nil
@@ -44,19 +52,6 @@
   :abstract t
   :documentation "Base class of the buffer-local gnus-modern renderers.")
 
-;;; Display helpers
-
-(defun gnus-modern--renderer-width (buffer &optional fallback)
-  "Return the display width of BUFFER, falling back to FALLBACK."
-  (if-let* ((window
-             (or (and (eq (window-buffer (selected-window)) buffer)
-                      (selected-window))
-                 (get-buffer-window buffer t))))
-      (window-body-width window)
-    (or fallback 100)))
-
-;;; Timer machinery
-
 (cl-defmethod gnus-modern--cancel-timers ((renderer gnus-modern-renderer))
   "Cancel timers owned by RENDERER."
   (when (timerp (oref renderer decoration-timer))
@@ -67,7 +62,7 @@
   (oset renderer resize-timer nil))
 
 (cl-defmethod gnus-modern--schedule-decoration ((renderer gnus-modern-renderer))
-  "Schedule decoration of the current buffer after a debounce."
+  "Schedule decoration of the current buffer with RENDERER after a debounce."
   (when (timerp (oref renderer decoration-timer))
     (cancel-timer (oref renderer decoration-timer)))
   (oset renderer decoration-timer
@@ -75,9 +70,8 @@
          0.05 nil #'gnus-modern--run-decoration
          renderer (current-buffer))))
 
-(cl-defmethod gnus-modern--run-decoration ((renderer gnus-modern-renderer)
-                                           buffer)
-  "Decorate BUFFER after the decoration debounce elapses."
+(cl-defmethod gnus-modern--run-decoration ((renderer gnus-modern-renderer) buffer)
+  "Decorate BUFFER with RENDERER after the decoration debounce elapses."
   (when (buffer-live-p buffer)
     (with-current-buffer buffer
       (oset renderer decoration-timer nil)
@@ -86,7 +80,7 @@
 
 (cl-defmethod gnus-modern--schedule-resize ((renderer gnus-modern-renderer)
                                             buffer)
-  "Schedule a debounced resize render for BUFFER."
+  "Schedule a debounced resize render of BUFFER with RENDERER."
   (when (buffer-live-p buffer)
     (when (timerp (oref renderer resize-timer))
       (cancel-timer (oref renderer resize-timer)))
@@ -95,7 +89,7 @@
            0.2 nil #'gnus-modern--rerender renderer buffer))))
 
 (cl-defmethod gnus-modern--rerender ((renderer gnus-modern-renderer) buffer)
-  "Rerender BUFFER after a debounced resize."
+  "Rerender BUFFER with RENDERER after a debounced resize."
   (when (buffer-live-p buffer)
     (with-current-buffer buffer
       (oset renderer resize-timer nil)
@@ -106,11 +100,8 @@
                              (oref renderer render-width))))
         (gnus-modern--rerender-now renderer)))))
 
-;;; Window size changes
-
 (defun gnus-modern--window-size-change-hook (frame)
-  "Schedule rerenders for visible buffers with an active renderer.
-Called from `window-size-change-functions' with FRAME."
+  "Schedule rerenders for visible buffers on FRAME with active renderers."
   (let ((seen (make-hash-table :test #'eq)))
     (dolist (window (window-list frame 'no-minibuffer))
       (let* ((buffer (window-buffer window))
@@ -125,15 +116,13 @@ Called from `window-size-change-functions' with FRAME."
           (puthash buffer t seen)
           (gnus-modern--schedule-resize renderer buffer))))))
 
-;;; Subclass hooks
-
 (cl-defmethod gnus-modern--decorate-p ((_renderer gnus-modern-renderer))
   "Return non-nil when RENDERER should decorate the current buffer."
   nil)
 
 (cl-defmethod gnus-modern--decorate ((renderer gnus-modern-renderer))
   "Decorate the current buffer with RENDERER."
-  (error "gnus-modern--decorate is not implemented for %S"
+  (error "`gnus-modern--decorate' is not implemented for %S"
          (eieio-object-class renderer)))
 
 (cl-defmethod gnus-modern--configure-buffer ((renderer gnus-modern-renderer))

@@ -63,7 +63,7 @@
   (:map dired-mode-map
    ("-" . dired-create-empty-file)
    ("C-c C-e" . wdired-change-to-wdired-mode))
-  :hook (dired-mode . my-dired-vc-ignores)
+  :hook (dired-after-readin . my-dired-vc-ignores)
   :custom
   (dired-dwim-target t)
   (dired-mouse-drag-files t)
@@ -88,11 +88,12 @@
                 (ignores (vc-call-backend
                           backend
                           'ignore-completion-table default-directory))
-                (pattern (regexp-opt ignores)))
+                (pattern (concat "\\=\\(" (regexp-opt ignores)
+                                 "\\)\\(?:$\\|\\s-\\)")))
       (font-lock-add-keywords
        nil
        `((,dired-move-to-filename-regexp
-          (,pattern (dired-move-to-filename) nil (0 'dired-ignored t))))
+          (,pattern (dired-move-to-filename) nil (1 'dired-ignored t))))
        'add-to-end))))
 
 (use-package dired-aux
@@ -113,13 +114,14 @@
   :ensure nil
   :custom
   (dired-omit-files
-   (concat "\\`[.]\\|[#~]\\'"
-           (cond
-            ((eq system-type 'windows-nt)
-             "\\|^desktop\\.ini$\\|^Thumbs\\.db$\\|^System Volume Information$\\|^\\$RECYCLE\\.BIN$")
-            ((eq system-type 'darwin)
-             "\\|^\\.DS_Store$\\|^\\.localized$\\|^\\._")
-            (t ""))))
+   (concat
+    "\\`[.]\\|[#~]\\'"
+    (cond
+     ((eq system-type 'windows-nt)
+      "\\|^desktop\\.ini$\\|^Thumbs\\.db$\\|^System Volume Information$\\|^\\$RECYCLE\\.BIN$")
+     ((eq system-type 'darwin)
+      "\\|^\\.DS_Store$\\|^\\.localized$\\|^\\._")
+     (t ""))))
   :config
   (put 'dired-find-alternate-file 'disabled nil)
   (let ((cmd (cond ((eq system-type 'darwin) "open")
@@ -280,9 +282,10 @@
   (compilation-skip-threshold 1)
   (compilation-transform-file-name-alist nil)
   :config
-  (add-to-list 'compilation-error-regexp-alist
-               '("\\([a-zA-Z0-9\\.]+\\)(\\([0-9]+\\)\\(,\\([0-9]+\\)\\)?) \\(Warning:\\)?"
-                 1 2 (4) (5))))
+  (add-to-list
+   'compilation-error-regexp-alist
+   '("\\([a-zA-Z0-9\\.]+\\)(\\([0-9]+\\)\\(,\\([0-9]+\\)\\)?) \\(Warning:\\)?"
+     1 2 (4) (5))))
 
 (use-package comint
   :ensure nil
@@ -342,6 +345,9 @@
                     (name . "^Doxyfile$")
                     (name . "^config\\.toml$")))
       ("Assets" (or (name . "\\.\\(png\\|jpe?g\\|svg\\|webp\\|bpm\\|ppm\\|mp[34]\\|mov\\|avi\\|obj\\)$")))
+      ("Telega" (or
+                 (mode . telega-root-mode)
+                 (mode . telega-chat-mode)))
       ("Mail" (or (derived-mode . message-mode)
                   (name . "\\`\\*\\(Gnus\\|gnus\\|Article\\|Summary\\|Group\\|mail\\|message\\)")))
       ("Document" (name . "\\.\\(md\\|markdown\\|org\\|adoc\\|tex\\|pdf\\|rst\\|txt\\)$"))
