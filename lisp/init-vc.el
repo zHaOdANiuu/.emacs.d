@@ -69,7 +69,6 @@
   (make-directory (expand-file-name "transient/" nn-directory) t))
 
 (use-package magit
-  :commands magit-file-delete
   :hook
   (git-commit-setup . (lambda () (setq fill-column git-commit-summary-max-length)))
   ;; HACK: See magit/magit#5320: large/long status buffers can change the

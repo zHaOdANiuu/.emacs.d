@@ -89,6 +89,7 @@
   :config
   (add-to-list 'org-export-backends 'md)
   (add-to-list 'org-structure-template-alist '("n" . "note"))
+  (add-to-list 'org-tags-exclude-from-inheritance "crypt")
   (add-to-list 'org-file-apps
                '("\\.\\(x?html?\\|pdf\\)\\'"  .
                  (lambda (file _link)
@@ -171,9 +172,6 @@
 
 (use-package org-crypt
   :ensure nil
-  :init
-  (with-eval-after-load 'org
-    (add-to-list 'org-tags-exclude-from-inheritance "crypt"))
   :config (org-crypt-use-before-save-magic))
 
 (use-package org-faces
@@ -195,6 +193,8 @@
   (org-agenda-finalize . org-modern-agenda)
   :custom
   (org-modern-table t)
+  (org-modern-table-vertical 1)
+  (org-modern-table-horizontal 1)
   (org-modern-star 'replace)
   (org-modern-replace-stars "◉⦿⊚⊙∘"))
 

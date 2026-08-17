@@ -99,19 +99,20 @@
 (use-package dired-x
   :ensure nil
   :hook (dired-mode . dired-omit-mode)
+  :custom
+  (dired-omit-verbose nil)
+  (dired-omit-extensions nil)
+  (dired-omit-files
+   (concat
+    "^#"
+    "\\|^\\.#"
+    "\\|^desktop\\.ini\\'"
+    "\\|^Thumbs\\.db\\'"
+    "\\|^System Volume Information\\'"
+    "\\|^\\$RECYCLE\\.BIN\\'"
+    "\\|^ntuser\\."
+    "\\|^\\.DS_Store\\'"))
   :config
-  (setq dired-omit-verbose nil
-        dired-omit-files
-        (concat
-         "^#"
-         "\\|^\\.#"
-         "\\|^desktop\\.ini\\'"
-         "\\|^Thumbs\\.db\\'"
-         "\\|^System Volume Information\\'"
-         "\\|^\\$RECYCLE\\.BIN\\'"
-         "\\|^ntuser\\."
-         "\\|^\\.DS_Store\\'"))
-
   (let ((cmd (cond ((eq system-type 'darwin) "open")
                    ((eq system-type 'gnu/linux) "xdg-open")
                    ((eq system-type 'windows-nt) "start")

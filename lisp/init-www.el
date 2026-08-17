@@ -291,7 +291,7 @@
   (defun my-telega-proxy ()
     (telega--addProxy
         '(:server "localhost"
-          :port 7897
+          :port nn-proxy-port
           :type (:@type "proxyTypeSocks5"))
       :enable-p 'enable))
 

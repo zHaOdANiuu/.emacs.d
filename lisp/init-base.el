@@ -186,13 +186,13 @@
 
 (use-package pixel-scroll
   :ensure nil
+  :init (pixel-scroll-precision-mode 1)
   :custom
   (scroll-margin 0)
   (scroll-step 0)
   (scroll-conservatively 101)
   (scroll-preserve-screen-position t)
-  (fast-but-imprecise-scrolling t)
-  :config (pixel-scroll-precision-mode 1))
+  (fast-but-imprecise-scrolling t))
 
 (use-package frame
   :ensure nil

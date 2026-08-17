@@ -8,7 +8,7 @@
 
 (defvar my--file-name-handler-alist file-name-handler-alist)
 (setq file-name-handler-alist nil
-      native-comp-jit-compilation t
+      native-comp-jit-compilation nil
       read-process-output-max (* 64 1024)
       gc-cons-percentage 1.0
       gc-cons-threshold most-positive-fixnum

@@ -1,0 +1,30 @@
+BasedOnStyle: LLVM
+
+ReflowComments: false
+SortIncludes: false
+FixNamespaceComments: false
+
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BreakBeforeTernaryOperators: false
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlwaysBreakTemplateDeclarations: No
+
+# style
+ColumnLimit: 0
+ConstructorInitializerIndentWidth: 2
+ContinuationIndentWidth: 2
+AlignAfterOpenBracket: BlockIndent
+AllowShortFunctionsOnASingleLine: All
+AllowShortLoopsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: true
+BreakBeforeBraces: Attach
+BinPackArguments: false
+BinPackParameters: false
+PointerAlignment: Left
+IndentPPDirectives: AfterHash
+IndentCaseLabels: true
+IndentCaseBlocks: false
+Cpp11BracedListStyle: true
+IndentRequiresClause: false

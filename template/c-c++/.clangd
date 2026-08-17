@@ -1,0 +1,20 @@
+If:
+  PathMatch:
+    - "src/*.cpp"
+    - "main.cpp"
+
+Index:
+  StandardLibrary: No
+  Background: Skip
+
+CompileFlags:
+  Add:
+    - -fno-rtti
+  Remove:
+    - -c
+    - -Werror
+    - -fmax-errors=*
+    - -fmodules
+    - -fmodule-only
+    - -fdeps-format=*
+    - -fmodule-mapper=*

@@ -61,10 +61,7 @@
     ["On Explorer Open" nn-explorer-open]
     ("C/C++ Template"
      ["New header File"        kill-buffer]
-     ["New C File"             kill-buffer]
-     ["New C++ File"           kill-buffer]
      ["New C++ Module File"    kill-buffer]
-     ["New C++ Module Project" kill-buffer]
      ["New C/C++ Project"      kill-buffer])
     ("Web Template"
      ["New HTML Project"  kill-buffer]

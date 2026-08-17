@@ -18,6 +18,11 @@
   :type 'string
   :group 'nn)
 
+(defcustom nn-proxy-port 7897
+  "VPN Proxy port."
+  :type 'number
+  :group 'nn)
+
 (defcustom nn-completion-style 'corfu
   "Completion framework to use."
   :type '(choice (const :tag "Corfu" corfu)
@@ -55,9 +60,9 @@
   (interactive)
   (setq-local url-proxy-services
               '(("no_proxy" . "^\\(localhost\\|10\\..*\\|192\\.168\\..*\\)")
-                ("http" . "localhost:7897")
-                ("https" . "localhost:7897")))
-  (message "Proxy enabled (localhost:7897)"))
+                ("http" . (format "localhost:%d" nn-proxy-port))
+                ("https" .(format "localhost:%d" nn-proxy-port))))
+  (message "Proxy enabled"))
 
 (defun nn-proxy-disable ()
   "Disable proxy in Emacs."

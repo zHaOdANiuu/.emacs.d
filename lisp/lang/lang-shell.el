@@ -37,8 +37,9 @@
       (let (res)
         (while
             (and (setq res
-                       (re-search-forward "[^\\]\\(\\$(.+?)\\|`.+?`\\)"
-                                          limit t))
+                       (re-search-forward
+                        "[^\\]\\(\\$(.+?)\\|`.+?`\\)"
+                        limit t))
                  (not (eq (nth 3 (syntax-ppss)) ?\"))))
         res)))
 

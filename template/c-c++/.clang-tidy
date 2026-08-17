@@ -1,0 +1,65 @@
+HeaderFilterRegex: ''
+Checks: >
+  -*,
+  llvm-*,
+  misc-*,
+  clang-diagnostic-*,
+  -misc-const-correctness,
+  -misc-include-cleaner,
+  -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
+  -misc-unused-parameters,
+  -misc-use-internal-linkage,
+  -misc-use-anonymous-namespace,
+  -llvm-namespace-comment,
+  modernize-use-auto,
+  modernize-use-using,
+  modernize-use-trailing-return-type,
+  readability-identifier-naming,
+  custom-auto-variable-init
+
+CheckOptions:
+  - key:   modernize-use-auto.MinTypeNameLength
+    value: 0
+  - key:   readability-identifier-naming.VariableCase
+    value: camelBack
+  - key:   readability-identifier-naming.GlobalVariableCase
+    value: camelBack
+  - key:   readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key:   readability-identifier-naming.ConstexprVariableCase
+    value: UPPER_CASE
+  - key:   readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key:   readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key:   readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key:   readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key:   readability-identifier-naming.MemberCase
+    value: camelBack
+  - key:   readability-identifier-naming.UnionCase
+    value: camelBack
+  - key:   readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+  - key:   readability-identifier-naming.IgnoreMainLikeFunctions
+    value: 1
+  - key:   readability-redundant-member-init.IgnoreBaseInCopyConstructors
+    value: 1
+  - key:   modernize-use-default-member-init.UseAssignment
+    value: 1
+
+CustomChecks:
+  - Name: auto-variable-init
+    Query: |
+      match varDecl(
+        unless(isImplicit()),
+        unless(isExpansionInSystemHeader()),
+        unless(hasType(autoType())),
+        hasInitializer(anything())
+      ).bind("badVar")
+    Diagnostic:
+      - BindName: badVar
+        Message: "Variable must use auto for type deduction: auto var = initializer"
+        Level: Warning
