@@ -31,23 +31,23 @@
 
 (use-package display-line-numbers
   :ensure nil
-  :hook ((prog-mode text-mode conf-mode) . display-line-numbers-mode)
+  :hook
+  ((prog-mode text-mode conf-mode) . display-line-numbers-mode)
+  (org-mode . (lambda () (display-line-numbers-mode -1)))
+  (markdown-ts-mode . (lambda () (display-line-numbers-mode -1)))
   :custom
   (display-line-numbers-grow-only t)
   (display-line-numbers-width 3)
-  (display-line-numbers-widen t)
-  :config
-  (add-hook 'org-mode-hook (lambda () (display-line-numbers-mode -1)))
-  (add-hook 'markdown-ts-mode-hook (lambda () (display-line-numbers-mode -1))))
+  (display-line-numbers-widen t))
 
 (use-package paren
   :ensure nil
   :custom
+  (show-paren-mode 1)
   (show-paren-style 'parenthesis)
   (show-paren-context-when-offscreen 'overlay)
   (blink-matching-paren-highlight-offscreen t)
   :config
-  (show-paren-mode t)
   (define-advice show-paren--show-context-in-overlay (:after (_text) no-box)
     (when show-paren--context-overlay
       (overlay-put show-paren--context-overlay
@@ -104,12 +104,12 @@
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
-;; (use-package minibuffer-frame
-;;   :vc (:url "https://github.com/zHaOdANiuu/minibuffer-frame" :rev :newest)
-;;   :init (minibuffer-frame-mode 1)
-;;   :config
-;;   (with-eval-after-load 'corfu
-;;     (setq global-corfu-minibuffer nil)))
+(use-package minibuffer-frame
+  :vc (:url "https://github.com/zHaOdANiuu/minibuffer-frame" :rev :newest)
+  :init (minibuffer-frame-mode 1)
+  :config
+  (with-eval-after-load 'corfu
+    (setq global-corfu-minibuffer nil)))
 
 (use-package color-picker
   :vc (:url "https://github.com/zHaOdANiuu/color-picker.el" :rev :newest)

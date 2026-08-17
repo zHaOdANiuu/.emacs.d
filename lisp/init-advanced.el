@@ -96,34 +96,22 @@
           (,pattern (dired-move-to-filename) nil (1 'dired-ignored t))))
        'add-to-end))))
 
-(use-package dired-aux
-  :ensure nil
-  :custom
-  (dired-vc-rename-file t)
-  (dired-do-revert-buffer t)
-  (dired-compress-file-alist
-   '(("\\.7z\\'" . "7z a -r %o %i")
-     ("\\.zip\\'" . "7z a -r %o  %i"))
-   (dired-compress-files-alist
-    '(("\\.7z\\'" . "7z a -r %o %i")
-      ("\\.zip\\'" . "7z a -r %o  %i")))
-   (dired-compress-directory-default-suffix ".7z")
-   (dired-compress-file-default-suffix ".7z")))
-
 (use-package dired-x
   :ensure nil
-  :custom
-  (dired-omit-files
-   (concat
-    "\\`[.]\\|[#~]\\'"
-    (cond
-     ((eq system-type 'windows-nt)
-      "\\|^desktop\\.ini$\\|^Thumbs\\.db$\\|^System Volume Information$\\|^\\$RECYCLE\\.BIN$")
-     ((eq system-type 'darwin)
-      "\\|^\\.DS_Store$\\|^\\.localized$\\|^\\._")
-     (t ""))))
+  :hook (dired-mode . dired-omit-mode)
   :config
-  (put 'dired-find-alternate-file 'disabled nil)
+  (setq dired-omit-verbose nil
+        dired-omit-files
+        (concat
+         "^#"
+         "\\|^\\.#"
+         "\\|^desktop\\.ini\\'"
+         "\\|^Thumbs\\.db\\'"
+         "\\|^System Volume Information\\'"
+         "\\|^\\$RECYCLE\\.BIN\\'"
+         "\\|^ntuser\\."
+         "\\|^\\.DS_Store\\'"))
+
   (let ((cmd (cond ((eq system-type 'darwin) "open")
                    ((eq system-type 'gnu/linux) "xdg-open")
                    ((eq system-type 'windows-nt) "start")
@@ -140,6 +128,38 @@
             ("\\.\\(?:mp3\\|flac\\)\\'" ,cmd)
             ("\\.html?\\'" ,cmd)
             ("\\.md\\'" ,cmd)))))
+
+(use-package dired-aux
+  :ensure nil
+  :custom
+  (dired-vc-rename-file t)
+  (dired-create-destination-dirs 'ask)
+  (dired-compress-file-alist
+   '(("\\.7z\\'" . "7z a -r %o %i")
+     ("\\.zip\\'" . "7z a -r %o  %i"))
+   (dired-compress-files-alist
+    '(("\\.7z\\'" . "7z a -r %o %i")
+      ("\\.zip\\'" . "7z a -r %o  %i")))
+   (dired-compress-directory-default-suffix ".7z")
+   (dired-compress-file-default-suffix ".7z"))
+  :config
+  ;; The w32 subprocess argv is limited to the ANSI code page (src/w32proc.c
+  ;; sys_spawnve treats argv as ANSI bytes), while MSYS2 ls outputs UTF-8.
+  ;; files.el's insert-directory uses file-name-coding-system for both sides,
+  ;; but a single global setting cannot satisfy both:
+  ;; - argv side (files.el:8426-8429) encodes argv via file-name-coding-system
+  ;;   → must be ANSI code page (cp936), or non-ASCII paths mangle at CreateProcessA;
+  ;; - output side (files.el:8518-8521) uses coding-system-for-read first
+  ;;   → must be utf-8 to correctly decode MSYS2 ls output.
+  ;; We dynamically bind coding-system-for-read to utf-8 only within this call,
+  ;; leaving the global file-name-coding-system unchanged (cp936).
+  (when (and ls-lisp-use-insert-directory-program
+             (eq system-type 'windows-nt))
+    (define-advice insert-directory (:around (orig &rest args) w32-msys-ls)
+      "Pass ANSI-codepage argv to `insert-directory-program', decode its UTF-8 output."
+      (let ((file-name-coding-system (intern (format "cp%d" w32-ansi-code-page)))
+            (coding-system-for-read 'utf-8))
+        (apply orig args)))))
 
 (use-package image-dired
   :ensure nil

@@ -184,7 +184,7 @@
      (?B . warning)
      (?C . success)))
   (org-agenda-deadline-faces
-   '((1.001 . error)
+   '((1.0 . error)
      (1.0 . org-warning)
      (0.5 . org-upcoming-deadline)
      (0.0 . org-upcoming-distant-deadline))))
@@ -194,8 +194,8 @@
   (org-mode . org-modern-mode)
   (org-agenda-finalize . org-modern-agenda)
   :custom
+  (org-modern-table t)
   (org-modern-star 'replace)
-  (org-modern-table-vertical 1.5)
   (org-modern-replace-stars "◉⦿⊚⊙∘"))
 
 (provide 'lang-org)

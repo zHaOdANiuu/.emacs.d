@@ -17,15 +17,14 @@
 (defconst nn-mode-line-info    (nerd-icons-codicon   "nf-cod-info"))
 (defconst nn-mode-line-git     (nerd-icons-powerline "nf-pl-branch"))
 
-(defun nn-mode-line--click-map (cmd)
-  (let ((map (make-sparse-keymap)))
-    (keymap-set map "<mode-line> <mouse-1>" cmd)
-    map))
-
 (defun nn-mode-line--prop (text help cmd)
-  (propertize text 'mouse-face 'mode-line-highlight
-              'help-echo help
-              'local-map (nn-mode-line--click-map cmd)))
+  (propertize
+   text
+   'mouse-face 'highlight
+   'help-echo help
+   'local-map (let ((map (make-sparse-keymap)))
+                (keymap-set map "<mode-line> <mouse-1>" cmd)
+                map)))
 
 (defun nn-mode-line-vc-format ()
   (or nn-mode-line--vc-cache
@@ -38,9 +37,10 @@
                                          (vc-call-backend backend 'mode-line-string root))))
                                  (if (string-empty-p b) "?" b))
                              "!")))
-              (nn-mode-line--prop (concat nn-mode-line-git (substring-no-properties branch))
-                                  "mouse-1: vc-dir"
-                                  #'vc-dir)))))
+              (nn-mode-line--prop
+               (concat nn-mode-line-git (substring-no-properties branch))
+               "mouse-1: vc-dir"
+               #'vc-dir)))))
 
 (defun nn-mode-line-flymake-format ()
   (or nn-mode-line--flymake-cache

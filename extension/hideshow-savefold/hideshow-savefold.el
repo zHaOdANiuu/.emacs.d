@@ -10,22 +10,11 @@
 
 (require 'hideshow)
 
-(defgroup hideshow-savefold nil
-  "Persist hideshow folds across Emacs sessions."
-  :group 'convenience
-  :group 'hideshow)
-
-(defcustom hideshow-savefold-directory
-  (locate-user-emacs-file "hideshow-savefold")
-  "Directory where hideshow fold data is persisted."
-  :type 'directory
-  :group 'hideshow-savefold)
+(defvar hideshow-savefold--fpath-to-attr-table (make-hash-table :test #'equal)
+  "Hash table mapping file paths to their attribute hash tables.")
 
 (defconst hideshow-savefold--folds-attr 'hideshow-savefold-folds
   "Key used to store fold data in the attr table.")
-
-(defvar hideshow-savefold--fpath-to-attr-table (make-hash-table :test #'equal)
-  "Hash table mapping file paths to their attribute hash tables.")
 
 (defsubst hideshow-savefold--buffer-file (&optional fpath)
   "Resolve FPATH or return the current buffer's expanded file name."
@@ -38,6 +27,17 @@
       (lambda (s e k) (hs-make-overlay s e k))
     (lambda (s e k) (hs-make-overlay s e k nil nil)))
   "`hs-make-overlay' with arity matching this Emacs version.")
+
+(defgroup hideshow-savefold nil
+  "Persist hideshow folds across Emacs sessions."
+  :group 'convenience
+  :group 'hideshow)
+
+(defcustom hideshow-savefold-directory
+  (locate-user-emacs-file "hideshow-savefold")
+  "Directory where hideshow fold data is persisted."
+  :type 'directory
+  :group 'hideshow-savefold)
 
 (defun hideshow-savefold--attr-table-fpath (fpath)
   "Return the filesystem path of the attr-table file for FPATH."
@@ -81,13 +81,15 @@ Call `hideshow-savefold--write-attrs' afterwards to persist."
 
 (defun hideshow-savefold--set-modtime ()
   "Record the current file's modification time as an attr."
-  (hideshow-savefold--set-attr 'hideshow-savefold-modtime
-                               (visited-file-modtime)))
+  (hideshow-savefold--set-attr
+   'hideshow-savefold-modtime
+   (visited-file-modtime)))
 
 (defun hideshow-savefold--file-newer-than-saved-p ()
   "Return t if the current file is newer than the saved fold data."
-  (when-let* ((saved-modtime (hideshow-savefold--get-attr
-                              'hideshow-savefold-modtime)))
+  (when-let* ((saved-modtime
+               (hideshow-savefold--get-attr
+                'hideshow-savefold-modtime)))
     (< (float-time saved-modtime) (float-time (visited-file-modtime)))))
 
 (defun hideshow-savefold--collect-folds ()
@@ -101,7 +103,6 @@ Call `hideshow-savefold--write-attrs' afterwards to persist."
 (defun hideshow-savefold--save ()
   "Save hideshow fold data for the current buffer to disk."
   (when (and (buffer-file-name)
-             (bound-and-true-p hs-minor-mode)
              (not (buffer-modified-p)))
     (hideshow-savefold--set-attr hideshow-savefold--folds-attr (hideshow-savefold--collect-folds))
     (hideshow-savefold--set-modtime)
@@ -109,8 +110,7 @@ Call `hideshow-savefold--write-attrs' afterwards to persist."
 
 (defun hideshow-savefold--restore ()
   "Restore saved hideshow folds for the current buffer."
-  (when (and (buffer-file-name)
-             (bound-and-true-p hs-minor-mode))
+  (when (buffer-file-name)
     (unless (hideshow-savefold--file-newer-than-saved-p)
       (when-let* ((folds (hideshow-savefold--get-attr
                           hideshow-savefold--folds-attr)))

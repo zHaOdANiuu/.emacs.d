@@ -28,7 +28,9 @@
   (cl-loop for font in '("Noto Color Emoji" "Segoe UI Emoji" "Apple Color Emoji")
            for spec = (font-spec :family font)
            when (find-font spec)
-           return (set-fontset-font t 'emoji spec nil 'prepend)))
+           return (set-fontset-font t 'emoji spec nil 'prepend))
+  ;; Greek alphabet
+  (set-fontset-font t '(#x0370 . #x03FF) (face-attribute 'default :family)))
 
 ;; If your font supports ligatures, uncomment it
 ;; (cl-loop for chars in '("::" "..." "->" "=>" "<=" ">=" "!==" "!=" "===" "==")

@@ -80,7 +80,17 @@
   (set-file-name-coding-system 'utf-8-unix)
   (set-selection-coding-system 'utf-8-unix)
   (when (eq system-type 'windows-nt)
-    (set-selection-coding-system 'utf-16le-dos)))
+    (set-selection-coding-system 'utf-16le-dos)
+    (when-let* ((coding
+                 (pcase (w32-get-console-codepage)
+                   (65001 'utf-8-dos)
+                   (936 'gbk-dos)
+                   (_ nil))))
+      (setq process-coding-system-alist
+            `(("[pP][lL][iI][nN][kK]" . #1=(,coding . ,coding))
+              ("[cC][mM][dD][pP][rR][oO][xX][yY]" . #1#)))
+      (setq default-process-coding-system
+            `(,coding . ,coding)))))
 
 (use-package uniquify
   :ensure nil
@@ -94,15 +104,14 @@
 (use-package ls-lisp
   :ensure nil
   :config
-  (if (and (executable-find "ls")
-           (not (eq system-type 'windows-nt)))
+  (if (executable-find "ls")
       (setq ls-lisp-use-insert-directory-program t)
     (setq ls-lisp-emulation 'UNIX
           ls-lisp-use-string-collate nil
           ls-lisp-use-localized-time-format t
           ls-lisp-support-symlinks t
           ls-lisp-dirs-first t
-          ls-lisp-verbosity '(links gid modes))
+          ls-lisp-verbosity '(links uid modes))
     (define-advice ls-lisp-format-file-size (:around (orig-fn file-size human-readable) my-format)
       "Use right-aligned human-readable format when HUMAN-READABLE is non-nil."
       (if human-readable

@@ -42,9 +42,10 @@
   (ido-case-fold t)
   (ido-create-new-buffer 'always)
   (ido-ignore-files '("\\`.DS_Store$" "Icon\\?$"))
-  (ido-ignore-buffers '("\\` " "^\\*ESS\\*" "^\\*Messages\\*" "^\\*[Hh]elp" "^\\*Buffer"
-                        "^\\*.*Completions\\*$" "^\\*Ediff" "^\\*tramp" "^\\*cvs-" "_region_"
-                        " output\\*$" "^TAGS$" "^\*Ido")))
+  (ido-ignore-buffers
+   '("\\` " "^\\*ESS\\*" "^\\*Messages\\*" "^\\*[Hh]elp" "^\\*Buffer"
+     "^\\*.*Completions\\*$" "^\\*Ediff" "^\\*tramp" "^\\*cvs-" "_region_"
+     " output\\*$" "^TAGS$" "^\*Ido")))
 
 (use-package icomplete
   :ensure nil
@@ -164,7 +165,11 @@
   (corfu-count 12)
   (corfu-max-width 120)
   (corfu-left-margin-width 0)
-  (corfu-right-margin-width 0))
+  (corfu-right-margin-width 0)
+  (corfu-auto-commands
+   '("self-insert-command\\'"
+     c-electric-colon c-electric-lt-gt
+     c-electric-slash c-scope-operator)))
 
 (use-package corfu-popupinfo
   :ensure nil

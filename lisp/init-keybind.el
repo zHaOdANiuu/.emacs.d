@@ -94,7 +94,8 @@
 
 (defun my-replace-string-whole-buffer (from to)
   (interactive "sReplace: \nsWith: ")
-  (replace-string from to nil (point-min) (point-max)))
+  (save-excursion
+    (replace-string from to nil (point-min) (point-max))))
 
 (keymap-global-set "C-!" #'my-replace-string-whole-buffer)
 (keymap-global-set "C-c w p" #'my-surround-replace-pair)
@@ -112,6 +113,7 @@
 (keymap-global-set "C-S-<backspace>" #'my-delete-whole-line-no-kill)
 (keymap-global-set "C-," #'my-copy-line-and-move-down)
 (keymap-global-set "C-~" #'my-home-dired)
+(keymap-global-set "C-'" #'imenu)
 (keymap-global-set "C-1" #'scroll-up-command)
 (keymap-global-set "C-2" #'scroll-down-command)
 (keymap-global-set "C-3" #'recenter-top-bottom)

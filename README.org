@@ -9,14 +9,22 @@
 
   *Elegant Emacs* is a personal Emacs 30+ config — no framework, no bloat.
 
-  - *Instant startup* — GC tuning, lazy loading, deferred autoloads
-  - *One-key everything* — =<f1>= format, =<f2>= rename, =<f5>= debug, =<f12>= jump, =C-c s= search
+* Features
+
+  - *Fast startup* — GC tuning, JIT lock optimization, deferred autoloads, suppressed redisplay during init
+  - *One-key workflow* — =<f1>= format, =<f2>= rename, =<f5>= debug, =<f12>= jump, =C-c s= search
   - *Custom dark theme* — ~nn-world~, =M-x nn-world-reload= to iterate live
-  - *==HOME== dashboard* — recent files, todo, quick actions; =n/p= navigate, =C-<f1>= summon
-  - *No LSP noise* — Eglot on-demand via context menu, not auto-start
-  - *Visual debugger* — Dape floating toolbar, breakpoints, attach to running process
-  - *Terminal anywhere* — Ghostel popup (=C-`=), Eshell, MSYS2 auto-detect
-  - *Batteries included* — Magit, ripgrep, translation, RSS, proxy toggle, right-click menus
+  - *=HOME=* dashboard — recent files, todo, quick actions; =n/p= navigate, =C-<f1>= summon
+  - *Completion* — Corfu or completion-preview; fido-frame child-frame minibuffer
+  - *LSP* — Eglot on demand via context menu; =<f2>= rename, =<f12>= jump
+  - *Visual debugger* — Dape + GDB, floating toolbar, breakpoints, process attach
+  - *Git* — Magit, VC, ediff, and automatic smerge conflict detection
+  - *Formatting* — Apheleia with prettier, clang-format, and shfmt; =<f1>= formats the buffer
+  - *Search* — ripgrep powers grep / xref / project; =C-c s= searches the current directory, wgrep edits results
+  - *Terminal anywhere* — Ghostel popup (=C-`=), Eshell, and MSYS2 auto-detection
+  - *Translation* — =C-c t w/r/b= for word / region / buffer; also available from the context menu
+  - *Mode-line* — cached Git branch, diagnostics, LSP status, encoding, and line-ending information
+  - *Batteries included* — EWW, ERC, Newsticker, Gnus, proxy toggle, and right-click menus
 
 * Install
 
@@ -26,21 +34,6 @@
 
   Codeberg mirror: ~https://codeberg.org/zdn/.emacs.d.git~
 
-* Highlights
-
-  - *Fast startup* — GC tuning, JIT lock optimization, suppressed redisplay during init
-  - *Custom theme* — ~nn-world~ dark theme, ~M-x nn-world-reload~ to live-reload
-  - *=HOME*= dashboard — logo, recent files, todo list; =n/p= to navigate, =C-<f1>= to summon
-  - *Completion* — Corfu (default) or completion-preview; fido-frame child-frame minibuffer
-  - *LSP* — Eglot (manual start via context menu), =<f2>= rename, =<f12>= jump
-  - *Debugging* — Dape + GDB, floating toolbar, attach to process on Windows
-  - *Git* — Magit with custom status buffer, VC-dir hides subdirectories, smerge auto-detects conflicts
-  - *Formatting* — Apheleia, =<f1>= to format; supports prettier / clang-format / shfmt
-  - *Search* — ripgrep powers grep / xref / project; =C-c s= search directory, wgrep for direct editing
-  - *Terminal* — Ghostel (=C-`=), MSYS2 auto-detection, Eshell with =clear= / =less= builtins
-  - *Translation* — =C-c t w/r/b= for word / region / buffer; also in context menu
-  - *Mode-line* — Git branch, diagnostics count, LSP status, encoding, line ending; all cached
-
 * Screenshots
 
   [[./example/start.jpg]]
@@ -49,25 +42,59 @@
 
 * Modules
 
-  | File                  | Purpose                                 |
-  |-----------------------+-----------------------------------------|
-  | =init-def.el=           | Custom variables, proxy, drag utilities |
-  | =init-font.el=          | IBM Plex Mono, CJK, Symbol, Emoji       |
-  | =init-display.el=       | Fringe, line numbers, paren, icons      |
-  | =init-mode-line.el=     | Git branch, diagnostics, LSP status     |
-  | =init-base.el=          | Files, backups, encoding, scrolling     |
-  | =init-advanced.el=      | Dired, compile, isearch, ibuffer        |
-  | =init-editor.el=        | Formatting, symbol-overlay, mc          |
-  | =init-lang.el=          | Language mode entry point               |
-  | =init-debug.el=         | Dape + GDB debugger                     |
-  | =init-diagnostics.el=   | Flymake + Flyspell                      |
-  | =init-completion.el=    | Corfu / completion-preview / fido       |
-  | =init-navigation.el=    | Citre, bookmark, imenu                  |
-  | =init-vc.el=            | Magit, VC, ediff, smerge                |
-  | =init-www.el=           | EWW, ERC, Newsticker, Gnus              |
-  | =init-utils.el=         | grep/rg, translation, calendar          |
-  | =init-terminal.el=      | Shell, Eshell, Ghostel                  |
-  | =init-word-move.el=     | Word-level movement                     |
-  | =init-keybind.el=       | Global keybindings                      |
-  | =init-context-menu.el=  | Right-click context menus               |
-  | =init-home.el=          | =*HOME*= dashboard                        |
+|----------------------+-----------------------------------------|
+| File                 | Purpose                                 |
+|----------------------+-----------------------------------------|
+| =init-def.el=          | Custom variables, proxy, drag utilities |
+| =init-font.el=         | IBM Plex Mono, CJK, symbols, emoji      |
+| =init-display.el=      | Fringe, line numbers, parens, icons     |
+| =init-mode-line.el=    | Git branch, diagnostics, LSP status     |
+| =init-base.el=         | Files, backups, encoding, scrolling     |
+| =init-advanced.el=     | Dired, compile, isearch, ibuffer        |
+| =init-editor.el=       | Formatting, symbol-overlay, multicursor |
+| =init-lang.el=         | Language configuration entry point      |
+| =init-debug.el=        | Dape + GDB debugger                     |
+| =init-diagnostics.el=  | Flymake + Flyspell                      |
+| =init-completion.el=   | Corfu / completion-preview / fido       |
+| =init-navigation.el=   | Citre, bookmarks, imenu                 |
+| =init-vc.el=           | Magit, VC, ediff, smerge                |
+| =init-www.el=          | EWW, ERC, Newsticker, Gnus              |
+| =init-utils.el=        | grep/rg, translation, calendar          |
+| =init-terminal.el=     | Shell, Eshell, Ghostel                  |
+| =init-word-move.el=    | Word-level movement                     |
+| =init-keybind.el=      | Global keybindings                      |
+| =init-context-menu.el= | Right-click context menus               |
+| =init-home.el=         | =*HOME*= dashboard                        |
+|----------------------+-----------------------------------------|
+
+Language modules loaded by =init-lang.el=:
+
+|--------------------+-----------------------------------------|
+| File               | Purpose                                 |
+|--------------------+-----------------------------------------|
+| =lang-cc.el=         | C / C++ via simpc-mode and tree-sitter  |
+| =lang-elisp.el=      | Emacs Lisp and help-mode                |
+| =lang-javascript.el= | JavaScript / TypeScript                 |
+| =lang-web.el=        | HTML / CSS / JS via web-mode and emmet  |
+| =lang-shell.el=      | Shell and PowerShell                    |
+| =lang-org.el=        | Org, agenda, capture, and source blocks |
+| =lang-markdown.el=   | Markdown via tree-sitter                |
+| =lang-json.el=       | JSON via tree-sitter                    |
+| =lang-yaml.el=       | YAML via tree-sitter                    |
+|--------------------+-----------------------------------------|
+
+* Extensions
+
+Local packages under =extension/=:
+
+|---------------------+-----------------------------------------|
+| Package             | Purpose                                 |
+|---------------------+-----------------------------------------|
+| =gnus-modern=         | Modernized Gnus interface               |
+| =hideshow-savefold=   | Persist hideshow folds across sessions  |
+| =nn-fringe-scale=     | Scale fringe bitmaps for HiDPI displays |
+| =nn-license-template= | Generate LICENSE files from templates   |
+| =nn-world=            | Custom dark theme                       |
+| =simpc=               | Simple C major mode                     |
+| =simple-mpv=          | Lightweight mpv media player interface  |
+|---------------------+-----------------------------------------|

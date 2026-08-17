@@ -44,6 +44,7 @@
 
 (when (eq system-type 'windows-nt)
   (w32-set-console-codepage 65001)
+  (setenv "LANG" "en_US.UTF-8")
 
   (when (boundp 'w32-get-true-file-attributes)
     (setq w32-get-true-file-attributes nil

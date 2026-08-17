@@ -4,6 +4,16 @@
 (defconst nn-home-package-load-count (length package-activated-list))
 (defconst nn-home-emacs-init-time (emacs-init-time))
 
+(defvar-keymap nn-home-keymap
+  "o" #'nn-home-return-action
+  "n" #'nn-home-next-line
+  "p" #'nn-home-previous-line
+  "q" #'nn-home-quit
+  "g" #'nn-home-refresh
+  "<up>" #'nn-home-previous-line
+  "<down>" #'nn-home-next-line
+  "<return>" #'nn-home-return-action)
+
 (defun nn-home-make-padding (len)
   (make-string (- len (default-font-width)) ?\s))
 
@@ -106,29 +116,18 @@
   (interactive)
   (save-buffers-kill-terminal))
 
-(defun nn-home-keymap ()
-  (let ((map (make-sparse-keymap)))
-    (keymap-set map "<return>" 'nn-home-return-action)
-    (keymap-set map "<down>" 'nn-home-next-line)
-    (keymap-set map "<up>" 'nn-home-previous-line)
-    (keymap-set map "o" 'nn-home-return-action)
-    (keymap-set map "n" 'nn-home-next-line)
-    (keymap-set map "p" 'nn-home-previous-line)
-    (keymap-set map "q" 'nn-home-quit)
-    (keymap-set map "g" 'nn-home-refresh)
-    map))
-
 (defun nn-home-create ()
   (let ((buf (get-buffer-create nn-home-buffer)))
     (with-current-buffer buf
       (let ((inhibit-read-only t))
         (erase-buffer)
         (buffer-disable-undo)
-        (use-local-map (nn-home-keymap))
+        (use-local-map nn-home-keymap)
         (read-only-mode 1)
         (display-line-numbers-mode -1)
         (setq buffer-offer-save nil)
-        (setq-local mode-line-format nil
+        (setq-local header-line-format nil
+                    mode-line-format nil
                     mouse-1-click-follows-link nil
                     mouse-highlight nil
                     vertical-scroll-bar nil)

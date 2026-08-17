@@ -42,5 +42,5 @@
 (require 'init-context-menu)
 (require 'init-home)
 (require 'nn-world-theme)
-(setq custom-file "~/.emacs.d/custom.el")
+(setq-default custom-file "~/.emacs.d/custom.el")
 (load custom-file)

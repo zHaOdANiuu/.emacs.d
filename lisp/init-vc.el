@@ -80,25 +80,25 @@
   (magit-diff-visit-file . my-magit-reveal-point-if-invisible-h)
   :custom
   (git-commit-major-mode 'git-commit-elisp-text-mode)
-  (magit-auto-revert-mode nil)
   (magit-commit-show-diff nil)
-  (magit-diff-refine-hunk t)
+  (magit-commit-ask-to-stage nil)
+  (magit-auto-revert-mode nil)
   (magit-refresh-verbose nil)
   (magit-refresh-status-buffer nil)
   (magit-revision-insert-related-refs nil)
-  (magit-run-hooks-from-githooks (not (eq system-type 'windows-nt)))
-  (magit-uniquify-buffer-names nil)
   (magit-save-repository-buffers nil)
+  (magit-diff-refine-hunk t)
+  (magit-uniquify-buffer-names nil)
+  (magit-no-confirm '(stage-all-changes unstage-all-changes))
+  (magit-run-hooks-from-githooks (not (eq system-type 'windows-nt)))
+  (magit-status-sections-hook
+   '(magit-insert-status-headers
+     magit-insert-untracked-files
+     my-magit-insert-unstaged-files
+     my-magit-insert-staged-files
+     magit-insert-stashes
+     magit-insert-recent-commits))
   :config
-  (setq magit-git-executable (or (executable-find magit-git-executable) "git")
-        magit-status-sections-hook
-        '(magit-insert-status-headers
-          magit-insert-untracked-files
-          my-magit-insert-unstaged-files
-          my-magit-insert-staged-files
-          magit-insert-stashes
-          magit-insert-recent-commits))
-
   (defconst my-magit--status-alist
     '(("M" "modified" . (:foreground "#f9e2af"))
       ("A" "new file" . (:foreground "#a6e3a1"))
