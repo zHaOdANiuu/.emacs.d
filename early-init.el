@@ -3,9 +3,6 @@
 ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=81506
 ;; (setq w32-ime-preedit t)
 
-(put 'if-let 'byte-obsolete-info nil)
-(put 'when-let 'byte-obsolete-info nil)
-
 (defvar my--file-name-handler-alist file-name-handler-alist)
 (setq file-name-handler-alist nil
       native-comp-jit-compilation nil
@@ -42,31 +39,52 @@
             (setq inhibit-redisplay nil
                   inhibit-message nil)))
 
-(when (eq system-type 'windows-nt)
-  (w32-set-console-codepage 65001)
-  (setenv "LANG" "en_US.UTF-8")
+(when (boundp 'load-path-filter-function)
+  (setq load-path-filter-function #'load-path-filter-cache-directory-files))
 
-  (when (boundp 'w32-get-true-file-attributes)
-    (setq w32-get-true-file-attributes nil
-          w32-pipe-read-delay 0
-          w32-pipe-buffer-size (* 64 1024)))
+(when (boundp 'w32-get-true-file-attributes)
+  (setq w32-get-true-file-attributes nil
+        w32-pipe-read-delay 0
+        w32-pipe-buffer-size (* 64 1024)))
 
-  (unless (getenv-internal "HOME")
-    (when-let* ((home (getenv "USERPROFILE")))
-      (setenv "HOME" home)
-      (setq abbreviated-home-dir nil)))
+(use-package package
+  :ensure nil
+  :custom
+  (package-quickstart t)
+  (package-enable-at-startup nil)
+  (package-install-upgrade-built-in nil)
+  (package-check-signature nil)
+  (package-archives
+   '(("melpa-cn" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
+     ("gnu-cn"   . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/"))))
 
-  (when-let* ((msys2-root (getenv "MSYS2"))
-              (msys2-bin (concat msys2-root "/usr/bin"))
-              (ucrt64-bin (concat msys2-root "/ucrt64/bin"))
-              (bash (concat msys2-bin "/bash.exe")))
-    (add-to-list 'exec-path msys2-bin)
-    (add-to-list 'exec-path ucrt64-bin)
-    (setenv "PATH" (concat msys2-bin ";" ucrt64-bin ";" (getenv "PATH")))
-    (setq shell-file-name bash
-          explicit-shell-file-name (concat msys2-root "/msys2_shell.cmd")
-          explicit-msys2_shell.cmd-args '("-defterm" "-here" "-full-path"
-                                          "-no-start" "-ucrt64" "-i"))
-    (setenv "MSYSTEM" "UCRT64")
-    (setenv "TERM" "xterm-256color")
-    (setenv "SHELL" bash)))
+(use-package use-package
+  :ensure nil
+  :custom
+  (use-package-always-ensure t)
+  (use-package-always-defer t)
+  (use-package-expand-minimally t))
+
+(use-package env
+  :ensure nil
+  :config
+  (setenv "TERM" "xterm-256color")
+  (when (eq system-type 'windows-nt)
+    (unless (getenv-internal "HOME")
+      (when-let* ((home (getenv "USERPROFILE")))
+        (setenv "HOME" home)
+        (setq abbreviated-home-dir nil)))
+
+    (when-let* ((msys2-root (getenv "MSYS2"))
+                (msys2-bin (concat msys2-root "/usr/bin"))
+                (ucrt64-bin (concat msys2-root "/ucrt64/bin"))
+                (bash (concat msys2-bin "/bash.exe")))
+      (add-to-list 'exec-path msys2-bin)
+      (add-to-list 'exec-path ucrt64-bin)
+      (setenv "PATH" (concat msys2-bin ";" ucrt64-bin ";" (getenv "PATH")))
+      (setq shell-file-name bash
+            explicit-shell-file-name (concat msys2-root "/msys2_shell.cmd")
+            explicit-msys2_shell.cmd-args '("-defterm" "-here" "-full-path"
+                                            "-no-start" "-ucrt64" "-i"))
+      (setenv "MSYSTEM" "UCRT64")
+      (setenv "SHELL" bash))))

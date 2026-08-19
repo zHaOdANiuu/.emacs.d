@@ -14,6 +14,7 @@
   ("M-<return>" . eldoc-print-current-symbol-info)
   ("C-c h ." . my-eldoc-copy)
   :custom
+  (eldoc-help-at-pt t)
   (eldoc-idle-delay 0.5)
   (eldoc-idle-delay-visible-only t)
   (eldoc-echo-area-use-multiline-p nil)
@@ -77,7 +78,8 @@
   :config
   (put 'dired-find-alternate-file 'disabled nil)
 
-  (define-advice dired-buffer-stale-p (:before-while (&rest args) my-dired--no-revert-in-virtual-buffers-a)
+  (define-advice dired-buffer-stale-p (:before-while (&rest args)
+                                       my-dired--no-revert-in-virtual-buffers-a)
     "Don't auto-revert in dired-virtual buffers (see `dired-virtual-revert')."
     (not (eq revert-buffer-function #'dired-virtual-revert)))
 

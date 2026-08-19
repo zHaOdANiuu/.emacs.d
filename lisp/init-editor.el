@@ -13,7 +13,8 @@
 (setq-default word-wrap t
               tab-width 2
               tab-always-indent 'complete
-              fill-column 80)
+              fill-column 80
+              line-spacing 0)
 
 (use-package ffap
   :ensure nil
@@ -192,10 +193,10 @@
    ("C-M-<" . mc/skip-to-previous-like-this)
    ("C-<mouse-1>" . mc/add-cursor-on-click)
    :map mc/keymap
-   ("<escape>" . multiple-cursors-mode)
-   ("C-c C-w" . my-kill-mc-lines-joined)
-   ("C-c M-w" . my-copy-mc-lines-joined)
-   ("C-;" . mc/vertical-align-with-space))
+   ("C-w" . my-mc/cat)
+   ("M-w" . my-mc/copy)
+   ("C-;" . mc/vertical-align-with-space)
+   ("<escape>" . multiple-cursors-mode))
   :init (multiple-cursors-mode t)
   :custom
   (mc/always-run-for-all t)
@@ -203,40 +204,40 @@
   :config
   (add-to-list 'mc--default-cmds-to-run-once #'swiper-mc)
 
-  (defun my-mc--collect-regions ()
-    (let ((cursors (mc/all-fake-cursors))
-          (texts '())
-          (markers '()))
-      (let ((beg (min (point) (mark)))
-            (end (max (point) (mark))))
-        (push (buffer-substring-no-properties beg end) texts)
-        (push (copy-marker beg) markers))
-      (dolist (cursor cursors)
-        (let* ((pt (marker-position (overlay-get cursor 'point)))
-               (mk (marker-position (overlay-get cursor 'mark)))
-               (beg (min pt mk))
-               (end (max pt mk)))
-          (push (buffer-substring-no-properties beg end) texts)
-          (push (copy-marker beg) markers)))
-      (multiple-cursors-mode -1)
+  (defun my-mc/get-line-with-indent (beg end)
+    (save-excursion
+      (goto-char beg)
+      (concat (buffer-substring-no-properties (line-beginning-position) beg)
+              (buffer-substring-no-properties beg end))))
+
+  (defun my-mc/lines-get ()
+    (let ((pairs
+           `(,`(,(region-beginning) ,(region-end)
+                ,(buffer-substring-no-properties
+                  (region-beginning) (region-end))))))
+      (mc/for-each-fake-cursor
+       cursor
+       (let* ((pt (marker-position (overlay-get cursor 'point)))
+              (mk (marker-position (overlay-get cursor 'mark)))
+              (beg (min pt mk))
+              (end (max pt mk)))
+         (push `(,beg ,end ,(my-mc/get-line-with-indent beg end))
+               pairs)))
+      (sort pairs (lambda (a b) (< (nth 0 a) (nth 0 b))))))
+
+  (defun my-mc/copy ()
+    (interactive)
+    (kill-new (string-join (mapcar (lambda (r) (nth 2 r)) (my-mc/lines-get)) "\n"))
+    (mc/keyboard-quit)
+    (multiple-cursors-mode -1))
+
+  (defun my-mc/cat ()
+    (interactive)
+    (let ((pairs (my-mc/lines-get)))
+      (kill-new (string-join (mapcar (lambda (r) (nth 2 r)) pairs) "\n"))
+      (dolist (r (reverse pairs))
+        (delete-region (nth 0 r) (nth 1 r)))
       (mc/keyboard-quit)
-      (cons (nreverse texts) (nreverse markers))))
-
-  (defun my-copy-mc-lines-joined ()
-    (interactive)
-    (let ((result (my-mc--collect-regions)))
-      (kill-new (string-join (car result) "\n"))))
-
-  (defun my-kill-mc-lines-joined ()
-    (interactive)
-    (let* ((result (my-mc--collect-regions))
-           (all-texts (car result))
-           (markers (cdr result))
-           (pairs (cl-mapcar #'cons markers all-texts)))
-      (dolist (pair (sort pairs (lambda (a b) (> (car a) (car b)))))
-        (goto-char (car pair))
-        (delete-region (marker-position (car pair))
-                       (+ (marker-position (car pair)) (length (cdr pair)))))
-      (kill-new (string-join all-texts "\n")))))
+      (multiple-cursors-mode -1))))
 
 (provide 'init-editor)

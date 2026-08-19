@@ -103,20 +103,14 @@
 
 (use-package ls-lisp
   :ensure nil
-  :config
-  (if (executable-find "ls")
-      (setq ls-lisp-use-insert-directory-program t)
-    (setq ls-lisp-emulation 'UNIX
-          ls-lisp-use-string-collate nil
-          ls-lisp-use-localized-time-format t
-          ls-lisp-support-symlinks t
-          ls-lisp-dirs-first t
-          ls-lisp-verbosity '(links uid modes))
-    (define-advice ls-lisp-format-file-size (:around (orig-fn file-size human-readable) my-format)
-      "Use right-aligned human-readable format when HUMAN-READABLE is non-nil."
-      (if human-readable
-          (format " %4s" (file-size-human-readable file-size))
-        (funcall orig-fn file-size human-readable)))))
+  :custom
+  (ls-lisp-use-insert-directory-program (when (executable-find "ls") t))
+  (ls-lisp-emulation 'UNIX)
+  (ls-lisp-use-string-collate nil)
+  (ls-lisp-use-localized-time-format t)
+  (ls-lisp-support-symlinks t)
+  (ls-lisp-dirs-first t)
+  (ls-lisp-verbosity '(links uid modes)))
 
 (use-package recentf
   :ensure nil

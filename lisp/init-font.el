@@ -8,7 +8,7 @@
   (cl-loop for font in '("IBM Plex Mono" "Jetbrains Mono" "Cascadia Code")
            for spec = (font-spec :family font)
            when (find-font spec)
-           return (set-face-attribute 'default nil :family font :height 150))
+           return (set-face-attribute 'default nil :family font :height 140))
   ;; Unicode
   (cl-loop for font in '("Segoe UI" "Arial Unicode MS")
            for spec = (font-spec :family font)

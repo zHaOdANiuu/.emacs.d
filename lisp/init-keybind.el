@@ -1,4 +1,16 @@
 ;;; -*- lexical-binding: t -*-
+(defun my-cut ()
+  (interactive)
+  (if (use-region-p)
+      (kill-region (region-beginning) (region-end))
+    (kill-whole-line)))
+
+(defun my-copy ()
+  (interactive)
+  (if (use-region-p)
+      (copy-region-as-kill (region-beginning) (region-end))
+    (progn (kill-ring-save (line-beginning-position) (line-beginning-position 2)))))
+
 (defun my-move-line-up ()
   (interactive)
   (transpose-lines 1)
@@ -14,18 +26,6 @@
   (interactive)
   (duplicate-line)
   (next-line 1))
-
-(defun my-cut ()
-  (interactive)
-  (if (use-region-p)
-      (kill-region (region-beginning) (region-end))
-    (kill-whole-line)))
-
-(defun my-copy ()
-  (interactive)
-  (if (use-region-p)
-      (copy-region-as-kill (region-beginning) (region-end))
-    (progn (kill-ring-save (line-beginning-position) (line-beginning-position 2)))))
 
 (defun my-delete-whole-line-no-kill ()
   (interactive)

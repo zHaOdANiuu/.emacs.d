@@ -14,7 +14,9 @@
 
 (use-package shell
   :ensure nil
-  :bind ("C-:" . shell-command)
+  :bind
+  ("C-:" . shell-command)
+  ("C-c C-`" . shell)
   :hook
   (shell-mode . my-shell-mode-hook)
   (comint-output-filter-functions . comint-strip-ctrl-m)
@@ -50,8 +52,15 @@
   (eshell-aliases-file (expand-file-name "eshell/aliases" nn-directory))
   (eshell-login-script (expand-file-name "eshell/login" nn-directory))
   (eshell-rc-script (expand-file-name "eshell/rc" nn-directory))
+  (eshell-history-size 100000)
+  (eshell-hist-ignoredups t)
   :config
-  (make-directory (expand-file-name "eshell/" nn-directory) t)
+  (put 'eshell/ebc 'eshell-no-numeric-conversions t)
+
+  (defalias 'eshell/e #'eshell/emacs)
+  (defalias 'eshell/ec #'eshell/emacs)
+  (defalias 'eshell/more #'eshell/less)
+
   (defun eshell/clear ()
     "Clear the eshell buffer."
     (interactive)
@@ -64,8 +73,6 @@
     (if (null args)
         (bury-buffer)
       (mapc #'find-file (mapcar #'expand-file-name (flatten-tree (reverse args))))))
-  (defalias 'eshell/e #'eshell/emacs)
-  (defalias 'eshell/ec #'eshell/emacs)
 
   (defun eshell/ebc (&rest args)
     "Compile a file (ARGS) in Emacs. Use `compile' to do background make."
@@ -79,7 +86,6 @@
       (throw 'eshell-replace-command
              (let ((l (eshell-stringify-list (flatten-tree args))))
                (eshell-parse-command (car l) (cdr l))))))
-  (put 'eshell/ebc 'eshell-no-numeric-conversions t)
 
   (defun my-eshell-view-file (file)
     "View FILE.  A version of `view-file' which properly rets the eshell prompt."
@@ -107,8 +113,35 @@
                  (file (pop args)))
             (eshell-view-file file)
             (forward-line line))
-        (my-eshell-view-file (pop args)))))
-  (defalias 'eshell/more #'eshell/less))
+        (my-eshell-view-file (pop args)))))  )
+
+(use-package ielm
+  :ensure nil
+  :custom
+  (ielm-history-file-name (expand-file-name "ielm-history.eld" nn-directory))
+  :config
+  ;; Adapted from http://www.modernemacs.com/post/comint-highlighting/ to add
+  ;; syntax highlighting to ielm REPLs.
+  (setq ielm-font-lock-keywords
+        (append
+         '(("\\(^\\*\\*\\*[^*]+\\*\\*\\*\\)\\(.*$\\)"
+            (1 font-lock-comment-face)
+            (2 font-lock-constant-face)))
+         (cl-loop for (matcher . match-highlights)
+                  in (append lisp-el-font-lock-keywords-2
+                             lisp-cl-font-lock-keywords-2)
+                  collect
+                  `((lambda (limit)
+                      (when ,(if (symbolp matcher)
+                                 `(,matcher limit)
+                               `(re-search-forward ,matcher limit t))
+                        ;; Only highlight matches after the prompt
+                        (> (match-beginning 0) (car comint-last-prompt))
+                        ;; Make sure we're not in a comment or string
+                        (let ((state (syntax-ppss)))
+                          (not (or (nth 3 state)
+                                   (nth 4 state))))))
+                    ,@match-highlights)))))
 
 (use-package ghostel
   :commands ghostel

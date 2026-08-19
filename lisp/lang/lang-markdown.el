@@ -26,7 +26,7 @@
   :ensure nil
   :if (and (>= emacs-major-version 31)
            (treesit-language-available-p 'markdown))
-  :mode "\\.md\\'"
+  :mode ("\\.md\\'" "/README\\'")
   :init
   (add-to-list 'treesit-language-source-alist
                '(markdown . ("https://github.com/tree-sitter-grammars/tree-sitter-markdown"

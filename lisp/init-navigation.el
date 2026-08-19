@@ -51,7 +51,8 @@
    ("q" . keyboard-quit))
   :init (require 'citre-config)
   :hook (prog-mode . citre-mode)
-  :custom-face (citre-peek-border-face ((t :inherit font-lock-keyword-face :strike-through t :extend t)))
+  :custom-face
+  (citre-peek-border-face ((t :inherit font-lock-keyword-face :strike-through t :extend t)))
   :custom
   (citre-readtags-program "readtags")
   (citre-ctags-program "ctags")

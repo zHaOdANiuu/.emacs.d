@@ -268,35 +268,70 @@
   (gnus-ignored-newsgroups "^to\\.\\|^[0-9. ]+\\( \\|$\\)\\|^[\"]\"[#'()]")
   (gnus-select-method
    '(nnimap "imap.gmail.com"
-            (nnimap-expunge t)
-            (nnimap-server-port 993)
-            (nnimap-stream ssl)))
+     (nnimap-expunge t)
+     (nnimap-server-port 993)
+     (nnimap-stream ssl)))
   (gnus-secondary-select-methods
-   '((nntp "nntp.lore.kernel.org")
-     (nnimap "imap.qq.com"
-             (nnimap-expunge t)
-             (nnimap-server-port 993)
-             (nnimap-stream ssl)))))
+   '((nnimap "imap.qq.com"
+      (nnimap-expunge t)
+      (nnimap-server-port 993)
+      (nnimap-stream ssl)))))
 
 (use-package gnus-modern
   :ensure nil
   :hook (gnus-mode . gnus-modern-mode))
 
 (use-package telega
-  :hook (telega-before-auth . my-telega-proxy)
+  :hook
+  (telega-before-auth . my-telega-proxy)
+  (telega-chat-modee . telega-completions-setup-capf)
+  (telega-image-mode . image-transform-fit-to-window)
   :custom
   (telega-server-libs-prefix "D:/local")
   (telega-avatar-workaround-gaps-for (when (display-graphic-p) '(return t)))
+  (telega-translate-to-language-by-default "zh")
+  (telega-msg-save-dir "~/Downloads")
+  (telega-chat-input-markups '("markdown2" "org"))
+  (telega-root-keep-cursor 'track)
+  (telega-root-buffer-name "*Telega Root*")
+  (telega-root-fill-column 70)
+  (telega-emoji-use-images nil)
+  (telega-filters-custom nil)
+  (telega-filter-custom-show-folders nil)
+  (telega-symbol-vertical-bar "│")
+  (telega-symbol-mark (propertize " " 'face 'telega-button-highlight))
+  (telega-symbol-button-close (nerd-icons-mdicon "nf-md-close_box_outline"))
+  (telega-symbol-verified (nerd-icons-codicon "nf-cod-verified_filled" :face 'telega-blue))
+  (telega-symbol-saved-messages-tag-end (nerd-icons-faicon "nf-fa-tag"))
+  (telega-symbol-forum (nerd-icons-mdicon "nf-md-format_list_text"))
+  (telega-symbol-reply-quote (nerd-icons-faicon "nf-fa-reply_all"))
+  (telega-symbol-forward (nerd-icons-faicon "nf-fa-mail_forward"))
+  (telega-symbol-checkmark (nerd-icons-mdicon "nf-md-check"))
+  (telega-symbol-heavy-checkmark (nerd-icons-codicon "nf-cod-check_all"))
+  (telega-symbol-summarize-in (nerd-icons-octicon "nf-oct-fold"))
+  (telega-symbol-summarize-out (nerd-icons-octicon "nf-oct-unfold"))
   :config
+  (telega-autoplay-mode 1)
+  (telega-notifications-mode 1)
+  (setq telega-symbols-emojify
+        (cl-reduce
+         (lambda (emojify key)
+           (assq-delete-all key emojify))
+         '(verified vertical-bar
+           checkmark forum heavy-checkmark
+           reply reply-quote horizontal-bar
+           forward button-close summarize-in summarize-out)
+         :initial-value telega-symbols-emojify))
+
   (defun my-telega-proxy ()
     (telega--addProxy
-        '(:server "localhost"
-          :port nn-proxy-port
+        `(:server "localhost"
+          :port ,nn-proxy-port
           :type (:@type "proxyTypeSocks5"))
       :enable-p 'enable))
 
   (when (eq system-type 'windows-nt)
-    (define-advice telega-server--start (:around (fn &rest args) isolate-stderr)
+    (define-advice telega-server--start (:around (fn &rest args) my-telega-server--start)
       (apply fn args)
       (let* ((buf telega-server--buffer)
              (cmd (process-command (get-buffer-process buf))))

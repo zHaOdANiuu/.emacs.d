@@ -118,7 +118,7 @@
    ("s" . org-agenda-schedule)
    ("C-SPC" . org-agenda-show-and-scroll-up))
   :custom
-  (org-agenda-files '("~/.emacs.d/agenda.org"))
+  (org-agenda-files '("~/agenda.org"))
   (org-agenda-window-setup 'current-window)
   (org-agenda-skip-unavailable-files t)
   (org-agenda-span 10)

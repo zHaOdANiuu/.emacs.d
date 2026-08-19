@@ -1,18 +1,5 @@
 ;;; -*- lexical-binding: t -*-
-(require 'package)
-(setq package-install-upgrade-built-in nil
-      package-check-signature nil
-      package-archives
-      '(("melpa-cn" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
-        ("gnu-cn"   . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")))
-(package-initialize)
-
-(require 'use-package)
-(setq use-package-always-ensure t
-      use-package-always-defer t
-      use-package-expand-minimally t
-      use-package-enable-imenu-support t)
-
+(setq custom-file "~/.emacs.d/custom.el")
 (push (expand-file-name "lisp/" user-emacs-directory) load-path)
 (push (expand-file-name "lisp/lang" user-emacs-directory) load-path)
 (dolist (entry (directory-files-and-attributes
@@ -20,9 +7,13 @@
   (when (eq t (cadr entry))
     (push (car entry) load-path)))
 
+(put 'if-let 'byte-obsolete-info nil)
+(put 'when-let 'byte-obsolete-info nil)
+(package-initialize)
 (require 'cl-lib)
 (require 'init-def)
 (require 'init-font)
+(require 'init-display)
 (require 'init-base)
 (require 'init-advanced)
 (require 'init-editor)
@@ -34,7 +25,6 @@
 (require 'init-vc)
 (require 'init-www)
 (require 'init-utils)
-(require 'init-display)
 (require 'init-mode-line)
 (require 'init-terminal)
 (require 'init-keybind)
@@ -42,5 +32,4 @@
 (require 'init-context-menu)
 (require 'init-home)
 (require 'nn-world-theme)
-(setq-default custom-file "~/.emacs.d/custom.el")
 (load custom-file)

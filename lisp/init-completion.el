@@ -154,11 +154,9 @@
   (global-corfu-mode 1)
   (global-corfu-modes '((not erc-mode help-mode gud-mode) t))
   (corfu-auto t)
-  (corfu-auto-delay 0.1)
+  (corfu-auto-delay 0.2)
   (corfu-auto-prefix 2)
-  (corfu-cycle nil)
   (corfu-preselect 'first)
-  (corfu-on-exact-match nil)
   (corfu-quit-at-boundary nil)
   (corfu-quit-no-match t)
   (corfu-preview-current nil)
@@ -173,8 +171,19 @@
 
 (use-package corfu-popupinfo
   :ensure nil
-  :hook (corfu-mode . corfu-popupinfo-mode)
-  :bind (:map corfu-map ("M-p" . corfu-popupinfo-toggle))
-  :custom (corfu-popupinfo-delay '(nil . nil)))
+  :bind
+  (:map corfu-map
+   ("M-p" . my-corfu-popupinfo-toggle)
+   ("M-1" . corfu-popupinfo-scroll-up)
+   ("M-2" . corfu-popupinfo-scroll-down))
+  :custom (corfu-popupinfo-delay '(0 . 0.2))
+  :config
+  (defun my-corfu-popupinfo-toggle ()
+    (interactive)
+    (corfu-popupinfo-mode (not corfu-popupinfo-mode)))
+
+  (define-advice corfu-quit (:after (&rest _) my-corfu-popupinfo-quit)
+    (when corfu-popupinfo-mode
+      (corfu-popupinfo-mode -1))))
 
 (provide 'init-completion)

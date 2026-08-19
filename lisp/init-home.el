@@ -20,16 +20,14 @@
 (defun nn-home-insert-logo ()
   (let ((padding (floor (* (window-width) 0.5))))
     (insert (nn-home-make-padding padding))
-    (insert-image (create-image nn-logo-image-path))
-    (insert "\n")))
+    (insert-image (create-image nn-logo-image-path))))
 
 (defun nn-home-insert-info ()
   (let* ((text (format "%d packages loaded in %s" nn-home-package-load-count nn-home-emacs-init-time))
          (padding (- (floor (window-width) 2)
                      (floor (- (length text) (floor (* (length text) 0.2))) 2))))
     (insert (make-string (max padding 0) ?\s))
-    (insert (propertize text 'face '(:inherit font-lock-type-face :height 0.8)))
-    (insert "\n\n")))
+    (insert (propertize text 'face '(:inherit font-lock-type-face :height 0.8)))))
 
 (defun nn-home-insert-group (group-name items &optional item-formatter)
   (let* ((formatter (or item-formatter (lambda (x) (format " %s" x))))
@@ -48,8 +46,7 @@
                 (if (> (length line) 64) (concat (substring line 0 63) nn-fold-string) line)
                 "\n")
         (put-text-property item-pos (point) 'nn-group-member group-name)
-        (put-text-property item-pos (point) 'nn-item-data item))))
-  (insert "\n"))
+        (put-text-property item-pos (point) 'nn-item-data item)))))
 
 (defun nn-home-return-action ()
   (interactive)
@@ -61,17 +58,17 @@
 (defun nn-home-toggle-group ()
   (interactive)
   (let ((group-name (get-text-property (point) 'nn-group-name)))
-    (when group-name
-      (if (get-text-property (point) 'nn-group-open)
-          (nn-home-collapse-group group-name)
-        (nn-home-expand-group group-name)))))
+    (if (get-text-property (point) 'nn-group-open)
+        (nn-home-collapse-group group-name)
+      (nn-home-expand-group group-name))))
 
 (defun nn-home-group-range (group-name)
   (save-excursion
     (let ((start (progn (forward-line 1) (point)))
           (end (point)))
       (while (and (not (eobp))
-                  (equal (get-text-property (point) 'nn-group-member) group-name))
+                  (equal
+                   (get-text-property (point) 'nn-group-member) group-name))
         (forward-line 1))
       (setq end (point))
       (cons start end))))
@@ -119,34 +116,32 @@
 (defun nn-home-create ()
   (let ((buf (get-buffer-create nn-home-buffer)))
     (with-current-buffer buf
-      (let ((inhibit-read-only t))
-        (erase-buffer)
-        (buffer-disable-undo)
-        (use-local-map nn-home-keymap)
-        (read-only-mode 1)
-        (display-line-numbers-mode -1)
-        (setq buffer-offer-save nil)
-        (setq-local header-line-format nil
-                    mode-line-format nil
-                    mouse-1-click-follows-link nil
-                    mouse-highlight nil
-                    vertical-scroll-bar nil)
-        (add-hook 'kill-buffer-query-functions (lambda () nil) nil t)))
+      (buffer-disable-undo)
+      (use-local-map nn-home-keymap)
+      (read-only-mode 1)
+      (display-line-numbers-mode -1)
+      (setq-local header-line-format nil
+                  mode-line-format nil
+                  mouse-1-click-follows-link nil
+                  mouse-highlight nil
+                  vertical-scroll-bar nil)
+      (add-hook 'kill-buffer-query-functions (lambda () nil) nil t))
     buf))
 
 (defun nn-home-render ()
   (with-current-buffer nn-home-buffer
     (let ((inhibit-read-only t))
+      (erase-buffer)
       (insert "\n")
-
       (nn-home-insert-logo)
+      (insert "\n")
       (nn-home-insert-info)
-
+      (insert "\n\n")
       (nn-home-insert-group
        "Config"
        '("~/.emacs.d/"
          "~/.emacs.d/lisp/"))
-
+      (insert "\n")
       (nn-home-insert-group
        "Recent Files"
        (seq-take recentf-list recentf-max-saved-items)))))
@@ -159,12 +154,10 @@
 (defun nn-home-refresh ()
   (interactive)
   (when (eq (current-buffer) (get-buffer nn-home-buffer))
-    (let ((inhibit-read-only t))
-      (erase-buffer)
-      (nn-home-render)
-      (goto-char (point-min))
-      (nn-home-next-line)
-      (nn-home-next-line))))
+    (nn-home-render)
+    (goto-char (point-min))
+    (nn-home-next-line)
+    (nn-home-next-line)))
 
 (nn-home-create)
 (nn-home-render)

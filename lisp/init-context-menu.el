@@ -70,8 +70,9 @@
 
 (defconst nn-leisure-menu-items
   '("NN Leisure Menu"
-    ["Read Rss"  my-newsticker-show-news]
+    ["telegram"    telega]
     ["Read Mail" gnus]
+    ["Read Rss"  my-newsticker-show-news]
     ["Send Mail" compose-mail]))
 
 (with-eval-after-load 'speedbar

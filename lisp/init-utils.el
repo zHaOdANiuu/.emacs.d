@@ -54,40 +54,31 @@
 
 (use-package webjump
   :ensure nil
-  :bind ("C-c /" . webjump)
+  :bind ("C-c /" . my-webjump-eww)
   :custom
   (webjump-sites
-   '(("Emacs Home Page" .  "www.gnu.org/software/emacs/emacs.html")
-     ("Xah Emacs Site" . "ergoemacs.org/index.html")
-     ("(or emacs irrelevant)" . "oremacs.com")
-     ("Mastering Emacs" . "https://www.masteringemacs.org/")
-     ("DuckDuckGo" .
-      [simple-query
-       "duckduckgo.com"
-       "duckduckgo.com/?q=" ""])
-     ("Google" .
-      [simple-query
-       "www.google.com"
-       "www.google.com/search?q=" ""])
-     ("Bing" .
-      [simple-query
-       "www.bing.com"
-       "www.bing.com/search?q=" ""])
-     ("Baidu" .
-      [simple-query
-       "www.baidu.com"
-       "www.baidu.com/s?wd=" ""])
-     ("Wikipedia" .
-      [simple-query
-       "wikipedia.org"
-       "wikipedia.org/wiki/" ""]))))
-
-(use-package nn-license-template
-  :ensure nil
-  :defer nil
-  :bind
-  ("C-c l f" . nn-license-template-file)
-  ("C-c l h" . nn-license-template-header))
+   '(("DuckDuckGo"     . [simple-query "https://www.duckduckgo.com"
+                                       "https://www.duckduckgo.com/?q=" ""])
+     ("DuckDuckGoNoAI" . [simple-query "https://noai.duckduckgo.com"
+                                       "https://noai.duckduckgo.com/?q=" ""])
+     ("DuckDuckAI"     . [simple-query "https://duck.ai" "https://duck.ai/?q=" ""])
+     ("DuckDuckGoImg"  . [simple-query "https://www.duckduckgo.com"
+                                       "https://www.duckduckgo.com/?iar=images&q=" ""])
+     ("Bing"           . [simple-query "www.bing.com" "www.bing.com/search?q=" ""])
+     ("Google"         . [simple-query "https://www.google.com"
+                                       "https://www.google.com/search?q=" ""])
+     ("YouTube"        . [simple-query "https://www.youtube.com/feed/subscriptions"
+                                       "https://www.youtube.com/results?search_query=" ""])
+     ("Claude"         . [simple-query "https://claude.ai/new" "https://claude.ai/new?q=" ""])
+     ("ChatGPT"        . [simple-query "https://chatgpt.com" "https://chatgpt.com/?q=" ""])
+     ("Wikipedia"      . [simple-query "wikipedia.org" "wikipedia.org/wiki/" ""])))
+  :config
+  (defun my-webjump-eww (&optional arg)
+    "Run `webjump' optionally forcing the internal browser (EWW)."
+    (interactive "P")
+    (require 'eww)
+    (let ((webjump-use-internal-browser arg))
+      (call-interactively #'webjump))))
 
 (use-package grep
   :ensure nil
@@ -198,5 +189,12 @@
   (("C-c m" . simple-mpv-audio-browse)
    :map dired-mode-map
    ("C-c p" . simple-mpv-play-file)))
+
+(use-package nn-license-template
+  :ensure nil
+  :defer nil
+  :bind
+  ("C-c l f" . nn-license-template-file)
+  ("C-c l h" . nn-license-template-header))
 
 (provide 'init-utils)
