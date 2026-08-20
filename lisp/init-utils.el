@@ -154,8 +154,6 @@
     :render (gt-buffer-render)))
   :custom-face (gt-overlay-source-face ((t nil)))
   :config
-  (defvar my-gt--active nil)
-
   (defun my-gt-translate (&optional mode)
     (let ((gt-polyglot-p t))
       (gt-start
@@ -173,10 +171,8 @@
       (delete-overlay ov)))
 
   (defun my-gt-auto-translate (&optional mode)
-    (setq my-gt--active (not my-gt--active))
-    (if my-gt--active
-        (my-gt-translate mode)
-      (my-gt-clear)))
+    "Translate using MODE; repeated calls keep existing translations."
+    (my-gt-translate mode))
 
   (defun my-translate-word   () (interactive) (my-gt-auto-translate 'word))
   (defun my-translate-region () (interactive) (my-gt-auto-translate 'region))

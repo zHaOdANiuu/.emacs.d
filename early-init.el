@@ -41,7 +41,8 @@
           (lambda ()
             (setq file-name-handler-alist my--file-name-handler-alist
                   gc-cons-threshold (* 16 1024 1024)  ; 16MB
-                  gc-cons-percentage 0.1)))
+                  gc-cons-percentage 0.1
+	                package-quickstart-file (expand-file-name "package-quickstart.el" package-user-dir))))
 
 (add-hook 'window-setup-hook
           (lambda ()
@@ -79,6 +80,11 @@
   :config
   (setenv "TERM" "xterm-256color")
   (when (eq system-type 'windows-nt)
+    (setenv "GIT_TERMINAL_PROMPT" "0")
+    (setenv "GIT_ASK_YESNO" "false")
+    (setenv "GIT_PAGER" "cat")
+    (setenv "GIT_ASKPASS" "git-gui--askpass")
+
     (unless (getenv-internal "HOME")
       (when-let* ((home (getenv "USERPROFILE")))
         (setenv "HOME" home)

@@ -9,7 +9,6 @@
 
 (use-package shr
   :ensure nil
-  :hook (shr-mode . visual-line-mode)
   :custom
   (shr-use-fonts t)
   (shr-width 80)
@@ -33,8 +32,7 @@
   :ensure nil
   :hook
   ((prog-mode text-mode conf-mode) . display-line-numbers-mode)
-  (org-mode . (lambda () (display-line-numbers-mode -1)))
-  (markdown-ts-mode . (lambda () (display-line-numbers-mode -1)))
+  ((org-mode markdown-mode markdown-ts-mode) . (lambda () (display-line-numbers-mode -1)))
   :custom
   (display-line-numbers-grow-only t)
   (display-line-numbers-width 3)
@@ -173,6 +171,10 @@ from `readable-foreground-color'."
                       'keymap my-colorful--color-picker-map
                       'pointer 'hand))
         (overlay-put ov 'face nil)))))
+
+(use-package olivetti
+  :ensure nil
+  :hook ((eww-mode org-mode markdown-mode markdown-ts-mode) . olivetti-mode))
 
 (use-package material-icon
   :vc (:url "https://github.com/zHaOdANiuu/material-icon.el" :rev :newest)

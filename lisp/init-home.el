@@ -157,6 +157,7 @@
     (nn-home-render)
     (goto-char (point-min))
     (nn-home-next-line)
+    (nn-home-next-line)
     (nn-home-next-line)))
 
 (require 'recentf)
@@ -165,6 +166,7 @@
 (nn-home-render)
 (nn-home-show)
 (goto-char (point-min))
+(nn-home-next-line)
 (nn-home-next-line)
 (nn-home-next-line)
 

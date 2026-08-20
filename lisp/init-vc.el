@@ -1,11 +1,4 @@
 ;;; -*- lexical-binding: t -*-
-(when (eq system-type 'windows-nt)
-  (setenv "GIT_TERMINAL_PROMPT" "0")
-  (setenv "GIT_ASK_YESNO" "false")
-  (setenv "GIT_PAGER" "cat")
-  (setenv "GIT_OPTIONAL_LOCKS" "0")
-  (setenv "GIT_ASKPASS" "git-gui--askpass"))
-
 (use-package vc
   :ensure nil
   :custom
@@ -75,9 +68,7 @@
   :custom
   (transient-history-file (expand-file-name "transient/history.el" nn-directory))
   (transient-levels-file (expand-file-name "transient/levels.el" nn-directory))
-  (transient-values-file (expand-file-name "transient/values.el" nn-directory))
-  :config
-  (make-directory (expand-file-name "transient/" nn-directory) t))
+  (transient-values-file (expand-file-name "transient/values.el" nn-directory)))
 
 (use-package magit
   :hook
@@ -105,7 +96,6 @@
      magit-insert-untracked-files
      my-magit-insert-unstaged-files
      my-magit-insert-staged-files
-     magit-insert-stashes
      magit-insert-recent-commits))
   :config
   (defconst my-magit--status-alist
@@ -116,36 +106,34 @@
       ("C" "copied"   . (:foreground "#94e2d5"))
       ("U" "unmerged" . (:foreground "#cba6f7"))))
 
-  (defun my-magit--wash-diff (line)
-    (let* ((parts (split-string line "\t" t))
-           (code (substring (car parts) 0 1))
-           (file (cadr parts))
-           (info (assoc code my-magit--status-alist))
-           (status (if info (cadr info) code))
-           (face (if info (cddr info) 'magit-diff-file-heading)))
-      (when (and code file)
+  (defun my-magit--insert (lines)
+    "Insert file status LINES as Magit file sections."
+    (dolist (line lines)
+      (let* ((parts (split-string line "\t"))
+             (code (car parts))
+             (file (car (last parts)))
+             (info (and code (assoc (substring code 0 1) my-magit--status-alist))))
         (magit-insert-section (file file)
-          (insert (propertize
-                   (concat (format "%-10s" status) file "\n")
-                   'font-lock-face face))))))
+          (insert
+           (propertize
+            (format "%-10s%s\n" (if info (cadr info) code) file)
+            'font-lock-face (if info (cddr info) 'magit-diff-file-heading))))))
+    (insert "\n"))
 
   (defun my-magit-insert-unstaged-files ()
-    (let ((files (magit-git-lines "diff" "--name-status")))
-      (when files
-        (magit-insert-section (unstaged 'unstaged)
-          (magit-insert-heading "Unstaged changes:")
-          (dolist (line files)
-            (unless (string-empty-p line)
-              (my-magit--wash-diff line)))))))
+    "Insert compact status entries for unstaged files."
+    (when-let* ((lines (magit-git-lines "diff" "--name-status")))
+      (magit-insert-section (unstaged)
+        (magit-insert-heading t "Unstaged changes")
+        (my-magit--insert lines))))
 
   (defun my-magit-insert-staged-files ()
-    (let ((files (magit-git-lines "diff" "--cached" "--name-status")))
-      (when files
-        (magit-insert-section (staged 'staged)
-          (magit-insert-heading "Staged changes:")
-          (dolist (line files)
-            (unless (string-empty-p line)
-              (my-magit--wash-diff line)))))))
+    "Insert compact status entries for staged files."
+    (unless (magit-bare-repo-p)
+      (when-let* ((lines (magit-git-lines "diff" "--cached" "--name-status")))
+        (magit-insert-section (staged)
+          (magit-insert-heading t "Staged changes")
+          (my-magit--insert lines)))))
 
   (defun my-magit-reveal-point-if-invisible-h ()
     "Reveal the point if in an invisible region."

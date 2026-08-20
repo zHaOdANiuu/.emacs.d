@@ -60,9 +60,9 @@
     ["Update Tags File" citre-update-this-tags-file]
     ["On Explorer Open" nn-explorer-open]
     ("C/C++ Template"
-     ["New header File"        kill-buffer]
-     ["New C++ Module File"    kill-buffer]
-     ["New C/C++ Project"      kill-buffer])
+     ["New header File"     kill-buffer]
+     ["New C++ Module File" kill-buffer]
+     ["New C/C++ Project"   kill-buffer])
     ("Web Template"
      ["New HTML Project"  kill-buffer]
      ["New Vue Project"   kill-buffer]
@@ -70,10 +70,14 @@
 
 (defconst nn-leisure-menu-items
   '("NN Leisure Menu"
-    ["telegram"    telega]
+    ["telegram"  telega]
     ["Read Mail" gnus]
     ["Read Rss"  my-newsticker-show-news]
-    ["Send Mail" compose-mail]))
+    ["Send Mail" compose-mail]
+    "--"
+    ["Translate Word"    my-translate-word]
+    ["Translate Region"  my-translate-region]
+    ["Translate Bufefer" my-translate-buffer]))
 
 (with-eval-after-load 'speedbar
   (keymap-set speedbar-mode-map "<down-mouse-3>" nil))

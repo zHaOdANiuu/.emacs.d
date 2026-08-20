@@ -1,7 +1,9 @@
 ;;; -*- lexical-binding: t -*-
 (when (< emacs-major-version 31)
   (use-package markdown-mode
-    :mode ("\\.md\\'" . gfm-mode)
+    :mode
+    ("\\.md\\'" . gfm-mode)
+    ("/README\\'" . gfm-mode)
     :custom
     (markdown-list-indent-width 2)
     (markdown-italic-underscore t)
