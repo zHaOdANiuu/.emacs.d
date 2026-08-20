@@ -144,7 +144,7 @@
       (insert "\n")
       (nn-home-insert-group
        "Recent Files"
-       (seq-take recentf-list recentf-max-saved-items)))))
+       recentf-list))))
 
 (defun nn-home-show ()
   (interactive)
@@ -159,6 +159,8 @@
     (nn-home-next-line)
     (nn-home-next-line)))
 
+(require 'recentf)
+(recentf-load-list)
 (nn-home-create)
 (nn-home-render)
 (nn-home-show)

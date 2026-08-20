@@ -1,8 +1,52 @@
 ;;; -*- lexical-binding: t -*-
 (use-package elisp-mode
   :ensure nil
-  :custom (emacs-lisp-indent-offset 2)
+  :custom
+  (emacs-lisp-indent-offset 2)
+  (lisp-indent-function #'my-lisp-indent-function)
   :config
+  (defun my-lisp-indent-function (indent-point state)
+    "See https://emacs.stackexchange.com/questions/10230/how-to-indent-keywords-aligned"
+    (let ((normal-indent (current-column))
+          (orig-point (point)))
+      (goto-char (1+ (elt state 1)))
+      (parse-partial-sexp (point) calculate-lisp-indent-last-sexp 0 t)
+      (cond
+       ((and (elt state 2)
+             (or (not (looking-at "\\sw\\|\\s_"))
+                 (looking-at ":")))
+        (if (not (> (save-excursion (forward-line 1) (point))
+                    calculate-lisp-indent-last-sexp))
+            (progn (goto-char calculate-lisp-indent-last-sexp)
+                   (beginning-of-line)
+                   (parse-partial-sexp (point) calculate-lisp-indent-last-sexp 0 t)))
+        (backward-prefix-chars)
+        (current-column))
+       ((and (save-excursion
+               (goto-char indent-point)
+               (skip-syntax-forward " ")
+               (not (looking-at ":")))
+             (save-excursion
+               (goto-char orig-point)
+               (looking-at ":")))
+        (save-excursion
+          (goto-char (+ 2 (elt state 1)))
+          (current-column)))
+       (t
+        (let ((function-name (buffer-substring (point) (progn (forward-sexp 1) (point))))
+              method)
+          (setq method (or (function-get (intern-soft function-name) 'lisp-indent-function)
+                           (get (intern-soft function-name) 'lisp-indent-hook)))
+          (cond ((or (eq method 'defun)
+                     (and (null method)
+                          (length> function-name 3)
+                          (string-match "\\`def" function-name)))
+                 (lisp-indent-defform state indent-point))
+                ((integerp method)
+                 (lisp-indent-specform method state indent-point normal-indent))
+                (method
+                 (funcall method indent-point state))))))))
+
   (define-advice calculate-lisp-indent
       (:override (&optional parse-start) my-emacs-lisp--calculate-lisp-indent-a)
     "Add better indentation for quoted and backquoted lists.

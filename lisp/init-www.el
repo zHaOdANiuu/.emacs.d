@@ -234,28 +234,23 @@
   :ensure nil
   :hook (gnus-group-mode . gnus-topic-mode)
   :custom
-  (gnus-mode-line-logo nil)
   (gnus-init-file (expand-file-name "gnus/init.el" nn-directory))
   (gnus-startup-file (expand-file-name "gnus/newsrc" nn-directory))
   (gnus-dribble-directory (expand-file-name "gnus/dribble/" nn-directory))
-  (gnus-activate-level 3)
+  (gnus-activate-level 1)
+  (gnus-mode-line-logo nil)
   (gnus-message-archive-group nil)
   (gnus-check-new-newsgroups nil)
   (gnus-check-bogus-newsgroups nil)
   (gnus-show-threads nil)
-  (gnus-use-cross-reference nil)
   (gnus-nov-is-evil nil)
+  (gnus-use-cross-reference nil)
+  (gnus-user-date-format-alist '((t . "%d-%m-%Y %H:%M")))
   (gnus-group-line-format "%1M%5y : %(%-50,50G%)\12")
   (gnus-logo-colors '("#ff5591" "#c0c0c0"))
   (gnus-permanently-visible-groups ".*")
   (gnus-summary-insert-entire-threads t)
-  (gnus-thread-sort-functions
-   '(gnus-thread-sort-by-most-recent-number
-     gnus-thread-sort-by-subject
-     (not gnus-thread-sort-by-total-score)
-     gnus-thread-sort-by-most-recent-date))
   (gnus-summary-line-format "%U %R %z : %[%d%] %4{ %-34,34n%} %3{ %}%(%1{%B%}%s%)\12")
-  (gnus-user-date-format-alist '((t . "%d-%m-%Y %H:%M")))
   (gnus-summary-thread-gathering-function 'gnus-gather-threads-by-references)
   (gnus-sum--tree-indent " ")
   (gnus-sum-thread-tree-indent " ")
@@ -266,16 +261,22 @@
   (gnus-sum-thread-tree-single-leaf "╰► ")
   (gnus-sum-thread-tree-vertical "│")
   (gnus-ignored-newsgroups "^to\\.\\|^[0-9. ]+\\( \\|$\\)\\|^[\"]\"[#'()]")
-  (gnus-select-method
-   '(nnimap "imap.gmail.com"
-     (nnimap-expunge t)
-     (nnimap-server-port 993)
-     (nnimap-stream ssl)))
-  (gnus-secondary-select-methods
-   '((nnimap "imap.qq.com"
-      (nnimap-expunge t)
-      (nnimap-server-port 993)
-      (nnimap-stream ssl)))))
+  (gnus-thread-sort-functions
+   '(gnus-thread-sort-by-most-recent-number
+     gnus-thread-sort-by-subject
+     (not gnus-thread-sort-by-total-score)
+     gnus-thread-sort-by-most-recent-date))
+  :config
+  (setopt gnus-select-method
+          '(nnimap "imap.gmail.com"
+            (nnimap-expunge t)
+            (nnimap-server-port 993)
+            (nnimap-stream ssl))
+          gnus-secondary-select-methods
+          '((nnimap "imap.qq.com"
+             (nnimap-expunge t)
+             (nnimap-server-port 993)
+             (nnimap-stream ssl)))))
 
 (use-package gnus-modern
   :ensure nil
@@ -325,10 +326,10 @@
 
   (defun my-telega-proxy ()
     (telega--addProxy
-        `(:server "localhost"
-          :port ,nn-proxy-port
-          :type (:@type "proxyTypeSocks5"))
-      :enable-p 'enable))
+     `(:server "localhost"
+       :port ,nn-proxy-port
+       :type (:@type "proxyTypeSocks5"))
+     :enable-p 'enable))
 
   (when (eq system-type 'windows-nt)
     (define-advice telega-server--start (:around (fn &rest args) my-telega-server--start)

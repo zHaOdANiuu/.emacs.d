@@ -62,7 +62,7 @@
     ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*[;=,({)]" 1 font-lock-type-face)
     ;; c++ func () -> return type
     (")\\s-*->\\s-*\\([^{\n]+\\)\\s-*{" 1 font-lock-type-face)
-    ("\\b\\([a-zA-Z_][a-zA-Z0-9_]*\\)[ \t]*(" 1 font-lock-function-name-face)
+    ("\\b\\([a-zA-Z_][a-zA-Z0-9_]*\\)[ \t]*(" 1 font-lock-function-name-face t)
     ;; function pointer
     ("(\\*\\([A-Za-z_][A-Za-z0-9_]*\\)\\s-*)\\s-*(" 1 font-lock-function-name-face)
     (")[ \t]*(" ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)[*& \t]*[,)]" nil nil (1 font-lock-type-face)))))

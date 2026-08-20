@@ -6,20 +6,29 @@
 (defvar my--file-name-handler-alist file-name-handler-alist)
 (setq file-name-handler-alist nil
       native-comp-jit-compilation nil
-      read-process-output-max (* 64 1024)
       gc-cons-percentage 1.0
       gc-cons-threshold most-positive-fixnum
       package-enable-at-startup nil
-      auto-mode-case-fold nil
       load-suffixes `(".elc" ".el")
       load-prefer-newer t
+      read-process-output-max (* 64 1024)
+      process-adaptive-read-buffering nil
+      command-line-x-option-alist nil
+      select-active-regions 'only
+      redisplay-skip-fontification-on-input t
+      fast-but-imprecise-scrolling t
+      ring-bell-function #'ignore
+      idle-update-delay 1.0
+      inhibit-compacting-font-caches t
       inhibit-startup-screen t
+      inhibit-compacting-font-caches t
       inhibit-startup-echo-area-message user-login-name
       inhibit-redisplay t
       inhibit-message t
+      frame-resize-pixelwise t
       frame-inhibit-implied-resize t
-      menu-bar-mode -1
       tool-bar-mode -1
+      menu-bar-mode -1
       scroll-bar-mode -1
       default-frame-alist
       '((menu-bar-lines . 0)
@@ -51,7 +60,7 @@
   :ensure nil
   :custom
   (package-quickstart t)
-  (package-enable-at-startup nil)
+  (package-enable-at-startup t)
   (package-install-upgrade-built-in nil)
   (package-check-signature nil)
   (package-archives

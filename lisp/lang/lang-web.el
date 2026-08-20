@@ -19,11 +19,11 @@
    ("C-c t m" . web-mode-tag-match))
   :custom
   (web-mode-markup-indent-offset 2)
-  (web-mode-css-indent-offset 2)
   (web-mode-code-indent-offset 2)
+  (web-mode-css-indent-offset 2)
+  (web-mode-enable-css-colorization nil)
   (web-mode-enable-auto-closing t)
   (web-mode-enable-current-element-highlight t)
-  (web-mode-enable-css-colorization t)
   :config (setf (alist-get "javascript" web-mode-comment-formats nil nil #'equal) "//"))
 
 (use-package emmet-mode

@@ -18,7 +18,6 @@
   (undo-outer-limit (* 13 24000000))
   (visible-bell nil)
   (visible-cursor nil)
-  (ring-bell-function #'ignore)
   (redisplay-skip-fontification-on-input t)
   (read-extended-command-predicate #'command-completion-default-include-p)
   (completion-show-help nil)
@@ -27,31 +26,22 @@
 
 (use-package repeat
   :ensure nil
-  :init (repeat-mode 1)
+  :hook (nn-first-file . repeat-mode)
   :custom (repeat-echo-mode-line t))
-
-(use-package autorevert
-  :ensure nil
-  :custom
-  (global-auto-revert-mode 1)
-  (global-auto-revert-non-file-buffers t)
-  (auto-revert-remote-files nil)
-  (auto-revert-verbose t)
-  (auto-revert-avoid-polling t))
 
 (use-package files
   :ensure nil
   :custom
-  (make-backup-files t)
+  (make-backup-files nil)
   (backup-directory-alist `(("." . ,(expand-file-name "backup" nn-directory))))
-  (auto-save-list-file-prefix (expand-file-name "auto-save-list/.saves-" nn-directory))
+  (auto-save-list-file-prefix nil)
   (auto-save-file-name-transforms
    `(("\\`/[^/]*:\\([^/]*/\\)*\\([^/]*\\)\\'"
       ,(expand-file-name "autosave/tramp-\\2-" nn-directory) sha1)
      ("\\`/\\([^/]+/\\)*\\([^/]+\\)\\'"
       ,(expand-file-name "autosave/\\2-" nn-directory) sha1)))
-  (auto-mode-case-fold nil)
   (auto-save-default nil)
+  (auto-mode-case-fold nil)
   (delete-old-versions t)
   (delete-by-moving-to-trash t)
   (create-lockfiles nil)
@@ -114,10 +104,13 @@
 
 (use-package recentf
   :ensure nil
-  :init (recentf-mode 1)
-  :hook (dired-mode-hook . my-recentf-add-dired-directory-h)
+  :commands recentf-open-files
+  :hook
+  (dired-mode . my-recentf-add-dired-directory-h)
+  (nn-first-file . recentf-mode)
   :custom
   (recentf-save-file (expand-file-name "recentf.eld" nn-directory))
+  (revert-without-query '("."))
   (recentf-max-saved-items 5)
   (recentf-auto-cleanup t)
   (recentf-auto-save-timer nil)
@@ -130,33 +123,108 @@
   :config
   (add-to-list 'recentf-keep '(derived-mode-p . dired-mode))
   (add-to-list 'recentf-filename-handlers #'substring-no-properties)
+
   (defun my-recentf-add-dired-directory-h ()
     "Add dired directories to recentf file list."
-    (recentf-add-file default-directory)))
+    (recentf-add-file default-directory))
+
+  (defun my-recentf-touch-buffer-h ()
+    "Bump file in recent file list when it is switched or written to."
+    (when buffer-file-name
+      (recentf-add-file buffer-file-name))
+    nil))
+
+(use-package autorevert
+  :ensure nil
+  :commands nn-auto-revert-mode
+  :hook (nn-first-file . nn-auto-revert-mode)
+  :custom
+  (auto-revert-verbose t)
+  (auto-revert-use-notify nil)
+  (auto-revert-avoid-polling t)
+  (auto-revert-stop-on-user-input nil)
+  :config
+  (defun nn-auto-revert-buffer-h ()
+    "Auto revert current buffer, if necessary."
+    (unless (or auto-revert-mode
+                (active-minibuffer-window)
+                (and buffer-file-name
+                     auto-revert-remote-files
+                     (file-remote-p buffer-file-name nil t)))
+      (dlet ((auto-revert-mode t))
+        (auto-revert-handler))))
+
+  (defun nn-auto-revert-buffers-h ()
+    "Auto revert stale buffers in visible windows, if necessary."
+    (dolist (buf (nn-visible-buffers))
+      (with-current-buffer buf
+        (nn-auto-revert-buffer-h))))
+
+  (define-minor-mode nn-auto-revert-mode
+    "A more performant alternative to `global-auto-revert-mode'."
+    :global t
+    :group 'nn
+    (when global-auto-revert-mode
+      (setq nn-auto-revert-mode nil))
+    (let ((fn (if nn-auto-revert-mode #'add-hook #'remove-hook)))
+      (funcall fn 'nn-switch-buffer-hook #'nn-auto-revert-buffer-h)
+      (funcall fn 'nn-switch-window-hook #'nn-auto-revert-buffer-h)
+      (funcall fn 'nn-switch-frame-hook #'nn-auto-revert-buffers-h)
+      (funcall fn 'after-save-hook #'nn-auto-revert-buffers-h))))
+
+(use-package comint
+  :ensure nil
+  :commands comint-truncate-buffer
+  :custom
+  (comint-buffer-maximum-size 2048)
+  (comint-prompt-read-only t))
 
 (use-package savehist
   :ensure nil
   :hook
+  (nn-first-input . savehist-mode)
   (savehist-save . my-savehist-unpropertize-variables-h)
   (savehist-save . my-savehist-remove-unprintable-registers-h)
-  :init (savehist-mode 1)
   :custom
+  (save-place-file (expand-file-name "saveplace.el" nn-directory))
   (savehist-file (expand-file-name "savehist.el" nn-directory))
   (savehist-autosave-interval nil)
   (savehist-save-minibuffer-history t)
   (savehist-additional-variables
    '(kill-ring register-alist mark-ring global-mark-ring
-               search-ring regexp-search-ring))
+     search-ring regexp-search-ring))
   :config
   (defun my-savehist-unpropertize-variables-h ()
-    (setq kill-ring (mapcar #'substring-no-properties
-                            (cl-remove-if-not #'stringp kill-ring))
-          register-alist (cl-loop for (reg . item) in register-alist
-                                  if (stringp item)
-                                  collect (cons reg (substring-no-properties item))
-                                  else collect (cons reg item))))
+    (setq kill-ring
+          (mapcar #'substring-no-properties
+                  (cl-remove-if-not #'stringp kill-ring))
+          register-alist
+          (cl-loop for (reg . item) in register-alist
+                   if (stringp item)
+                   collect (cons reg (substring-no-properties item))
+                   else collect (cons reg item))))
+
   (defun my-savehist-remove-unprintable-registers-h ()
-    (setq register-alist (cl-remove-if-not #'savehist-printable register-alist))))
+    (setq-local register-alist (cl-remove-if-not #'savehist-printable register-alist)))
+
+  (define-advice save-place-find-file-hook (:after-while (&rest _) my-recenter)
+    "Recenter on cursor when loading a saved place."
+    (if buffer-file-name (ignore-errors (recenter))))
+
+  (define-advice save-place-to-alist (:around (fn &rest args) my-inhibit-long-files)
+    (unless (bound-and-true-p so-long-minor-mode)
+      (apply fn args)))
+
+  (define-advice save-place-find-file-hook (:before-while (&rest _) my-point-at-bol)
+    "If something else has moved point, don't try to move it again."
+    (bobp))
+
+  (define-advice save-place-alist-to-file (:around (fn &rest args) my-no-pp)
+    "`save-place-alist-to-file' uses `pp' to prettify the contents of its cache.
+`pp' can be expensive for longer lists, and there's no reason to prettify cache
+files, so this replace calls to `pp' with the much faster `prin1'."
+    (cl-letf (((symbol-function 'pp) #'prin1))
+      (apply fn args))))
 
 (use-package project
   :ensure nil
@@ -185,8 +253,7 @@
   (scroll-margin 0)
   (scroll-step 0)
   (scroll-conservatively 101)
-  (scroll-preserve-screen-position t)
-  (fast-but-imprecise-scrolling t))
+  (scroll-preserve-screen-position t))
 
 (use-package frame
   :ensure nil

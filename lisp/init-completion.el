@@ -19,18 +19,18 @@
   :bind
   (("C-x C-r" . my-ido-recentf-open)
    (:map ido-common-completion-map
-    ("C-w" . ido-delete-backward-word-updir)
-    ("C-n" . ido-next-match)
-    ("C-p" . ido-prev-match)
-    ("<down>" . ido-next-match)
-    ("<up>" . ido-prev-match))
+         ("C-w" . ido-delete-backward-word-updir)
+         ("C-n" . ido-next-match)
+         ("C-p" . ido-prev-match)
+         ("<down>" . ido-next-match)
+         ("<up>" . ido-prev-match))
    (:map ido-file-completion-map
-    ("C-w" . ido-delete-backward-word-updir))
+         ("C-w" . ido-delete-backward-word-updir))
    (:map ido-file-dir-completion-map
-    ("C-n" . ido-next-match)
-    ("C-p" . ido-prev-match)
-    ("<down>" . ido-next-match)
-    ("<up>" . ido-prev-match)))
+         ("C-n" . ido-next-match)
+         ("C-p" . ido-prev-match)
+         ("<down>" . ido-next-match)
+         ("<up>" . ido-prev-match)))
   :init (ido-mode 1)
   :custom
   (ido-save-directory-list-file (expand-file-name "ido-save-directory-list.el" nn-directory))
@@ -68,11 +68,11 @@
            (eq nn-completion-style 'completion-preview))
   :bind
   (:map completion-preview-active-mode-map
-   ("C-n" . completion-preview-next-candidate)
-   ("C-p" . completion-preview-prev-candidate)
-   ("C-l" . (lambda () (interactive)
-              (completion-preview-hide)
-              (completion-preview-next-candidate))))
+        ("C-n" . completion-preview-next-candidate)
+        ("C-p" . completion-preview-prev-candidate)
+        ("C-l" . (lambda () (interactive)
+                   (completion-preview-hide)
+                   (completion-preview-next-candidate))))
   :custom
   (completion-preview-ignore-case t)
   (completion-preview-minimum-symbol-length nil)
@@ -142,20 +142,23 @@
 
 (use-package corfu
   :if (eq nn-completion-style 'corfu)
-  :commands (corfu-quit)
   :bind
-  (:map corfu-map
+  (:map
+   corfu-map
    ([tab] . corfu-complete)
    ("<return>" . corfu-complete)
    ([backtab] . corfu-previous)
    ("<escape>" . corfu-quit)
    ("S-SPC" . corfu-insert-separator))
+  :hook (nn-first-input . global-corfu-mode)
   :custom
-  (global-corfu-mode 1)
-  (global-corfu-modes '((not erc-mode help-mode gud-mode) t))
   (corfu-auto t)
   (corfu-auto-delay 0.2)
   (corfu-auto-prefix 2)
+  (corfu-auto-commands
+   '("self-insert-command\\'"
+     c-electric-colon c-electric-lt-gt
+     c-electric-slash c-scope-operator))
   (corfu-preselect 'first)
   (corfu-quit-at-boundary nil)
   (corfu-quit-no-match t)
@@ -164,15 +167,13 @@
   (corfu-max-width 120)
   (corfu-left-margin-width 0)
   (corfu-right-margin-width 0)
-  (corfu-auto-commands
-   '("self-insert-command\\'"
-     c-electric-colon c-electric-lt-gt
-     c-electric-slash c-scope-operator)))
+  (global-corfu-modes '((not erc-mode help-mode gud-mode) t)))
 
 (use-package corfu-popupinfo
   :ensure nil
   :bind
-  (:map corfu-map
+  (:map
+   corfu-map
    ("M-p" . my-corfu-popupinfo-toggle)
    ("M-1" . corfu-popupinfo-scroll-up)
    ("M-2" . corfu-popupinfo-scroll-down))

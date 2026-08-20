@@ -47,8 +47,9 @@
   (minibuffer-visible-completions 'up-down)
   (minibuffer-prompt-properties
    '(read-only t intangible t cursor-intangible t face minibuffer-prompt))
-  (minibuffer-depth-indicate-mode t)
-  (minibuffer-electric-default-mode t))
+  :config
+  (minibuffer-depth-indicate-mode 1)
+  (minibuffer-electric-default-mode 1))
 
 (use-package wdired
   :ensure nil
@@ -62,8 +63,8 @@
   :commands dired-jump
   :bind
   (:map dired-mode-map
-   ("-" . dired-create-empty-file)
-   ("C-c C-e" . wdired-change-to-wdired-mode))
+        ("-" . dired-create-empty-file)
+        ("C-c C-e" . wdired-change-to-wdired-mode))
   :hook (dired-after-readin . my-dired-vc-ignores)
   :custom
   (dired-dwim-target t)
@@ -79,7 +80,7 @@
   (put 'dired-find-alternate-file 'disabled nil)
 
   (define-advice dired-buffer-stale-p (:before-while (&rest args)
-                                       my-dired--no-revert-in-virtual-buffers-a)
+                                                     my-dired--no-revert-in-virtual-buffers-a)
     "Don't auto-revert in dired-virtual buffers (see `dired-virtual-revert')."
     (not (eq revert-buffer-function #'dired-virtual-revert)))
 
@@ -289,7 +290,9 @@
 
 (use-package compile
   :ensure nil
-  :hook (compilation-filter . ansi-color-compilation-filter)
+  :hook
+  (compilation-filter . ansi-color-compilation-filter)
+  (compilation-filter . nn-comint-truncate-buffer-h)
   :bind
   (("C-c c" . compile)
    :map compilation-mode-map
@@ -308,19 +311,25 @@
   (add-to-list
    'compilation-error-regexp-alist
    '("\\([a-zA-Z0-9\\.]+\\)(\\([0-9]+\\)\\(,\\([0-9]+\\)\\)?) \\(Warning:\\)?"
-     1 2 (4) (5))))
+     1 2 (4) (5)))
 
-(use-package comint
-  :ensure nil
-  :custom
-  (comint-buffer-maximum-size 2048)
-  (comint-prompt-read-only t))
+  (defun nn-comint-truncate-buffer-h (&optional _string)
+    "Rate-limit `comint-truncate-buffer' in compilation-mode buffers."
+    (if (> (buffer-size)
+           ;; HACK: Approximate this because counting lines is prohibitively
+           ;;   expensive in longer buffers, especially in
+           ;;   `compilation-filter-hook' which fires rapidly.
+           (* 80 comint-buffer-maximum-size))
+        (let ((gc-cons-threshold most-positive-fixnum)
+              (gc-cons-percentage 1.0))
+          (with-silent-modifications
+            (comint-truncate-buffer))))))
 
 (use-package isearch
   :ensure nil
   :bind
   (:map isearch-mode-map
-   ([remap isearch-delete-char] . isearch-del-char))
+        ([remap isearch-delete-char] . isearch-del-char))
   :custom
   (isearch-lazy-highlight t)
   (isearch-wrap-pause t)

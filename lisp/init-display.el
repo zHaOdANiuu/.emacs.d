@@ -42,8 +42,12 @@
 
 (use-package paren
   :ensure nil
+  :hook (prog-mode . show-paren-mode)
   :custom
-  (show-paren-mode 1)
+  (show-paren-delay 0.1)
+  (show-paren-highlight-openparen t)
+  (show-paren-when-point-inside-paren t)
+  (show-paren-when-point-in-periphery t)
   (show-paren-style 'parenthesis)
   (show-paren-context-when-offscreen 'overlay)
   (blink-matching-paren-highlight-offscreen t)
@@ -56,15 +60,15 @@
 (use-package whitespace
   :ensure nil
   :hook
-  (((emacs-lisp-mode
-     simpc-mode
-     c-mode c-ts-mode
-     c++-mode c++-ts-mode
-     js-mode js-json-mode json-ts-mode
-     typescript-ts-mode tsx-ts-mode
-     makefile-mode makefile-gmake-mode)
-    . whitespace-mode)
-   (before-save . delete-trailing-whitespace))
+  ((emacs-lisp-mode
+    simpc-mode
+    c-mode c-ts-mode
+    c++-mode c++-ts-mode
+    js-mode js-json-mode json-ts-mode
+    typescript-ts-mode tsx-ts-mode
+    makefile-mode makefile-gmake-mode)
+   . whitespace-mode)
+  (before-save . delete-trailing-whitespace)
   :custom
   (whitespace-line-column nil)
   (whitespace-style '(face indentation tabs tab-mark spaces space-mark))
@@ -88,10 +92,11 @@
   (add-function :before-while whitespace-enable-predicate #'my-whitespace--in-parent-frame-p))
 
 (use-package indent-bars
-  :hook ((sh-mode
-          python-mode python-ts-mode
-          yaml-mode yaml-ts-mode)
-         . indent-bars-mode)
+  :hook
+  ((sh-mode
+    python-mode python-ts-mode
+    yaml-mode yaml-ts-mode)
+   . indent-bars-mode)
   :custom
   (indent-bars-display-on-blank-lines nil)
   (indent-bars-highlight-current-depth nil)
@@ -121,7 +126,6 @@
   :custom
   (colorful-use-prefix t)
   (colorful-only-strings 'only-prog)
-  (css-fontify-colors nil)
   :config
   (add-to-list 'global-colorful-modes 'helpful-mode)
 
