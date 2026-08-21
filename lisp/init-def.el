@@ -13,6 +13,11 @@
   :type 'boolean
   :group 'nn)
 
+(defcustom nn-vim-mode nil
+  "Enbale vim input method.."
+  :type 'boolean
+  :group 'nn)
+
 (defcustom nn-fold-string "…"
   "String used for folding/truncating display."
   :type 'string

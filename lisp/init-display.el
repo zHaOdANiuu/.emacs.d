@@ -109,7 +109,8 @@
 
 (use-package minibuffer-frame
   :vc (:url "https://github.com/zHaOdANiuu/minibuffer-frame" :rev :newest)
-  :init (minibuffer-frame-mode 1)
+  :if (display-graphic-p)
+  :hook (window-setup .  minibuffer-frame-mode)
   :config
   (with-eval-after-load 'corfu
     (setq global-corfu-minibuffer nil)))
@@ -123,7 +124,7 @@
   :hook (prog-mode . colorful-mode)
   :custom
   (colorful-use-prefix t)
-  (colorful-only-strings 'only-prog)
+  (colorful-only-strings nil)
   :config
   (add-to-list 'global-colorful-modes 'helpful-mode)
 

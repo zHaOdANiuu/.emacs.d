@@ -15,10 +15,6 @@
   :config
   (setq syntax-wholeline-max 1000))
 
-(use-package prog-mode
-  :ensure nil
-  :hook (prog-mode . prettify-symbols-mode))
-
 (use-package text-mode
   :ensure nil
   :mode ("/.gitignore\\'" "/INSTALL\\'" "/LICENSE\\'")

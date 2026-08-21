@@ -1,6 +1,7 @@
 ;;; -*- lexical-binding: t -*-
 (use-package elisp-mode
   :ensure nil
+  :hook (emacs-lisp-mode . prettify-symbols-mode)
   :custom
   (emacs-lisp-indent-offset 2)
   (lisp-indent-function #'my-lisp-indent-function)

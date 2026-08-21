@@ -142,6 +142,15 @@
          (when (commandp mode)
            (funcall mode)))))))
 
+(defun nn-viper-mode-format ()
+  (when (bound-and-true-p viper-mode)
+    (if mark-active "VISUAL"
+      (pcase viper-current-state
+        ('vi-state      "NORMAL")
+        ('insert-state  "INSERT")
+        ('replace-state "REPLACE")
+        ('emacs-state   "EMACS")))))
+
 (define-advice vc-refresh-state (:after (&rest _) reset-nn-vc-cache)
   (setq nn-mode-line--vc-cache nil))
 
@@ -157,6 +166,7 @@
 
 (defconst nn-mode-line-format
   '("%e"
+    "  " (:eval (nn-viper-mode-format))
     "  " (:eval (nn-mode-line-vc-format))
     "  " "%b"
     "  " (:eval (nn-mode-line-flymake-format))

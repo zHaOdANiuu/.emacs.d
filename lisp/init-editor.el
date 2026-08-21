@@ -166,9 +166,10 @@
   (add-to-list 'apheleia-mode-alist '(cuda-mode . clang-format))
   (add-to-list 'apheleia-mode-alist '(protobuf-mode . clang-format))
 
-  (dolist (formatter '(prettier prettier-css prettier-html prettier-javascript
-                                prettier-json prettier-scss prettier-svelte
-                                prettier-typescript prettier-yaml))
+  (dolist (formatter
+           '(prettier prettier-css prettier-html prettier-javascript
+             prettier-json prettier-scss prettier-svelte
+             prettier-typescript prettier-yaml))
     (setf (alist-get formatter apheleia-formatters)
           '("prettier" "--stdin-filepath"
             (or (apheleia-formatters-local-buffer-file-name)
@@ -239,5 +240,42 @@
         (delete-region (nth 0 r) (nth 1 r)))
       (mc/keyboard-quit)
       (multiple-cursors-mode -1))))
+
+(use-package viper
+  :ensure nil
+  :if nn-vim-mode
+  :hook (nn-first-file . viper-mode)
+  :bind
+  (:map viper-vi-global-user-map
+   ;; Movements by references and LSP
+   ("gd" .'xref-find-references)
+   ("SPC c a" . eglot-code-actions)
+   ("SPC s g" . project-find-regexp)
+   ("SPC s f" . project-find-file)
+   ;; Map `C-w` followed by specific keys to window commands in Viper
+   ("C-w s" . viper-window-split-horizontally)
+   ("C-w v" . viper-window-split-vertically)
+   ("C-w c" . viper-window-close)
+   ("C-w o" . viper-window-maximize)
+   ;; Add navigation commands to mimic Vim's `C-w hjkl`
+   ("C-w h" . windmove-left)
+   ("C-w l" . windmove-right)
+   ("C-w k" . windmove-up)
+   ("C-w j" . windmove-down)
+   ;; Indent region
+   ("==" . indent-region)
+   ;; Word spelling
+   ("z=" . ispell-word)
+   ;; Keybindings for buffer navigation and switching in Viper mode
+   ("] b" . next-buffer)
+   ("[ b" . previous-buffer)
+   ("b l" . switch-to-buffer)
+   ("SPC SPC" . switch-to-buffer))
+  :init
+  (setq viper-inhibit-startup-message t
+        viper-expert-level 5)
+  :config
+  (when (eq system-type 'windows-nt)
+    (add-hook 'viper-vi-state-hook (lambda () (w32-set-ime-open-status nil)))))
 
 (provide 'init-editor)
