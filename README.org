@@ -1,100 +1,91 @@
 #+title: Elegant Emacs
 #+property: header-args :eval never-export
+#+startup: overview
 #+attr_org: :center t
-[[./logo.png]]
-
+[[./user-lisp/logo.png]]
 #+attr_org: :center t
-[[https://img.shields.io/badge/Supports-Emacs_30+-purple.svg?style=flat-square&logo=GNU%20Emacs&logoColor=white]]
+[[https://img.shields.io/badge/Supports-Emacs_31+-purple.svg?style=flat-square&logo=GNU%20Emacs&logoColor=white]]
 [[https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square]]
 
-  *Elegant Emacs* is a personal Emacs 30+ config — no framework, no bloat.
+
+[[./example/start.jpg]]
+
+[[./example/dir.png]]
+
+[[./example/theme.jpg]]
+
+* Introduction
+
+Elegant Emacs is a personal, batteries-included Emacs configuration for GNU
+Emacs 31 and newer.  It keeps configuration modules small under
+=user-lisp/=, uses built-in Emacs features first, and adds packages only when
+they improve everyday editing or development.  Startup work is deferred where
+possible, while customization and persistent state remain easy to find in
+=user-lisp/init-def.el= and =.nn=.
 
 * Features
 
-  - *Fast startup* — GC tuning, JIT lock optimization, deferred autoloads, suppressed redisplay during init
-  - *One-key workflow* — =<f1>= format, =<f2>= rename, =<f5>= debug, =<f12>= jump, =C-c s= search
-  - *Custom dark theme* — ~nn-world~, =M-x nn-world-reload= to iterate live
-  - *=HOME=* dashboard — recent files, todo, quick actions; =n/p= navigate, =C-<f1>= summon
-  - *Completion* — Corfu or completion-preview; fido-frame child-frame minibuffer
-  - *LSP* — Eglot on demand via context menu; =<f2>= rename, =<f12>= jump
-  - *Visual debugger* — Dape + GDB, floating toolbar, breakpoints, process attach
-  - *Git* — Magit, VC, ediff, and automatic smerge conflict detection
-  - *Formatting* — Apheleia with prettier, clang-format, and shfmt; =<f1>= formats the buffer
-  - *Search* — ripgrep powers grep / xref / project; =C-c s= searches the current directory, wgrep edits results
-  - *Terminal anywhere* — Ghostel popup (=C-`=), Eshell, and MSYS2 auto-detection
-  - *Translation* — =C-c t w/r/b= for word / region / buffer; also available from the context menu
-  - *Mode-line* — cached Git branch, diagnostics, LSP status, encoding, and line-ending information
-  - *Batteries included* — EWW, ERC, Newsticker, Gnus, proxy toggle, and right-click menus
+- *Fast startup and sensible defaults.* Expensive setup is deferred until the
+  first input or file visit, so Emacs stays responsive while common editing and
+  project state work out of the box.
+- *Editing and appearance.* Completion, formatting, folding, multiple cursors,
+  file and buffer management, font and icon fallback, and the =nn-world= dark
+  theme make the editor comfortable for daily use.
+- *Programming.* Tree-sitter modes cover C/C++, Emacs Lisp, JavaScript and
+  TypeScript, web templates, shell, Org, Markdown, JSON, and YAML.  Eglot
+  provides LSP navigation, renaming, references, and code actions; Flymake
+  shows diagnostics; Dape and GDB handle debugging.
+- *Projects and navigation.* Built-in Project support with ripgrep search,
+  Git-aware navigation, xref, Citre/readtags, bookmarks, and Dired makes it
+  easy to find and manage code and files.
+- *Terminals and daily tools.* Ghostel provides a project-aware terminal,
+  while Eshell, EWW, Org, translation, mail/news, and IRC cover common work
+  without leaving Emacs.
+- *Live Server.* The =live-server= package starts a small Python HTTP server
+  for a selected directory, with configurable host and port, directory
+  listings, and automatic browser reload when served files change.
+- *Simple mpv.* The =simple-mpv= package plays files through the external
+  =mpv= player, browses a configured audio directory, and provides an Emacs
+  control buffer with metadata, progress, play/pause, previous/next, shuffle,
+  loop, and seeking.  Use =C-c p= in Dired to play a file or =C-c m= to open
+  the audio browser.
+
+The most useful defaults are:
+
+|---------------+-------------------------------|
+| Key           | Action                        |
+|---------------+-------------------------------|
+| =<f1>=          | Format the current buffer     |
+| =<f2>=          | Rename the current symbol     |
+| =<f5>=          | Start Dape debugging          |
+| =<f8>= / =S-<f8>= | Next / previous Flymake error |
+| =<f12>=         | Jump to a definition or tag   |
+| =C-c s=         | Search files in the project   |
+| =C-`=           | Toggle the Ghostel terminal   |
+| =C-<f1>=        | Show the =*HOME*= dashboard     |
+|---------------+-------------------------------|
+* Requirements
+
+This configuration supports only GNU Emacs 31 and newer.  A graphical frame is
+recommended for fonts, icons, child frames, and the Dape toolbar; core editing
+also works in a terminal frame.  Git is required for installation and
+version-control integration.
+
+Optional tools such as =ripgrep=, language servers, =gdb=, =aspell=,
+=prettier=, =clang-format=, =shfmt=, Python, =mpv=, and a Bash executable
+enable their corresponding integrations.  The first launch needs network
+access so =use-package= can install missing packages; later launches use the
+local package cache.
 
 * Install
 
-  #+begin_src sh
-  git clone https://github.com/zHaOdANiuu/.emacs.d.git ~/.emacs.d
-  #+end_src
+Clone into Emacs' conventional user directory and start Emacs normally:
 
-  Codeberg mirror: ~https://codeberg.org/zdn/.emacs.d.git~
+#+begin_src sh
+git clone https://github.com/zHaOdANiuu/.emacs.d.git ~/.emacs.d
+#+end_src
 
-* Screenshots
-
-  [[./example/start.jpg]]
-  [[./example/theme.jpg]]
-  [[./example/dir.png]]
-
-* Modules
-
-|----------------------+-----------------------------------------|
-| File                 | Purpose                                 |
-|----------------------+-----------------------------------------|
-| =init-def.el=          | Custom variables, proxy, drag utilities |
-| =init-font.el=         | IBM Plex Mono, CJK, symbols, emoji      |
-| =init-display.el=      | Fringe, line numbers, parens, icons     |
-| =init-mode-line.el=    | Git branch, diagnostics, LSP status     |
-| =init-base.el=         | Files, backups, encoding, scrolling     |
-| =init-advanced.el=     | Dired, compile, isearch, ibuffer        |
-| =init-editor.el=       | Formatting, symbol-overlay, multicursor |
-| =init-lang.el=         | Language configuration entry point      |
-| =init-debug.el=        | Dape + GDB debugger                     |
-| =init-diagnostics.el=  | Flymake + Flyspell                      |
-| =init-completion.el=   | Corfu / completion-preview / fido       |
-| =init-navigation.el=   | Citre, bookmarks, imenu                 |
-| =init-vc.el=           | Magit, VC, ediff, smerge                |
-| =init-www.el=          | EWW, ERC, Newsticker, Gnus              |
-| =init-utils.el=        | grep/rg, translation, calendar          |
-| =init-terminal.el=     | Shell, Eshell, Ghostel                  |
-| =init-word-move.el=    | Word-level movement                     |
-| =init-keybind.el=      | Global keybindings                      |
-| =init-context-menu.el= | Right-click context menus               |
-| =init-home.el=         | =*HOME*= dashboard                        |
-|----------------------+-----------------------------------------|
-
-Language modules loaded by =init-lang.el=:
-
-|--------------------+-----------------------------------------|
-| File               | Purpose                                 |
-|--------------------+-----------------------------------------|
-| =lang-cc.el=         | C / C++ via simpc-mode and tree-sitter  |
-| =lang-elisp.el=      | Emacs Lisp and help-mode                |
-| =lang-javascript.el= | JavaScript / TypeScript                 |
-| =lang-web.el=        | HTML / CSS / JS via web-mode and emmet  |
-| =lang-shell.el=      | Shell and PowerShell                    |
-| =lang-org.el=        | Org, agenda, capture, and source blocks |
-| =lang-markdown.el=   | Markdown via tree-sitter                |
-| =lang-json.el=       | JSON via tree-sitter                    |
-| =lang-yaml.el=       | YAML via tree-sitter                    |
-|--------------------+-----------------------------------------|
-
-* Extensions
-
-Local packages under =extension/=:
-
-|---------------------+-----------------------------------------|
-| Package             | Purpose                                 |
-|---------------------+-----------------------------------------|
-| =gnus-modern=         | Modernized Gnus interface               |
-| =hideshow-savefold=   | Persist hideshow folds across sessions  |
-| =nn-fringe-scale=     | Scale fringe bitmaps for HiDPI displays |
-| =nn-license-template= | Generate LICENSE files from templates   |
-| =nn-world=            | Custom dark theme                       |
-| =simpc=               | Simple C major mode                     |
-| =simple-mpv=          | Lightweight mpv media player interface  |
-|---------------------+-----------------------------------------|
+No framework bootstrap command is required.  On the first launch, the
+configuration creates its persistent state under =~/.emacs.d/.nn/=.  A
+Codeberg mirror is available at
+[[https://codeberg.org/zdn/.emacs.d.git][Codeberg]].

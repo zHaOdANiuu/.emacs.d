@@ -1,21 +1,14 @@
 ;;; -*- lexical-binding: t -*-
-(put 'if-let 'byte-obsolete-info nil)
-(put 'when-let 'byte-obsolete-info nil)
-
-(setq custom-file "~/.emacs.d/custom.el")
-(push (expand-file-name "lisp/" user-emacs-directory) load-path)
-(push (expand-file-name "lisp/lang" user-emacs-directory) load-path)
-(nconc load-path
-       (directory-files-recursively
-        (expand-file-name "extension" user-emacs-directory) "." t))
-
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (let ((file-name-handler-alist nil))
-  (require 'cl-lib)
+  (require 'nn-world-theme)
   (require 'init-def)
-  (require 'init-font)
-  (require 'init-display)
+  (load custom-file)
+  (when (display-graphic-p)
+    (require 'init-font))
   (require 'init-base)
   (require 'init-advanced)
+  (require 'init-display)
   (require 'init-editor)
   (require 'init-lang)
   (require 'init-debug)
@@ -30,6 +23,4 @@
   (require 'init-keybind)
   (require 'init-word-move)
   (require 'init-context-menu)
-  (require 'init-home)
-  (require 'nn-world-theme)
-  (load custom-file))
+  (require 'init-home))
