@@ -10,6 +10,19 @@
   (put 'if-let 'byte-obsolete-info nil)
   (put 'when-let 'byte-obsolete-info nil)
   (set-default-toplevel-value 'lexical-binding t)
+  (set-default-coding-systems 'utf-8-unix)
+  (set-locale-environment "en_US.UTF-8")
+  (set-charset-priority 'unicode)
+
+  (if (eq system-type 'windows-nt)
+      (progn
+        (set-clipboard-coding-system 'gbk-dos)
+        (setq default-process-coding-system `(utf-8-dos . ,locale-coding-system)
+              process-coding-system-alist
+              '(("[pP][lL][iI][nN][kK]" utf-8-dos . gbk-dos)
+                ("[cC][mM][dD][pP][rR][oO][xX][yY]" utf-8-dos . gbk-dos))))
+    (set-clipboard-coding-system 'utf-8-unix)
+    (setq default-process-coding-system '(utf-8-unix . utf-8-unix)))
 
   (setq idle-update-delay 1.0
         inhibit-message t

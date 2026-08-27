@@ -14,9 +14,9 @@
   (fido-vertical-mode 1)
   :custom
   (icomplete-max-delay-chars 2)
-  (icomplete-show-matches-on-no-input nil)
   (icomplete-hide-common-prefix nil)
   (icomplete-tidy-shadowed-file-names t)
+  (icomplete-show-matches-on-no-input nil)
   :config
   (defun my-recentf-open ()
     (interactive)

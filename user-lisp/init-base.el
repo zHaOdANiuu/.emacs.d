@@ -1,8 +1,8 @@
 ;;; -*- lexical-binding: t -*-
 (use-package project
   :ensure nil
-  :init (setq project-list-file (concat nn-directory "project-list.el"))
   :custom
+  (project-list-file (concat nn-directory "project-list.el"))
   (project-vc-ignores
    '("node_modules" ".git" ".svn" "vendor" "dist" "build"
      ".cache" ".tox" "__pycache__" "target" "out"))
@@ -10,33 +10,6 @@
   (project-vc-merge-submodules nil)
   (project-files-relative-names t)
   (project-search-function #'project-ripgrep))
-
-(use-package mule
-  :ensure nil
-  :custom
-  (locale-coding-system 'utf-8-unix)
-  (default-buffer-file-coding-system 'utf-8-unix)
-  (default-process-coding-system '(utf-8-unix . utf-8-unix))
-  :config
-  (prefer-coding-system 'utf-8-unix)
-  (set-language-environment "UTF-8")
-  (set-default-coding-systems 'utf-8-unix)
-  (set-keyboard-coding-system 'utf-8-unix)
-  (set-terminal-coding-system 'utf-8-unix)
-  (set-file-name-coding-system 'utf-8-unix)
-  (set-selection-coding-system 'utf-8-unix)
-  (when (eq system-type 'windows-nt)
-    (set-selection-coding-system 'utf-16le-dos)
-    (when-let* ((coding
-                 (pcase (w32-get-console-codepage)
-                   (65001 'utf-8-dos)
-                   (936 'gbk-dos)
-                   (_ nil))))
-      (setq process-coding-system-alist
-            `(("[pP][lL][iI][nN][kK]" . #1=(,coding . ,coding))
-              ("[cC][mM][dD][pP][rR][oO][xX][yY]" . #1#)))
-      (setq default-process-coding-system
-            `(,coding . ,coding)))))
 
 (use-package simple
   :ensure nil
@@ -79,13 +52,6 @@
   (find-file-suppress-same-file-warnings t)
   (require-final-newline t))
 
-(use-package uniquify
-  :ensure nil
-  :custom
-  (uniquify-buffer-name-style 'forward)
-  (uniquify-strip-common-suffix t)
-  (uniquify-after-kill-buffer-flag t))
-
 (use-package ls-lisp
   :ensure nil
   :custom
@@ -95,13 +61,18 @@
   (ls-lisp-use-localized-time-format t)
   (ls-lisp-support-symlinks t)
   (ls-lisp-dirs-first t)
-  (ls-lisp-verbosity '(links uid modes)))
+  (ls-lisp-verbosity '(links uid modes))
+  :config
+  (when (and ls-lisp-use-insert-directory-program
+             (eq system-type 'windows-nt))
+    (define-advice insert-directory (:around (orig &rest args) my-w32-msys-ls)
+      "Pass ANSI-codepage argv to `insert-directory-program', decode its UTF-8 output."
+      (let ((coding-system-for-read 'utf-8))
+        (apply orig args)))))
 
 (use-package recentf
   :ensure nil
-  :hook
-  (nn-first-file . recentf-mode)
-  (dired-mode . my-recentf-add-dired-directory-h)
+  :hook (dired-mode . my-recentf-add-dired-directory-h)
   :custom
   (recentf-save-file (concat nn-directory "recentf.eld"))
   (revert-without-query '("."))
@@ -195,6 +166,13 @@ files, so this replace calls to `pp' with the much faster `prin1'."
   :ensure nil
   :hook nn-first-file
   :custom (repeat-echo-mode-line t))
+
+(use-package uniquify
+  :ensure nil
+  :custom
+  (uniquify-buffer-name-style 'forward)
+  (uniquify-strip-common-suffix t)
+  (uniquify-after-kill-buffer-flag t))
 
 (use-package mwheel
   :ensure nil

@@ -38,8 +38,8 @@
   (completion-ignore-case t)
   (completion-show-help t)
   (completion-styles '(partial-completion flex initials))
-  (completions-format 'one-column)
   (completions-max-height 10)
+  (completions-format 'one-column)
   (completions-sort 'historical)
   (enable-recursive-minibuffers t)
   (read-buffer-completion-ignore-case t)
@@ -141,30 +141,12 @@
   (dired-create-destination-dirs 'ask)
   (dired-compress-file-alist
    '(("\\.7z\\'" . "7z a -r %o %i")
-     ("\\.zip\\'" . "7z a -r %o  %i"))
-   (dired-compress-files-alist
-    '(("\\.7z\\'" . "7z a -r %o %i")
-      ("\\.zip\\'" . "7z a -r %o  %i")))
-   (dired-compress-directory-default-suffix ".7z")
-   (dired-compress-file-default-suffix ".7z"))
-  :config
-  ;; The w32 subprocess argv is limited to the ANSI code page (src/w32proc.c
-  ;; sys_spawnve treats argv as ANSI bytes), while MSYS2 ls outputs UTF-8.
-  ;; files.el's insert-directory uses file-name-coding-system for both sides,
-  ;; but a single global setting cannot satisfy both:
-  ;; - argv side (files.el:8426-8429) encodes argv via file-name-coding-system
-  ;;   → must be ANSI code page (cp936), or non-ASCII paths mangle at CreateProcessA;
-  ;; - output side (files.el:8518-8521) uses coding-system-for-read first
-  ;;   → must be utf-8 to correctly decode MSYS2 ls output.
-  ;; We dynamically bind coding-system-for-read to utf-8 only within this call,
-  ;; leaving the global file-name-coding-system unchanged (cp936).
-  (when (and ls-lisp-use-insert-directory-program
-             (eq system-type 'windows-nt))
-    (define-advice insert-directory (:around (orig &rest args) w32-msys-ls)
-      "Pass ANSI-codepage argv to `insert-directory-program', decode its UTF-8 output."
-      (let ((file-name-coding-system (intern (format "cp%d" w32-ansi-code-page)))
-            (coding-system-for-read 'utf-8))
-        (apply orig args)))))
+     ("\\.zip\\'" . "7z a -r %o  %i")))
+  (dired-compress-files-alist
+   '(("\\.7z\\'" . "7z a -r %o %i")
+     ("\\.zip\\'" . "7z a -r %o  %i")))
+  (dired-compress-directory-default-suffix ".7z")
+  (dired-compress-file-default-suffix ".7z"))
 
 (use-package image-dired
   :ensure nil
@@ -194,13 +176,14 @@
   :custom
   (speedbar-window-side 'right)
   (speedbar-window-default-width 30)
-  (speedbar-vc-do-check nil)
+  (speedbar-vc-do-check t)
+  (speedbar-obj-do-check nil)
   (speedbar-use-images nil)
   (speedbar-use-imenu-flag nil)
   (speedbar-use-tool-tips-flag nil)
   (speedbar-hide-button-brackets-flag t)
-  (speedbar-mode-specific-contents-flag nil)
   (speedbar-mode-functions-list nil)
+  (speedbar-mode-specific-contents-flag nil)
   (speedbar-dynamic-tags-function-list nil)
   (speedbar-special-mode-expansion-list nil)
   (speedbar-show-unknown-files t)
