@@ -13,16 +13,6 @@
   :type 'boolean
   :group 'nn)
 
-(defcustom nn-font-fallback t
-  "Apply font fallback."
-  :type 'boolean
-  :group 'nn)
-
-(defcustom nn-font-ligatures nil
-  "Enbale font ligatures."
-  :type 'boolean
-  :group 'nn)
-
 (defcustom nn-vim-mode nil
   "Enbale vim input method."
   :type 'boolean

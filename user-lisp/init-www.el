@@ -158,7 +158,6 @@
   :custom
   (gnus-init-file (concat nn-directory ".gnus.el"))
   (gnus-startup-file (concat nn-directory ".newsrc"))
-  (gnus-directory (concat nn-directory "News/"))
   (gnus-always-read-dribble-file t)
   (gnus-activate-level 3)
   (gnus-use-cache t)
@@ -239,11 +238,11 @@
   :hook (gnus-select-group . gnus-group-set-timestamp)
   :custom
   ;; Pretty marks
+  (gnus-sum-thread-tree-indent          "  ")
+  (gnus-sum-thread-tree-single-indent   "◎ ")
   (gnus-sum-thread-tree-root            "┌ ")
   (gnus-sum-thread-tree-false-root      "◌ ")
-  (gnus-sum-thread-tree-single-indent   "◎ ")
   (gnus-sum-thread-tree-vertical        "│")
-  (gnus-sum-thread-tree-indent          "  ")
   (gnus-sum-thread-tree-leaf-with-other "├─►")
   (gnus-sum-thread-tree-single-leaf     "╰─►")
   (gnus-summary-line-format "%U%R %3d %[%-23,23f%] %B %s\n")

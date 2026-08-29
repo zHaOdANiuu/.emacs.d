@@ -20,8 +20,7 @@
 (setq-default word-wrap t
               tab-width 2
               tab-always-indent 'complete
-              fill-column 80
-              line-spacing 0)
+              fill-column 80)
 
 (use-package ffap
   :ensure nil

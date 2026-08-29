@@ -13,10 +13,9 @@
   (set-default-coding-systems 'utf-8-unix)
   (set-locale-environment "en_US.UTF-8")
   (set-charset-priority 'unicode)
-
   (if (eq system-type 'windows-nt)
       (progn
-        (set-clipboard-coding-system 'gbk-dos)
+        (set-clipboard-coding-system 'utf-16-le)
         (setq default-process-coding-system `(utf-8-dos . ,locale-coding-system)
               process-coding-system-alist
               '(("[pP][lL][iI][nN][kK]" utf-8-dos . gbk-dos)

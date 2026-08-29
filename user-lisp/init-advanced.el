@@ -53,7 +53,7 @@
 
 (use-package wdired
   :ensure nil
-  :commands (wdired-change-to-wdired-mode)
+  :commands wdired-change-to-wdired-mode
   :custom
   (wdired-allow-to-change-permissions t)
   (wdired-create-parent-directories t))

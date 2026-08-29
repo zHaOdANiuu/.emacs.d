@@ -13,7 +13,6 @@
 
 (use-package simple
   :ensure nil
-  :hook (nn-frist-file . global-visual-line-mode)
   :custom
   (indent-tabs-mode nil)
   (idle-update-delay 0.5)
@@ -101,7 +100,7 @@
 
 (use-package autorevert
   :ensure nil
-  :hook (nn-first-file . auto-revert-mode)
+  :hook (nn-first-file . global-auto-revert-mode)
   :custom
   (auto-revert-verbose t)
   (auto-revert-use-notify t)
