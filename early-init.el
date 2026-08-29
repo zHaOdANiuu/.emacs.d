@@ -10,18 +10,6 @@
   (put 'if-let 'byte-obsolete-info nil)
   (put 'when-let 'byte-obsolete-info nil)
   (set-default-toplevel-value 'lexical-binding t)
-  (set-default-coding-systems 'utf-8-unix)
-  (set-locale-environment "en_US.UTF-8")
-  (set-charset-priority 'unicode)
-  (if (eq system-type 'windows-nt)
-      (progn
-        (set-clipboard-coding-system 'utf-16-le)
-        (setq default-process-coding-system `(utf-8-dos . ,locale-coding-system)
-              process-coding-system-alist
-              '(("[pP][lL][iI][nN][kK]" utf-8-dos . gbk-dos)
-                ("[cC][mM][dD][pP][rR][oO][xX][yY]" utf-8-dos . gbk-dos))))
-    (set-clipboard-coding-system 'utf-8-unix)
-    (setq default-process-coding-system '(utf-8-unix . utf-8-unix)))
 
   (setq idle-update-delay 1.0
         inhibit-message t
@@ -76,7 +64,11 @@
   (inhibit-startup-screen t)
   (inhibit-startup-echo-area-message user-login-name)
   (frame-resize-pixelwise t)
-  (frame-inhibit-implied-resize t))
+  (frame-inhibit-implied-resize t)
+  (frame-title-format
+   '(:eval (concat
+            (if (and buffer-file-name (buffer-modified-p)) "● " "")
+            (buffer-name)))))
 
 (use-package package
   :ensure nil

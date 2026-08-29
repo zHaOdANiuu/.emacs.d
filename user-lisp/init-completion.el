@@ -6,66 +6,6 @@
   (dabbrev-downcase-means-case-replace nil)
   (dabbrev-case-distinction nil))
 
-(use-package icomplete
-  :ensure nil
-  :bind ("C-x C-r" . my-recentf-open)
-  :init
-  (fido-mode 1)
-  (fido-vertical-mode 1)
-  :custom
-  (icomplete-max-delay-chars 2)
-  (icomplete-hide-common-prefix nil)
-  (icomplete-tidy-shadowed-file-names t)
-  (icomplete-show-matches-on-no-input nil)
-  :config
-  (defun my-recentf-open ()
-    (interactive)
-    (let ((file (completing-read "Find recent file: " recentf-list nil t)))
-      (if (and file (file-exists-p file))
-          (find-file file)
-        (message "File open failed")))))
-
-(use-package completion-preview
-  :ensure nil
-  :if (eq nn-completion-style 'completion-preview)
-  :bind
-  (:map completion-preview-active-mode-map
-   ("C-n" . completion-preview-next-candidate)
-   ("C-p" . completion-preview-prev-candidate)
-   ("C-l" . (lambda () (interactive)
-              (completion-preview-hide)
-              (completion-preview-next-candidate))))
-  :custom
-  (completion-preview-ignore-case t)
-  (completion-preview-minimum-symbol-length nil)
-  (completion-preview-completion-styles '(basic partial-completion initials orderless)))
-
-(use-package yasnippet
-  :commands
-  (yas-minor-mode-on
-   yas-expand
-   yas-expand-snippet
-   yas-lookup-snippet
-   yas-insert-snippet
-   yas-new-snippet
-   yas-visit-snippet-file
-   yas-activate-extra-mode
-   yas-deactivate-extra-mode
-   yas-maybe-expand-abbrev-key-filter)
-  :custom
-  (yas-verbosity 3)
-  (yas-snippet-dirs nil)
-  :config (yas-global-mode 1))
-
-(use-package yasnippet-snippets
-  :hook (simpc-mode . (lambda () (yas-activate-extra-mode 'c++-mode))))
-
-(use-package yasnippet-capf
-  :hook (yas-minor-mode . my-corfu-add-yasnippet-capf-h)
-  :config
-  (defun my-corfu-add-yasnippet-capf-h ()
-    (add-hook 'completion-at-point-functions #'yasnippet-capf 30 t)))
-
 (use-package eglot
   :ensure nil
   :bind
@@ -106,6 +46,40 @@
 
   ;; ignore jsonrpc log
   (fset #'jsonrpc--log-event #'ignore))
+
+(use-package icomplete
+  :ensure nil
+  :bind ("C-x C-r" . my-recentf-open)
+  :init
+  (fido-mode 1)
+  (fido-vertical-mode 1)
+  :custom
+  (icomplete-max-delay-chars 2)
+  (icomplete-hide-common-prefix nil)
+  (icomplete-tidy-shadowed-file-names t)
+  (icomplete-show-matches-on-no-input nil)
+  :config
+  (defun my-recentf-open ()
+    (interactive)
+    (let ((file (completing-read "Find recent file: " recentf-list nil t)))
+      (if (and file (file-exists-p file))
+          (find-file file)
+        (message "File open failed")))))
+
+(use-package completion-preview
+  :ensure nil
+  :if (eq nn-completion-style 'completion-preview)
+  :bind
+  (:map completion-preview-active-mode-map
+   ("C-n" . completion-preview-next-candidate)
+   ("C-p" . completion-preview-prev-candidate)
+   ("C-l" . (lambda () (interactive)
+              (completion-preview-hide)
+              (completion-preview-next-candidate))))
+  :custom
+  (completion-preview-ignore-case t)
+  (completion-preview-minimum-symbol-length nil)
+  (completion-preview-completion-styles '(basic partial-completion initials orderless)))
 
 (use-package corfu
   :if (eq nn-completion-style 'corfu)
@@ -187,5 +161,31 @@
   (define-advice corfu-quit (:after (&rest _) my-corfu-popupinfo-quit)
     (when corfu-popupinfo-mode
       (corfu-popupinfo-mode -1))))
+
+(use-package yasnippet
+  :commands
+  (yas-minor-mode-on
+   yas-expand
+   yas-expand-snippet
+   yas-lookup-snippet
+   yas-insert-snippet
+   yas-new-snippet
+   yas-visit-snippet-file
+   yas-activate-extra-mode
+   yas-deactivate-extra-mode
+   yas-maybe-expand-abbrev-key-filter)
+  :custom
+  (yas-verbosity 3)
+  (yas-snippet-dirs nil)
+  :config (yas-global-mode 1))
+
+(use-package yasnippet-snippets
+  :hook (simpc-mode . (lambda () (yas-activate-extra-mode 'c++-mode))))
+
+(use-package yasnippet-capf
+  :hook (yas-minor-mode . my-corfu-add-yasnippet-capf-h)
+  :config
+  (defun my-corfu-add-yasnippet-capf-h ()
+    (add-hook 'completion-at-point-functions #'yasnippet-capf 30 t)))
 
 (provide 'init-completion)

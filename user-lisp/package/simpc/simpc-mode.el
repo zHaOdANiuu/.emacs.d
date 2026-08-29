@@ -1,6 +1,10 @@
 ;;; simpc-mode.el --- Simple C mode -*- lexical-binding: t; -*-
+
+;; ref https://github.com/rexim/simpc-mode/blob/master/simpc-mode.el
+
 (defcustom simpc-indent-width 2
-  "Simpc indent width (matches VSCode's default tabSize for C/C++).")
+  "Simpc indent width"
+  :type 'number)
 
 (defconst simpc-mode-syntax-table
   (let ((table (make-syntax-table)))
@@ -67,63 +71,66 @@
     ("(\\*\\([A-Za-z_][A-Za-z0-9_]*\\)\\s-*)\\s-*(" 1 font-lock-function-name-face)
     (")[ \t]*(" ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)[*& \t]*[,)]" nil nil (1 font-lock-type-face)))))
 
-(defun simpc--line-content ()
-  "Content of the current line without the trailing newline, as a string
-\(never nil, even on an empty line)."
-  (buffer-substring-no-properties (line-beginning-position) (line-end-position)))
+(defun simpc--proper-indentation (parse-status)
+  (let ((depth (nth 0 parse-status))             ; Depth in parens
+        (paren-start (nth 1 parse-status))       ; Position of the paren that started this list
+        ;; (paren-prev (nth 2 parse-status))     ; Position of the previous sibling paren
+        (in-string (nth 3 parse-status))         ; Non-nil if inside a string
+        (in-comment (nth 4 parse-status))        ; Non-nil if inside a comment
+        ;; (string-start (nth 5 parse-status))   ; Start position of string or comment
+        ;; (string-end (nth 6 parse-status))     ; End position of string or comment
+        ;; (string-type (nth 7 parse-status))    ; Type of string or comment
+        ;; (string-content (nth 8 parse-status)) ; Content of string or comment
+        ;; (in-block (nth 9 parse-status))       ; Non-nil if inside a code block
+        )
+    ;; Print all information for debugging
+    ;; (message "=== Parse Status ===")
+    ;; (message "Depth: %S" depth)
+    ;; (message "Paren start: %S" paren-start)
+    ;; (message "Paren prev: %S" paren-prev)
+    ;; (message "In string: %S" in-string)
+    ;; (message "In comment: %S" in-comment)
+    ;; (message "String start: %S" string-start)
+    ;; (message "String end: %S" string-end)
+    ;; (message "String type: %S" string-type)
+    ;; (message "String content: %S" string-content)
+    ;; (message "In block: %S" in-block)
+    (save-excursion
+      (back-to-indentation)
+      (cond
+       (in-comment (current-indentation))
 
-(defun simpc--previous-non-empty-line ()
-  "Return the nearest preceding non-blank line as (CONTENT 0 INDENTATION),
-or nil if there is none."
-  (save-excursion
-    (move-beginning-of-line nil)
-    (if (bobp)
-        nil
-      (forward-line -1)
-      (let ((line (string-trim-right (simpc--line-content))))
-        (while (and (not (bobp)) (string-empty-p line))
-          (forward-line -1)
-          (setq line (string-trim-right (simpc--line-content))))
-        (if (string-empty-p line)
-            nil
-          (cons line (current-indentation)))))))
+       (paren-start
+        (let ((same-indent-p (looking-at "[]})]"))
+              (case-keyword-p (looking-at "default\\_>\\|case\\_>[^:]")))
+          (goto-char paren-start)
+          (cond
+           (same-indent-p
+            (back-to-indentation)
+            (current-column))
 
-(defun simpc--desired-indentation ()
-  (let* ((width (max simpc-indent-width 0))
-         (cur-line (string-trim-right (simpc--line-content)))
-         (nonblank (simpc--previous-non-empty-line))
-         (prev-line (if nonblank (car nonblank) ""))
-         (prev-indent (if nonblank (cdr nonblank) 0)))
-    (cond ((string-match-p "^\\s-*switch\\s-*(.+)" prev-line)
-           (+ prev-indent width))
-          (t
-           (max (+ prev-indent
-                   (if (and nonblank
-                            (or
-                             (string-match-p
-                              "^.*\\({[^}]*\\|([^)]*\\|\\[[^]]*\\)$"
-                              prev-line)
-                             (string-match-p
-                              "^[ \t]*\\(if\\|while\\|for\\|else\\([ \t]+if\\)?\\)[ \t]*([^)]*)[ \t]*$"
-                              prev-line)))
-                       width 0)
-                   (cond ((and nonblank
-                               (string-suffix-p ":" prev-line)
-                               (not (string-suffix-p ":" cur-line)))
-                          width)
-                         ((string-match-p ":[ \t]*{?[ \t]*$" cur-line) (- width))
-                         (t 0))
-                   (if (string-match-p "^[ \t]*[]})]" cur-line) (- width) 0))
-                0)))))
+           ((looking-at "[({[]\\s-*$")
+            (back-to-indentation)
+            (+ (current-column)
+               (if (looking-at "\\_<switch\\_>")
+                   (* simpc-indent-width (if case-keyword-p 1 2))
+                 simpc-indent-width)))
+
+           (t
+            (forward-char)
+            (skip-chars-forward " \t")
+            (current-column)))))
+
+       (t (prog-first-column))))))
 
 (defun simpc-indent-line ()
   (interactive)
-  (when (not (bobp))
-    (let* ((desired-indentation
-            (simpc--desired-indentation))
-           (n (max (- (current-column) (current-indentation)) 0)))
-      (indent-line-to desired-indentation)
-      (forward-char n))))
+  (let* ((parse-status
+          (save-excursion (syntax-ppss (line-beginning-position))))
+         (offset (- (point) (save-excursion (back-to-indentation) (point)))))
+    (unless (nth 3 parse-status)
+      (indent-line-to (simpc--proper-indentation parse-status))
+      (when (> offset 0) (forward-char offset)))))
 
 (define-derived-mode simpc-mode prog-mode "Simple C"
   "Simple major mode for editing C files."

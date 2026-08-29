@@ -92,10 +92,14 @@
         (delete-char -1)
         (insert (string new-char))))))
 
-(defun my-replace-string-whole-buffer (from to)
-  (interactive "sReplace: \nsWith: ")
-  (save-excursion
-    (replace-string from to nil (point-min) (point-max))))
+(defun my-replace (from to &optional delimited start end)
+  (interactive
+   (let ((beg (if (use-region-p) (region-beginning) (point-min)))
+         (end (if (use-region-p) (region-end)       (point-max))))
+     (list (read-string "Replace: ")
+           (read-string "With: ")
+           nil beg end)))
+  (replace-string from to delimited start end))
 
 (defun my-split-and-switch (direction)
   (let ((buf (read-buffer
@@ -112,6 +116,7 @@
 (defun my-split-left-and-switch  ()  (interactive) (my-split-and-switch 'left))
 (defun my-split-below-and-switch ()  (interactive) (my-split-and-switch 'below))
 (defun my-split-above-and-switch ()  (interactive) (my-split-and-switch 'above))
+
 (keymap-global-set "C-c o f" #'my-split-right-and-switch)
 (keymap-global-set "C-c o b" #'my-split-left-and-switch)
 (keymap-global-set "C-c o n" #'my-split-below-and-switch)
@@ -120,12 +125,11 @@
 (keymap-global-set "C-c o <left>" #'my-split-left-and-switch)
 (keymap-global-set "C-c o <down>" #'my-split-below-and-switch)
 (keymap-global-set "C-c o <up>" #'my-split-above-and-switch)
-(keymap-global-set "C-!" #'my-replace-string-whole-buffer)
+(keymap-global-set "C-!" #'my-replace)
 (keymap-global-set "M-S-<right>" #'shrink-window-horizontally)
 (keymap-global-set "M-S-<left>" #'enlarge-window-horizontally)
 (keymap-global-set "M-S-<down>" #'shrink-window)
 (keymap-global-set "M-S-<up>" #'enlarge-window)
-(keymap-global-set "C-!" #'my-replace-string-whole-buffer)
 (keymap-global-set "C-c w r" #'my-surround-replace)
 (keymap-global-set "C-c w R" #'my-surround-replace-pair)
 (keymap-global-set "C-c w w" #'my-surround-word)

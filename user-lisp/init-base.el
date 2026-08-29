@@ -198,12 +198,6 @@ files, so this replace calls to `pp' with the much faster `prin1'."
   (blink-cursor-mode -1)
   (window-divider-mode 1)
   :custom
-  (frame-resize-pixelwise t)
-  (frame-inhibit-implied-resize t)
-  (frame-title-format
-   '(:eval (concat
-            (if (and buffer-file-name (buffer-modified-p)) "● " "")
-            (buffer-name))))
   (window-divider-default-places t)
   (window-divider-default-right-width 1)
   (window-divider-default-bottom-width 0)

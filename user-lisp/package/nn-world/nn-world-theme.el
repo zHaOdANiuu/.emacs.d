@@ -43,7 +43,7 @@
    `(border         ((t :background ,pink)))
    `(highlight      ((t :background ,secondary)))
    `(lazy-highlight ((t :inherit highlight)))
-   `(region         ((t :background ,(color-lighten-name secondary 10))))
+   `(region         ((t :background ,(color-lighten-name secondary 20))))
 
    `(vertical-border            ((t :foreground ,bright)))
    `(window-divider             ((t :inherit vertical-border)))
@@ -332,7 +332,7 @@
    `(symbol-overlay-face-6       ((t :foreground ,green :inverse-video t)))
    `(symbol-overlay-face-7       ((t :foreground ,teal :inverse-video t)))
    `(symbol-overlay-face-8       ((t :foreground ,gold :inverse-video t)))
-   `(symbol-overlay-default-face ((t :inherit region :foreground unspecified)))
+   `(symbol-overlay-default-face ((t :inherit highlight)))
 
    `(outline-1 ((t :foreground ,red)))
    `(outline-2 ((t :foreground ,orange)))

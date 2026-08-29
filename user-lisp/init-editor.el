@@ -183,7 +183,6 @@
    ("C-c C-<" . mc/mark-all-like-this)
    ("C-M->" . mc/skip-to-next-like-this)
    ("C-M-<" . mc/skip-to-previous-like-this)
-   ("C-<mouse-1>" . mc/add-cursor-on-click)
    :map mc/keymap
    ("M-S-w" . my-mc/copy)
    ("C-S-w" . my-mc/cat)
@@ -205,7 +204,7 @@
   (defun my-mc/lines-get ()
     (let ((pairs
            `(,`(,(region-beginning) ,(region-end)
-                ,(buffer-substring-no-properties
+                ,(my-mc/get-line-with-indent
                   (region-beginning) (region-end))))))
       (mc/for-each-fake-cursor
        cursor
