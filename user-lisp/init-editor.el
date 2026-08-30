@@ -172,9 +172,8 @@
   ("M-n" . symbol-overlay-jump-next)
   ("M-p" . symbol-overlay-jump-prev)
   ("M-r" . symbol-overlay-rename)
-  :bind-keymap ("M-s s" . symbol-overlay-map)
   :hook (prog-mode yaml-mode yaml-ts-mode)
-  :custom (symbol-overlay-idle-time 0.3))
+  :custom (symbol-overlay-idle-time 0.5))
 
 (use-package multiple-cursors
   :bind
@@ -234,7 +233,6 @@
 (use-package viper
   :ensure nil
   :if nn-vim-mode
-  :hook nn-first-file
   :bind
   (:map viper-vi-global-user-map
    ;; Movements by references and LSP

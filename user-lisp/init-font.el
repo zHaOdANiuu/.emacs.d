@@ -25,13 +25,12 @@
 (cl-loop for font in '("Segoe UI Symbol" "Apple Symbols" "Symbol")
          for spec = (font-spec :family font)
          when (find-font spec)
-         return (dolist (script '(symbol mathematical))
-                  (set-fontset-font t script font)))
+         return (set-fontset-font t 'symbol font))
 ;; Emoji
 (cl-loop for font in '("Segoe UI Emoji" "Apple Color Emoji" "Noto Color Emoji")
          for spec = (font-spec :family font)
          when (find-font spec)
-         return (set-fontset-font t 'symbol spec nil 'append))
+         return (set-fontset-font t 'emoji spec))
 ;; Nerd Fonts
 (cl-loop for font in '("Symbols Nerd Font Mono")
          for spec = (font-spec :family font)

@@ -205,7 +205,7 @@ from `readable-foreground-color'."
 (use-package nerd-icons-corfu
   :if (eq nn-completion-style 'corfu)
   :after corfu
-  :init
+  :config
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
   (setq
    nerd-icons-corfu-mapping
