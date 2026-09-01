@@ -1,0 +1,43 @@
+# -*- mode: snippet -*-
+# name: pomo table
+# key: pomo
+# --
+|-------+-------+----------|
+| start | type  | duration |
+|-------+-------+----------|
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 20m      |
+|-------+-------+----------|
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 20m      |
+|-------+-------+----------|
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 20m      |
+|-------+-------+----------|
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 10m      |
+|       | work  | 20m      |
+|       | break | 20m      |
+|-------+-------+----------|

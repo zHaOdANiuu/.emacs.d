@@ -5,7 +5,9 @@
   (fringe-mode '(16 . 16))
   (indicate-buffer-boundaries nil)
   (overflow-newline-into-fringe nil)
-  :config (setq-default fringes-outside-margins t))
+  :config
+  (setq-default fringes-outside-margins t)
+  (setf (cdr (assq 'truncation fringe-indicator-alist)) '(nil nil)))
 
 (use-package nn-fringe-scale
   :ensure nil
@@ -113,7 +115,8 @@
   :ensure nil
   :hook
   (gnus-article-mode
-   eww-mode org-mode markdown-ts-mode))
+   eww-mode org-mode markdown-ts-mode)
+  :custom (olivetti-mode-on-hook nil))
 
 (use-package minibuffer-frame
   :hook window-setup)
@@ -205,7 +208,7 @@ from `readable-foreground-color'."
 (use-package nerd-icons-corfu
   :if (eq nn-completion-style 'corfu)
   :after corfu
-  :config
+  :init
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
   (setq
    nerd-icons-corfu-mapping

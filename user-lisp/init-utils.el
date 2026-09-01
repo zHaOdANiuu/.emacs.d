@@ -121,7 +121,7 @@
   (defun my-calfw-open ()
     (interactive)
     (calfw-org-open-calendar)
-    (text-scale-set -2)
+    (text-scale-set -1)
     (calfw-refresh-calendar-buffer)))
 
 (use-package gt

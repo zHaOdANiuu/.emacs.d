@@ -20,12 +20,11 @@
 
 (use-package text-mode
   :ensure nil
-  :mode ("/.gitignore\\'" "/INSTALL\\'" "/LICENSE\\'")
+  :mode "/.gitignore\\'" "/INSTALL\\'" "/LICENSE\\'"
   :custom (text-mode-ispell-word-completion nil))
 
 (use-package conf-mode
   :ensure nil
-  :mode ("\\.env\\..*\\'" "\\.env\\'")
-  :init (add-to-list 'auto-mode-alist '("\\.env\\'" . conf-mode)))
+  :mode "\\.env\\..*\\'" "\\.env\\'")
 
 (provide 'init-lang)

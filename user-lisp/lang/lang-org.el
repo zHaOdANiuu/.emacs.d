@@ -88,7 +88,6 @@
      (js . t) (css . t)
      (plantuml . t)))
   :config
-  (add-to-list 'org-export-backends 'md)
   (add-to-list 'org-structure-template-alist '("n" . "note"))
   (add-to-list 'org-tags-exclude-from-inheritance "crypt")
   (add-to-list 'org-file-apps
@@ -98,7 +97,7 @@
 
   (dolist (abbrev '(("github"     . "https://github.com/%s")
                     ("youtube"    . "https://youtube.com/watch?v=%s")
-                    ("google"     . "https://google.com/search?q=")
+                    ("google"     . "https://google.com/search?q=%s")
                     ("gimages"    . "https://google.com/images?q=%s")
                     ("gmap"       . "https://maps.google.com/maps?q=%s")
                     ("kagi"       . "https://kagi.com/search?q=%s")
@@ -129,7 +128,17 @@
 
 (use-package org-src
   :ensure nil
-  :custom (org-src-preserve-indentation t))
+  :custom
+  (org-src-preserve-indentation t)
+  (org-src-lang-modes
+   '(("el" . emacs-lisp) ("elisp" . emacs-lisp)
+     ("sh" . sh) ("bash" . sh) ("powershell" . powershell)
+     ("bat" . bat) ("vbs" . js)
+     ("html" . web) ("css" . css) ("scss" . scss)
+     ("javascript" . js) ("js" . js) ("jsx" . js)
+     ("typescript" . typescript-ts) ("ts" . typescript-ts) ("tsx" . tsx-ts)
+     ("java" . java) ("go" . go-ts) ("rust" . rust-ts) ("python" . python)
+     ("c" . c) ("c++" . c++) ("cpp" . c++) ("glsl" . c))))
 
 (use-package org-capture
   :ensure nil

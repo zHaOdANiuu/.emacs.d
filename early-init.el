@@ -10,19 +10,23 @@
   (put 'if-let 'byte-obsolete-info nil)
   (put 'when-let 'byte-obsolete-info nil)
   (set-default-toplevel-value 'lexical-binding t)
+  (run-with-idle-timer 5 t #'garbage-collect)
 
-  (setq idle-update-delay 1.0
+  (setq native-comp-jit-compilation nil
+        native-comp-deferred-compilation nil
+        read-process-output-max (* 64 1024)
+        process-adaptive-read-buffering nil
+        redisplay-skip-fontification-on-input t
+        load-path-filter-function #'load-path-filter-cache-directory-files
         inhibit-message t
         inhibit-redisplay t
-        tool-bar-mode -1
         menu-bar-mode -1
+        tool-bar-mode -1
         scroll-bar-mode -1
-        default-frame-alist
-        '((menu-bar-lines . 0)
-          (tool-bar-lines . 0)
-          (horizontal-scroll-bars)
-          (vertical-scroll-bars)
-          (fullscreen . maximized)))
+        frame-title-format
+        '(:eval (concat
+                 (if (and buffer-file-name (buffer-modified-p)) "● " "")
+                 (buffer-name))))
 
   (let ((default-file-name-handler-alist file-name-handler-alist)
         (default-load-file-rep-suffixes load-file-rep-suffixes))
@@ -35,40 +39,33 @@
                       load-file-rep-suffixes default-load-file-rep-suffixes))
               101))
 
-  (when (boundp 'load-path-filter-function)
-    (setq load-path-filter-function #'load-path-filter-cache-directory-files))
-
   (when (boundp 'w32-get-true-file-attributes)
     (setq w32-get-true-file-attributes nil
           w32-pipe-read-delay 0
           w32-pipe-buffer-size (* 64 1024)))
   :custom
   (user-lisp-auto-scrape nil)
-  (native-comp-jit-compilation nil)
-  (native-comp-deferred-compilation nil)
   (gc-cons-percentage (if noninteractive #x8000000 most-positive-fixnum))
   (gc-cons-threshold (if noninteractive #x8000000 most-positive-fixnum))
   (load-prefer-newer t)
-  (redisplay-skip-fontification-on-input t)
-  (read-process-output-max (* 64 1024))
-  (process-adaptive-read-buffering nil)
-  (command-line-x-option-alist nil)
+  (idle-update-delay 1.0)
   (select-active-regions 'only)
-  (redisplay-skip-fontification-on-input t)
   (fast-but-imprecise-scrolling t)
   (ring-bell-function #'ignore)
   (use-short-answers t)
   (use-dialog-box nil)
   (use-file-dialog nil)
-  (inhibit-compacting-font-caches t)
   (inhibit-startup-screen t)
   (inhibit-startup-echo-area-message user-login-name)
+  (inhibit-compacting-font-caches t)
   (frame-resize-pixelwise t)
   (frame-inhibit-implied-resize t)
-  (frame-title-format
-   '(:eval (concat
-            (if (and buffer-file-name (buffer-modified-p)) "● " "")
-            (buffer-name)))))
+  (default-frame-alist
+    '((menu-bar-lines . 0)
+      (tool-bar-lines . 0)
+      (horizontal-scroll-bars)
+      (vertical-scroll-bars)
+      (fullscreen . maximized))))
 
 (use-package package
   :ensure nil

@@ -267,7 +267,9 @@ Adapted from URL `https://www.reddit.com/r/emacs/comments/d7x7x8/finally_fixing_
 
 (use-package help-mode
   :ensure nil
-  :hook (help-mode . cursor-sensor-mode)
+  :hook
+  (help-mode . visual-line-mode)
+  (help-mode . cursor-sensor-mode)
   :bind (:map help-mode-map ("r" . my-remove-hook-at-point))
   :config
   (defun my-function-advices (function)

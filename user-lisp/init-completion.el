@@ -174,18 +174,6 @@
    yas-activate-extra-mode
    yas-deactivate-extra-mode
    yas-maybe-expand-abbrev-key-filter)
-  :custom
-  (yas-verbosity 3)
-  (yas-snippet-dirs nil)
-  :config (yas-global-mode 1))
-
-(use-package yasnippet-snippets
-  :hook (simpc-mode . (lambda () (yas-activate-extra-mode 'c++-mode))))
-
-(use-package yasnippet-capf
-  :hook (yas-minor-mode . my-corfu-add-yasnippet-capf-h)
-  :config
-  (defun my-corfu-add-yasnippet-capf-h ()
-    (add-hook 'completion-at-point-functions #'yasnippet-capf 30 t)))
+  :hook (nn-first-input . yas-global-mode))
 
 (provide 'init-completion)

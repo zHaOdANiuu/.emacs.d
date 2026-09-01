@@ -62,11 +62,16 @@
     (dired default-directory)))
 
 (defun my-surround-word (char)
+  "Wrap word at point or active region with CHAR."
   (interactive "cWrap char: ")
-  (when-let (bnd (bounds-of-thing-at-point 'word))
-    (save-excursion
-      (goto-char (cdr bnd)) (insert char)
-      (goto-char (car bnd)) (insert char))))
+  (let ((beg (if (use-region-p) (region-beginning)
+               (car (bounds-of-thing-at-point 'word))))
+        (end (if (use-region-p) (region-end)
+               (cdr (bounds-of-thing-at-point 'word)))))
+    (when (and beg end)
+      (save-excursion
+        (goto-char end) (insert char)
+        (goto-char beg) (insert char)))))
 
 (defun my-surround-replace (char)
   (interactive "cReplace surrounding chars with: ")

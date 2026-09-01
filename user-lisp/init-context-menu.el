@@ -16,18 +16,18 @@
   (require 'live-server)
   (live-server-start))
 
-(defun nn-context-menu (event)
-  (interactive "e")
-  (let ((menu
-         (cond
-          ((or (derived-mode-p 'dired-mode)
-               (derived-mode-p 'speedbar-mode))
-           nn-project-menu-items)
-          ((or (derived-mode-p 'prog-mode)
-               (derived-mode-p 'text-mode))
-           nn-edit-menu-items)
-          (t nn-leisure-menu-items))))
-    (popup-menu menu event)))
+(defun nn-context-menu ()
+  (interactive)
+  (popup-menu
+   (cond
+    ((or (derived-mode-p 'dired-mode)
+         (derived-mode-p 'speedbar-mode))
+     nn-project-menu-items)
+    ((or (derived-mode-p 'prog-mode)
+         (derived-mode-p 'text-mode))
+     nn-edit-menu-items)
+    (t nn-leisure-menu-items))
+   `(mouse-3 ,(mouse-absolute-pixel-position))))
 
 (defconst nn-edit-menu-items
   '("NN Edit Menu"
@@ -88,5 +88,6 @@
 
 (keymap-global-set "<mouse-3>" #'nn-context-menu)
 (keymap-global-set "<left-margin> <mouse-3>" #'nn-context-menu)
+(keymap-global-set "<right-margin> <mouse-3>" #'nn-context-menu)
 
 (provide 'init-context-menu)

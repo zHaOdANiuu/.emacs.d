@@ -9,18 +9,17 @@
       bidi-paragraph-direction 'left-to-right
       long-line-threshold 1000
       large-hscroll-threshold 1000
-      truncate-partial-width-windows nil
       undo-limit (* 13 160000)
       undo-strong-limit (* 13 240000)
       undo-outer-limit (* 13 24000000)
-      word-wrap-by-category t
       sentence-end-double-space nil
       delete-pair-push-mark t)
 
-(setq-default word-wrap t
-              tab-width 2
+(setq-default tab-width 2
               tab-always-indent 'complete
-              fill-column 80)
+              fill-column 80
+              truncate-lines t
+              truncate-partial-width-windows nil)
 
 (use-package ffap
   :ensure nil
