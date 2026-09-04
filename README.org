@@ -1,18 +1,14 @@
-#+title: Elegant Emacs
-#+property: header-args :eval never-export
-#+startup: overview
-#+attr_org: :center t
-[[./user-lisp/logo.png]]
-#+attr_org: :center t
-[[https://img.shields.io/badge/Supports-Emacs_31+-purple.svg?style=flat-square&logo=GNU%20Emacs&logoColor=white]]
-[[https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square]]
+#+TITLE: Elegant Emacs
+#+AUTHOR: zhaodaniu
+#+OPTIONS: toc: nil
 
-
-[[./example/start.jpg]]
-
-[[./example/dir.png]]
-
-[[./example/theme.jpg]]
+#+HTML: <p align="center">
+#+HTML:   <img src="./user-lisp/logo.png" alt="Project Logo" width="300"/>
+#+HTML:   <br/>
+#+HTML:   <img src="https://img.shields.io/badge/Emacs-31%2B-green.svg" alt="Emacs 31+"/>
+#+HTML:   <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="GPLv3 License"/>
+#+HTML: </p>
+#+HTML: <hr />
 
 * Introduction
 
@@ -89,3 +85,9 @@ No framework bootstrap command is required.  On the first launch, the
 configuration creates its persistent state under =~/.emacs.d/.nn/=.  A
 Codeberg mirror is available at
 [[https://codeberg.org/zdn/.emacs.d.git][Codeberg]].
+
+* Preview
+
+#+ATTR_ORG: :width 400
+[[./example/home.jpg]] [[./example/gnus.jpg]]
+[[./example/dir.jpg]] [[./example/theme.jpg]]
