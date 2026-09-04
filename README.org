@@ -8,7 +8,6 @@
 #+HTML:   <img src="https://img.shields.io/badge/Emacs-31%2B-green.svg" alt="Emacs 31+"/>
 #+HTML:   <img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="GPLv3 License"/>
 #+HTML: </p>
-#+HTML: <hr />
 
 * Introduction
 
@@ -27,15 +26,15 @@ possible, while customization and persistent state remain easy to find in
 - *Editing and appearance.* Completion, formatting, folding, multiple cursors,
   file and buffer management, font and icon fallback, and the =nn-world= dark
   theme make the editor comfortable for daily use.
-- *Programming.* Tree-sitter modes cover C/C++, Emacs Lisp, JavaScript and
-  TypeScript, web templates, shell, Org, Markdown, JSON, and YAML.  Eglot
-  provides LSP navigation, renaming, references, and code actions; Flymake
-  shows diagnostics; Dape and GDB handle debugging.
+- *Programming.* Lang modes cover C/C++, JavaScript and TypeScript, web templates,
+  powershell, Markdown, JSON, and YAML.  Eglot provides LSP navigation, renaming,
+  references, and code actions; Flymake shows diagnostics; Dape and GDB handle
+  debugging.
 - *Projects and navigation.* Built-in Project support with ripgrep search,
-  Git-aware navigation, xref, Citre/readtags, bookmarks, and Dired makes it
-  easy to find and manage code and files.
+  xref, Citre/readtags, bookmarks, and Dired makes it easy to find and manage
+  code and files.
 - *Terminals and daily tools.* Ghostel provides a project-aware terminal,
-  while Eshell, EWW, Org, translation, mail/news, and IRC cover common work
+  while Eshell, EWW, translation, mail/news, and IRC cover common work
   without leaving Emacs.
 - *Live Server.* The =live-server= package starts a small Python HTTP server
   for a selected directory, with configurable host and port, directory
