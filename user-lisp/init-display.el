@@ -112,7 +112,6 @@
   :hook prog-mode)
 
 (use-package olivetti
-  :ensure nil
   :hook
   (gnus-article-mode
    eww-mode org-mode markdown-ts-mode)
