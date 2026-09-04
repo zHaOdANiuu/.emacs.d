@@ -59,8 +59,6 @@
   (webjump-sites
    '(("DuckDuckGo"     . [simple-query "https://www.duckduckgo.com"
                                        "https://www.duckduckgo.com/?q=" ""])
-     ("DuckDuckGoNoAI" . [simple-query "https://noai.duckduckgo.com"
-                                       "https://noai.duckduckgo.com/?q=" ""])
      ("DuckDuckAI"     . [simple-query "https://duck.ai" "https://duck.ai/?q=" ""])
      ("DuckDuckGoImg"  . [simple-query "https://www.duckduckgo.com"
                                        "https://www.duckduckgo.com/?iar=images&q=" ""])
@@ -69,13 +67,9 @@
                                        "https://www.google.com/search?q=" ""])
      ("YouTube"        . [simple-query "https://www.youtube.com/feed/subscriptions"
                                        "https://www.youtube.com/results?search_query=" ""])
-     ("Claude"         . [simple-query "https://claude.ai/new" "https://claude.ai/new?q=" ""])
-     ("ChatGPT"        . [simple-query "https://chatgpt.com" "https://chatgpt.com/?q=" ""])
      ("Wikipedia"      . [simple-query "wikipedia.org" "wikipedia.org/wiki/" ""])))
   :config
   (defun my-webjump-eww (&optional arg)
-    "Run `webjump' optionally forcing the internal browser (EWW)."
-    (interactive "P")
     (require 'eww)
     (let ((webjump-use-internal-browser arg))
       (call-interactively #'webjump))))
@@ -123,49 +117,6 @@
     (calfw-org-open-calendar)
     (text-scale-set -1)
     (calfw-refresh-calendar-buffer)))
-
-(use-package gt
-  :bind
-  ("C-c t w" . my-translate-word)
-  ("C-c t r" . my-translate-region)
-  ("C-c t b" . my-translate-buffer)
-  :custom
-  (gt-default-translator
-   (gt-translator
-    :taker (gt-taker :langs '(en zh) :text 'word :prompt t)
-    :engines (list (gt-youdao-dict-engine)
-                   (gt-youdao-suggest-engine))
-    :render (gt-buffer-render)))
-  :custom-face
-  (gt-overlay-source-face ((t nil)))
-  :config
-  (defvar my-gt--active nil)
-
-  (defun my-gt-translate (&optional mode)
-    (let ((gt-polyglot-p t))
-      (gt-start
-       (gt-translator
-        :taker (gt-taker :langs '(en zh) :text mode)
-        :engines (list (if (eq mode 'word)
-                           (gt-youdao-dict-engine)
-                         (gt-bing-engine)))
-        :render (if (eq mode 'word)
-                    (gt-buffer-render)
-                  (gt-overlay-render))))))
-
-  (defun my-gt-clear ()
-    (dolist (ov (gt-overlay-render-get-overlays (point-min) (point-max)))
-      (delete-overlay ov)))
-
-  (defun my-gt-auto-translate (&optional mode)
-    (setq my-gt--active (not my-gt--active))
-    (if my-gt--active
-        (my-gt-translate mode)
-      (my-gt-clear)))
-
-  (defun my-translate-word   () (interactive) (my-gt-auto-translate 'word))
-  (defun my-translate-region () (interactive) (my-gt-auto-translate 'region))
-  (defun my-translate-buffer () (interactive) (my-gt-auto-translate 'buffer)))
 
 (use-package simple-mpv
   :ensure nil

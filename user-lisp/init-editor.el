@@ -1,26 +1,4 @@
 ;;; -*- lexical-binding: t -*-
-(setq cursor-type 'box
-      visible-bell nil
-      visible-cursor nil
-      adaptive-fill-regexp "[ t]+|[ t]*([0-9]+.|*+)[ t]*"
-      adaptive-fill-first-line-regexp "^* *$"
-      bidi-inhibit-bpa t
-      bidi-display-reordering 'left-to-right
-      bidi-paragraph-direction 'left-to-right
-      long-line-threshold 1000
-      large-hscroll-threshold 1000
-      undo-limit (* 13 160000)
-      undo-strong-limit (* 13 240000)
-      undo-outer-limit (* 13 24000000)
-      sentence-end-double-space nil
-      delete-pair-push-mark t)
-
-(setq-default tab-width 2
-              tab-always-indent 'complete
-              fill-column 80
-              truncate-lines t
-              truncate-partial-width-windows nil)
-
 (use-package ffap
   :ensure nil
   :custom

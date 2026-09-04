@@ -1,9 +1,7 @@
 ;;; -*- lexical-binding: t -*-
-(use-package auth-source
-  :ensure nil
-  :custom
-  (user-full-name "zhaodaniu")
-  (user-mail-address "zhaodaniu1@gmail.com"))
+(setq user-full-name "zhaodaniu"
+      user-mail-address "zhaodaniu1@gmail.com"
+      url-configuration-directory (concat nn-directory "url/"))
 
 (use-package server
   :ensure nil
@@ -12,6 +10,10 @@
 (use-package nsm
   :ensure nil
   :custom (nsm-settings-file (concat nn-directory "network-security.eld")))
+
+(use-package ecomplete
+  :ensure nil
+  :custom (ecomplete-database-file (concat nn-directory "ecompleterc")))
 
 (use-package mm-decode
   :ensure nil
@@ -405,10 +407,10 @@
 
   (defun my-telega-proxy ()
     (telega--addProxy
-     `(:server "localhost"
-       :port ,nn-proxy-port
-       :type (:@type "proxyTypeSocks5"))
-     :enable-p 'enable))
+        `(:server "localhost"
+          :port ,nn-proxy-port
+          :type (:@type "proxyTypeSocks5"))
+      :enable-p 'enable))
 
   (when (eq system-type 'windows-nt)
     (define-advice telega-server--start (:around (fn &rest args) my-telega-server--start)

@@ -16,6 +16,12 @@
   (require 'live-server)
   (live-server-start))
 
+(defun my-translate-word () (interactive))
+
+(defun my-translate-region () (interactive))
+
+(defun my-translate-buffer () (interactive))
+
 (defun nn-context-menu ()
   (interactive)
   (popup-menu

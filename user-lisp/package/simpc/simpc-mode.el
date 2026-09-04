@@ -47,11 +47,11 @@
     "namespace" "asm" "static_assert" "reflexpr" "synchronized" "atomic_cancel"
     "atomic_commit" "atomic_noexcept"))
 
-(defvar simpc-font-lock-keywords
+(defconst simpc-font-lock-keywords
   `(("^# *\\(warn\\|error\\)" 0 font-lock-warning-face)
     ("^# *[#a-zA-Z0-9_]+" 0 font-lock-preprocessor-face)
     ("^# *include\\(?:_next\\)?\\s-+\\(\\(<\\|\"\\).*\\(>\\|\"\\)\\)" 1 font-lock-string-face)
-    (,(regexp-opt simpc-keywords 'words) 0 font-lock-keyword-face)
+    (,(regexp-opt simpc-keywords 'symbols) 0 font-lock-keyword-face)
     (,(regexp-opt simpc-types 'symbols) 0 font-lock-type-face)
     ("\\_<\\(?:true\\|false\\|nullptr\\)\\_>" 0 font-lock-constant-face)
     ("\\_<0[xX][0-9a-fA-F_]+\\_>" 0 font-lock-constant-face)
@@ -75,7 +75,7 @@
   (let ((depth (nth 0 parse-status))             ; Depth in parens
         (paren-start (nth 1 parse-status))       ; Position of the paren that started this list
         ;; (paren-prev (nth 2 parse-status))     ; Position of the previous sibling paren
-        (in-string (nth 3 parse-status))         ; Non-nil if inside a string
+        ;; (in-string (nth 3 parse-status))      ; Non-nil if inside a string
         (in-comment (nth 4 parse-status))        ; Non-nil if inside a comment
         ;; (string-start (nth 5 parse-status))   ; Start position of string or comment
         ;; (string-end (nth 6 parse-status))     ; End position of string or comment
@@ -100,26 +100,27 @@
       (cond
        (in-comment (current-indentation))
 
+       ((save-excursion
+          (forward-line -1)
+          (back-to-indentation)
+          (looking-at "\\_<\\(if\\|while\\|for\\|else\\|do\\|try\\|catch\\)\\_>"))
+        (save-excursion
+          (forward-line -1)
+          (back-to-indentation)
+          (+ (current-indentation) simpc-indent-width)))
+
        (paren-start
-        (let ((same-indent-p (looking-at "[]})]"))
-              (case-keyword-p (looking-at "default\\_>\\|case\\_>[^:]")))
+        (let ((close-p (looking-at "[]})]"))
+              (case-label-p (looking-at "\\_<\\(case\\|default\\)\\_>")))
           (goto-char paren-start)
-          (cond
-           (same-indent-p
-            (back-to-indentation)
-            (current-column))
-
-           ((looking-at "[({[]\\s-*$")
-            (back-to-indentation)
+          (back-to-indentation)
+          (if close-p
+              (current-column)
             (+ (current-column)
-               (if (looking-at "\\_<switch\\_>")
-                   (* simpc-indent-width (if case-keyword-p 1 2))
-                 simpc-indent-width)))
-
-           (t
-            (forward-char)
-            (skip-chars-forward " \t")
-            (current-column)))))
+               (* simpc-indent-width
+                  (if (looking-at "\\_<switch\\_>")
+                      (if case-label-p 1 2)
+                    1))))))
 
        (t (prog-first-column))))))
 

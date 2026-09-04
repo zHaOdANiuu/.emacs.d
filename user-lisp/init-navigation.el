@@ -3,7 +3,7 @@
   :ensure nil
   :hook
   (prog-mode . goto-address-prog-mode)
-  (text-mode . goto-address-mode))
+  (text-mode . goto-address-prog-mode))
 
 (use-package xref
   :autoload xref-show-definitions-completing-read
@@ -49,7 +49,6 @@
    ("M-<f12>" . citre-peek)
    :map citre-peek-keymap
    ("q" . keyboard-quit))
-  :init (require 'citre-config)
   :hook (prog-mode . citre-mode)
   :custom-face
   (citre-peek-border-face ((t :inherit font-lock-keyword-face :strike-through t :extend t)))
@@ -63,6 +62,8 @@
   (citre-edit-ctags-options-manually nil)
   (citre-auto-enable-citre-mode-backends-for-remote nil)
   :config
+  (require 'citre-config)
+
   (add-to-list 'completion-category-overrides '(citre (styles basic)))
 
   (defvar-local nn-citre-external-tags nil

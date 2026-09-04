@@ -119,6 +119,26 @@
    `(font-lock-variable-name-face        ((t :foreground ,fg)))
    `(font-lock-variable-use-face         ((t :foreground ,fg)))
 
+   `(dired-flagged           ((t :foreground ,red)))
+   `(dired-marked            ((t :bold t)))
+   `(dired-mark              ((t :inherit dired-marked)))
+   `(dired-header            ((t :foreground ,pink)))
+   `(dired-ignored           ((t :foreground ,dim)))
+   `(dired-special           ((t :foreground ,yellow)))
+   `(dired-symlink           ((t :foreground ,pink)))
+   `(dired-warning           ((t :inherit warning)))
+   `(dired-directory         ((t :foreground ,teal)))
+   `(dired-perm-write        ((t :foreground ,green)))
+   `(dired-broken-symlink    ((t :foreground ,fg :background ,red)))
+
+   `(speedbar-button-face    ((t :foreground ,teal)))
+   `(speedbar-directory-face ((t :inherit dired-directory)))
+   `(speedbar-file-face      ((t :foreground ,fg)))
+   `(speedbar-highlight-face ((t :inherit highlight)))
+   `(speedbar-selected-face  ((t :foreground ,pink :underline t)))
+   `(speedbar-separator-face ((t :foreground ,dim)))
+   `(speedbar-tag-face       ((t :foreground ,yellow)))
+
    `(isearch      ((t :inherit match)))
    `(isearch-fail ((t :inherit error)))
 
@@ -145,28 +165,6 @@
    `(wgrep-face        ((t nil)))
    `(wgrep-done-face   ((t :inherit success :strike-through t)))
    `(wgrep-reject-face ((t :inherit error :underline (:style wave))))
-
-   `(newsticker-treeview-selection-face ((t :foreground ,pink :bold t)))
-
-   `(dired-flagged           ((t :foreground ,red)))
-   `(dired-marked            ((t :bold t)))
-   `(dired-mark              ((t :inherit dired-marked)))
-   `(dired-header            ((t :foreground ,pink)))
-   `(dired-ignored           ((t :foreground ,dim)))
-   `(dired-special           ((t :foreground ,yellow)))
-   `(dired-symlink           ((t :foreground ,pink)))
-   `(dired-warning           ((t :inherit warning)))
-   `(dired-directory         ((t :foreground ,fg)))
-   `(dired-perm-write        ((t :foreground ,green)))
-   `(dired-broken-symlink    ((t :foreground ,fg :background ,red)))
-
-   `(speedbar-button-face    ((t :foreground ,teal)))
-   `(speedbar-directory-face ((t :inherit dired-directory)))
-   `(speedbar-file-face      ((t :foreground ,fg)))
-   `(speedbar-highlight-face ((t :inherit highlight)))
-   `(speedbar-selected-face  ((t :foreground ,pink :underline t)))
-   `(speedbar-separator-face ((t :foreground ,dim)))
-   `(speedbar-tag-face       ((t :foreground ,yellow)))
 
    `(flymake-error   ((t :underline (:style wave :color ,red-dark))))
    `(flymake-warning ((t :underline (:style wave :color ,yellow-dark))))
@@ -341,6 +339,8 @@
    `(outline-5 ((t :foreground ,teal)))
    `(outline-6 ((t :foreground ,blue)))
    `(outline-7 ((t :foreground ,purple)))
+
+   `(newsticker-treeview-selection-face ((t :foreground ,pink :bold t)))
 
    `(message-header-to         ((t :foreground ,red)))
    `(message-header-cc         ((t :foreground ,bright)))

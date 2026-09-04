@@ -164,6 +164,7 @@
 (keymap-global-set "C-<tab>" #'bs-cycle-next)
 (keymap-global-set "C-S-<tab>" #'bs-cycle-previous)
 (keymap-global-set "C-a" #'back-to-indentation)
+(keymap-global-set "M-m" #'move-beginning-of-line)
 (keymap-global-set "C-v" #'yank)
 (keymap-global-set "C-z" #'undo)
 (keymap-global-set "C-S-z" #'undo-redo)
