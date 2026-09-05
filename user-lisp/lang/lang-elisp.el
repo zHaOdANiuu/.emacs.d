@@ -1,6 +1,9 @@
 ;;; -*- lexical-binding: t -*-
 (use-package elisp-mode
   :ensure nil
+  :bind
+  ("<f12>" . find-function-at-point)
+  ("C-<f12>" . find-variable-at-point)
   :hook (emacs-lisp-mode . prettify-symbols-mode)
   :custom
   (emacs-lisp-indent-offset nn-indent-offset)

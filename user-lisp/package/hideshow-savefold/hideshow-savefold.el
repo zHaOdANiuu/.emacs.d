@@ -22,12 +22,6 @@
       (and (buffer-file-name)
            (expand-file-name (buffer-file-name)))))
 
-(defalias 'hideshow-savefold--make-overlay
-  (if (>= emacs-major-version 31)
-      (lambda (s e k) (hs-make-overlay s e k))
-    (lambda (s e k) (hs-make-overlay s e k nil nil)))
-  "`hs-make-overlay' with arity matching this Emacs version.")
-
 (defgroup hideshow-savefold nil
   "Persist hideshow folds across Emacs sessions."
   :group 'convenience
@@ -104,7 +98,8 @@ Call `hideshow-savefold--write-attrs' afterwards to persist."
   "Save hideshow fold data for the current buffer to disk."
   (when (and (buffer-file-name)
              (not (buffer-modified-p)))
-    (hideshow-savefold--set-attr hideshow-savefold--folds-attr (hideshow-savefold--collect-folds))
+    (hideshow-savefold--set-attr hideshow-savefold--folds-attr
+                                 (hideshow-savefold--collect-folds))
     (hideshow-savefold--set-modtime)
     (hideshow-savefold--write-attrs)))
 
@@ -115,7 +110,7 @@ Call `hideshow-savefold--write-attrs' afterwards to persist."
       (when-let* ((folds (hideshow-savefold--get-attr
                           hideshow-savefold--folds-attr)))
         (dolist (fd folds)
-          (hideshow-savefold--make-overlay (car fd) (cadr fd) (caddr fd)))))))
+          (hs-make-overlay (car fd) (cadr fd) (caddr fd)))))))
 
 (defun hideshow-savefold--mapc-buffers (fun pred)
   "Call FUN in every live buffer where PRED returns non-nil."

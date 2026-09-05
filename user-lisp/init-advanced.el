@@ -176,7 +176,7 @@
   :custom
   (speedbar-window-side 'right)
   (speedbar-window-default-width 30)
-  (speedbar-vc-do-check t)
+  (speedbar-vc-do-check nil)
   (speedbar-obj-do-check nil)
   (speedbar-use-images nil)
   (speedbar-use-imenu-flag nil)
@@ -187,7 +187,7 @@
   (speedbar-dynamic-tags-function-list nil)
   (speedbar-special-mode-expansion-list nil)
   (speedbar-show-unknown-files t)
-  (speedbar-smart-directory-expand-flag t)
+  (speedbar-smart-directory-expand-flag nil)
   (speedbar-verbosity-level 0)
   (speedbar-directory-unshown-regexp "^\\(\\.\\.*$\\)"))
 

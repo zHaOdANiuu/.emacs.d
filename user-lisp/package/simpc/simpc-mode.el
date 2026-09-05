@@ -48,9 +48,10 @@
     "atomic_commit" "atomic_noexcept"))
 
 (defconst simpc-font-lock-keywords
-  `(("^# *\\(warn\\|error\\)" 0 font-lock-warning-face)
-    ("^# *[#a-zA-Z0-9_]+" 0 font-lock-preprocessor-face)
-    ("^# *include\\(?:_next\\)?\\s-+\\(\\(<\\|\"\\).*\\(>\\|\"\\)\\)" 1 font-lock-string-face)
+  `(("^\\s-*#\\s-*\\(warn\\|error\\)" 0 font-lock-warning-face)
+    ("^\\s-*#\\s-*\\(?:[a-zA-Z0-9_]+\\)" 0 font-lock-preprocessor-face)
+    ("\\b\\(defined\\)\\b" 1 font-lock-preprocessor-face t)
+    ("^\\s-*#\\s-*include\\(?:_next\\)?\\s-+\\(\\(<\\|\"\\).*\\(>\\|\"\\)\\)" 1 font-lock-string-face)
     (,(regexp-opt simpc-keywords 'symbols) 0 font-lock-keyword-face)
     (,(regexp-opt simpc-types 'symbols) 0 font-lock-type-face)
     ("\\_<\\(?:true\\|false\\|nullptr\\)\\_>" 0 font-lock-constant-face)

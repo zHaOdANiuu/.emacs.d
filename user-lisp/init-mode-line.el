@@ -131,9 +131,9 @@
 (define-advice flymake--handle-report (:after (&rest _) reset-nn-flymake-cache)
   (setq nn-mode-line--flymake-cache nil
         nn-mode-line--flymake-counts
-        (list (string-to-number (format-mode-line flymake-mode-line-error-counter))
-              (string-to-number (format-mode-line flymake-mode-line-warning-counter))
-              (string-to-number (format-mode-line flymake-mode-line-note-counter)))))
+        `(,(string-to-number (format-mode-line flymake-mode-line-error-counter))
+          ,(string-to-number (format-mode-line flymake-mode-line-warning-counter))
+          ,(string-to-number (format-mode-line flymake-mode-line-note-counter)))))
 
 (define-advice eglot--managed-mode (:after (&rest _) reset-nn-eglot-cache)
   (setq nn-mode-line--eglot-cache nil))

@@ -119,15 +119,17 @@
    `(font-lock-variable-name-face        ((t :foreground ,fg)))
    `(font-lock-variable-use-face         ((t :foreground ,fg)))
 
+   `(sh-heredoc ((t :inherit font-lock-string-face)))
+
    `(dired-flagged           ((t :foreground ,red)))
-   `(dired-marked            ((t :bold t)))
+   `(dired-marked            ((t :foreground ,red)))
    `(dired-mark              ((t :inherit dired-marked)))
    `(dired-header            ((t :foreground ,pink)))
    `(dired-ignored           ((t :foreground ,dim)))
    `(dired-special           ((t :foreground ,yellow)))
    `(dired-symlink           ((t :foreground ,pink)))
    `(dired-warning           ((t :inherit warning)))
-   `(dired-directory         ((t :foreground ,teal)))
+   `(dired-directory         ((t :foreground ,(color-darken-name fg 10))))
    `(dired-perm-write        ((t :foreground ,green)))
    `(dired-broken-symlink    ((t :foreground ,fg :background ,red)))
 

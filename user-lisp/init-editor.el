@@ -213,7 +213,7 @@
   :bind
   (:map viper-vi-global-user-map
    ;; Movements by references and LSP
-   ("gd" .'xref-find-references)
+   ("gd" . xref-find-references)
    ("SPC c a" . eglot-code-actions)
    ("SPC s g" . project-find-regexp)
    ("SPC s f" . project-find-file)
