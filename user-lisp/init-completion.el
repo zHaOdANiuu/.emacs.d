@@ -68,29 +68,30 @@
 
 (use-package completion-preview
   :ensure nil
-  :if (eq nn-completion-style 'completion-preview)
   :bind
   (:map completion-preview-active-mode-map
    ("C-n" . completion-preview-next-candidate)
    ("C-p" . completion-preview-prev-candidate)
+   ("C-<down>" . completion-preview-next-candidate)
+   ("C-<up>" . completion-preview-next-candidate)
    ("C-l" . (lambda () (interactive)
               (completion-preview-hide)
               (completion-preview-next-candidate))))
+  :hook (text-mode . completion-preview-mode)
   :custom
   (completion-preview-ignore-case t)
   (completion-preview-minimum-symbol-length nil)
   (completion-preview-completion-styles '(basic partial-completion initials orderless)))
 
 (use-package corfu
-  :if (eq nn-completion-style 'corfu)
   :bind
   (:map corfu-map
    ([tab] . corfu-complete)
-   ("<return>" . corfu-complete)
    ([backtab] . corfu-previous)
+   ("<return>" . corfu-complete)
    ("<escape>" . corfu-quit)
    ("S-SPC" . corfu-insert-separator))
-  :hook (nn-first-input . global-corfu-mode)
+  :hook (prog-mode . corfu-mode)
   :custom
   (cor)
   (corfu-auto t)

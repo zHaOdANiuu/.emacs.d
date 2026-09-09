@@ -33,13 +33,6 @@
   :type 'number
   :group 'nn)
 
-(defcustom nn-completion-style 'corfu
-  "Completion framework to use."
-  :type '(choice
-          (const :tag "Corfu" corfu)
-          (const :tag "Completion-preview" completion-preview))
-  :group 'nn)
-
 (defcustom nn-buffer-allow-names
   '("*compilation*" "*eshell*" "*ghostel*")
   "List of buffer names allowed in special contexts."

@@ -125,7 +125,6 @@
 (defun my-split-above-and-switch ()  (interactive) (my-split-and-switch 'above))
 
 (keymap-global-set "<escape>" #'keyboard-escape-quit)
-(keymap-global-set "C-!" #'my-replace)
 (keymap-global-set "C-c o f" #'my-split-right-and-switch)
 (keymap-global-set "C-c o b" #'my-split-left-and-switch)
 (keymap-global-set "C-c o n" #'my-split-below-and-switch)
@@ -144,8 +143,9 @@
 (keymap-global-set "C-x k" #'my-kill)
 (keymap-global-set "C-x C-k" #'kill-buffer)
 (keymap-global-set "C-S-<backspace>" #'my-delete-whole-line-no-kill)
-(keymap-global-set "C-," #'my-copy-line-and-move-down)
+(keymap-global-set "C-c r" #'my-replace)
 (keymap-global-set "C-~" #'my-home-dired)
+(keymap-global-set "C-," #'my-copy-line-and-move-down)
 (keymap-global-set "C-'" #'imenu)
 (keymap-global-set "C-1" #'scroll-up-command)
 (keymap-global-set "C-2" #'scroll-down-command)

@@ -305,21 +305,6 @@
        (make-string (- cells scaled-filled)
                     simple-mpv-audio-progress-empty-char)))))
 
-(defun simple-mpv--audio-control-refresh ()
-  (simple-mpv--audio-control-request-property "media-title")
-  (simple-mpv--ipc-dispatch
-   (lambda (value)
-     (simple-mpv--audio-control-property-change "metadata" value))
-   "get_property" "metadata")
-  (simple-mpv--ipc-dispatch
-   (lambda (value)
-     (when (and (stringp value) (not (string-empty-p value)))
-       (setf (alist-get 'author simple-mpv--audio-control-state) value)
-       (simple-mpv--audio-control-render)))
-   "get_property" "metadata/author")
-  (simple-mpv--audio-control-request-property "time-pos")
-  (simple-mpv--audio-control-request-property "duration"))
-
 (defun simple-mpv--audio-control-tick ()
   "Poll mpv for position, title, and duration while the control is visible."
   (cond
@@ -337,6 +322,21 @@
       (dolist (property '("media-title" "duration"))
         (simple-mpv--audio-control-request-property property))))))
 
+(defun simple-mpv--audio-control-refresh ()
+  (simple-mpv--audio-control-request-property "media-title")
+  (simple-mpv--ipc-dispatch
+   (lambda (value)
+     (simple-mpv--audio-control-property-change "metadata" value))
+   "get_property" "metadata")
+  (simple-mpv--ipc-dispatch
+   (lambda (value)
+     (when (and (stringp value) (not (string-empty-p value)))
+       (setf (alist-get 'author simple-mpv--audio-control-state) value)
+       (simple-mpv--audio-control-render)))
+   "get_property" "metadata/author")
+  (simple-mpv--audio-control-request-property "time-pos")
+  (simple-mpv--audio-control-request-property "duration"))
+
 (defun simple-mpv--audio-control-ensure ()
   (unless (buffer-live-p simple-mpv--audio-control-buffer)
     (setq simple-mpv--audio-control-buffer
@@ -350,7 +350,7 @@
     (let ((win (display-buffer-in-side-window
                 simple-mpv--audio-control-buffer
                 '((side . bottom) (slot . 0)))))
-      (set-window-text-height win 1)
+      (set-window-text-height win 2)
       (set-window-parameter win 'no-other-window t)
       (set-window-parameter win 'no-delete-other-windows t)
       (set-window-dedicated-p win t)
@@ -371,30 +371,26 @@
 (defun simple-mpv--audio-control-render-line-content (description progress time width)
   (let* ((button-items
           `(,(simple-mpv--audio-control-button
-              "🙏" "Random play" #'simple-mpv--audio-control-random 1.2)
+              "🙏" "Random play" #'simple-mpv--audio-control-random 1.3)
             ,(simple-mpv--audio-control-button
-              "👈" "Previous track" #'simple-mpv--audio-control-last 1.2)
+              "👈" "Previous track" #'simple-mpv--audio-control-last 1.3)
             ,(simple-mpv--audio-control-button
               (if simple-mpv--audio-control-play-flag "👌" "✋")
               "Play or pause" #'simple-mpv--audio-control-auto-play 1.6)
             ,(simple-mpv--audio-control-button
-              "👉" "Next track" #'simple-mpv--audio-control-next 1.2)
+              "👉" "Next track" #'simple-mpv--audio-control-next 1.3)
             ,(simple-mpv--audio-control-button
-              "🤏" "Toggle loop" #'simple-mpv--audio-control-loop 1.2)))
+              "🤏" "Toggle loop" #'simple-mpv--audio-control-loop 1.3)))
          (right-full (concat progress " " time))
          (progress-width (- width (string-width time) 1))
-         (right
-          (cond
-           ((>= width (string-width right-full))
-            right-full)
-           ((> progress-width 0)
-            (concat
-             (simple-mpv--audio-control-progress-fit progress progress-width)
-             " " time))
-           ((>= width (string-width time))
-            time)
-           (t
-            (simple-mpv--audio-control-progress-fit progress width))))
+         (right (cond
+                 ((>= width (string-width right-full)) right-full)
+                 ((> progress-width 0)
+                  (concat
+                   (simple-mpv--audio-control-progress-fit progress progress-width)
+                   " " time))
+                 ((>= width (string-width time)) time)
+                 (t (simple-mpv--audio-control-progress-fit progress width))))
          (right-width (string-width right))
          (buttons-with-gap (mapconcat #'identity button-items " "))
          (buttons-compact (mapconcat #'identity button-items ""))
@@ -409,9 +405,8 @@
            (t "")))
          (buttons-width (string-width buttons)))
     (let* ((button-column
-            (max 0
-                 (min (truncate (/ (- width buttons-width) 2))
-                      (- width right-width buttons-width 1))))
+            (max 0 (min (truncate (/ (- width buttons-width) 2))
+                        (- width right-width buttons-width 1))))
            (description-width-limit
             (min (truncate (* width 0.40))
                  (max 0 (1- button-column))))
@@ -421,10 +416,8 @@
                  description description-width-limit 0 nil t)
               "")))
       (concat
-       description
-       (simple-mpv--audio-control-align-space button-column)
-       buttons
-       (simple-mpv--audio-control-align-space (- width right-width))
+       description (simple-mpv--audio-control-align-space button-column)
+       buttons (simple-mpv--audio-control-align-space (- width right-width))
        right))))
 
 (defun simple-mpv--audio-control-render-line (description progress time)

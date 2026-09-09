@@ -13,6 +13,11 @@
 (cl-loop for font in '("IBM Plex Mono" "JetBrains Mono" "Iosevka SS13" "Cascadia Mono")
          when (find-font (font-spec :family font))
          return (set-face-attribute 'default nil :family font :height 140))
+;; Unicode
+(cl-loop for font in '("Segoe UI" "Arial Unicode MS")
+         for spec = (font-spec :family font)
+         when (find-font spec)
+         return (set-fontset-font t 'unicode spec nil))
 ;; Chinese
 (cl-loop for font in '("LXGW WenKai Mono" "Sarasa Mono SC"
                        "Microsoft YaHei" "DengXian" "Simhei")

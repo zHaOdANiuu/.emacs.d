@@ -7,7 +7,9 @@
   ;; 2. Fontify command substitution in double quotes
   ;; 3. Fontify built-in/common commands (see `+sh-builtin-keywords')
   (sh-mode . my-sh-init-extra-fontification-h)
-  :custom (sh-indent-after-continuation 'always)
+  :custom
+  (sh-basic-offset nn-indent-offset)
+  (sh-indent-after-continuation 'always)
   :config
   (add-to-list 'sh-imenu-generic-expression
                '(sh (nil "^\\s-*function\\s-+\\([[:alpha:]_-][[:alnum:]_-]*\\)\\s-*\\(?:()\\)?" 1)

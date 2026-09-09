@@ -233,7 +233,7 @@ files, so this replace calls to `pp' with the much faster `prin1'."
       (window-width . 0.5)
       (side . right)
       (slot . 0))
-     ("\\*\\(Flymake diagnostics\\)"
+     ("\\*\\(Flymake diagnostics\\)\\*"
       (display-buffer-in-side-window)
       (window-height . 0.35)
       (side . bottom)

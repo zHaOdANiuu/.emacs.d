@@ -14,7 +14,6 @@
   ("C-c h ." . my-eldoc-copy)
   ("M-<return>" . eldoc-print-current-symbol-info)
   :custom
-  (eldoc-help-at-pt t)
   (eldoc-idle-delay 0.5)
   (eldoc-idle-delay-visible-only t)
   (eldoc-echo-area-use-multiline-p nil)

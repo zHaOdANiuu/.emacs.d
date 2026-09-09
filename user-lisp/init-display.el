@@ -2,7 +2,7 @@
 (use-package fringe
   :ensure nil
   :custom
-  (fringe-mode '(16 . 16))
+  (fringe-mode '(16 . 0))
   (indicate-buffer-boundaries nil)
   (overflow-newline-into-fringe nil)
   :config
@@ -117,9 +117,6 @@
    eww-mode org-mode markdown-ts-mode)
   :custom (olivetti-mode-on-hook nil))
 
-(use-package minibuffer-frame
-  :hook window-setup)
-
 (use-package color-picker
   :vc (:url "https://github.com/zHaOdANiuu/color-picker.el" :rev :newest)
   :commands color-picker
@@ -181,16 +178,6 @@ from `readable-foreground-color'."
                       'pointer 'hand))
         (overlay-put ov 'face nil)))))
 
-(use-package material-icon
-  :vc (:url "https://github.com/zHaOdANiuu/material-icon.el" :rev :newest)
-  :hook
-  (dired-mode . material-icon-dired-icons-mode)
-  (ibuffer-mode . material-icon-ibuffer-icons-mode)
-  :init
-  (setq material-icon-size 22)
-  (with-eval-after-load 'speedbar
-    (material-icon-speedbar-icons-mode 1)))
-
 (use-package nerd-icons
   :commands
   (nerd-icons-octicon
@@ -205,7 +192,6 @@ from `readable-foreground-color'."
    nerd-icons-powerline))
 
 (use-package nerd-icons-corfu
-  :if (eq nn-completion-style 'corfu)
   :after corfu
   :init
   (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)
@@ -246,5 +232,17 @@ from `readable-foreground-color'."
      (unit :style "cod" :icon "symbol_ruler" :face nerd-icons-lsilver)
      (value :style "cod" :icon "symbol_field" :face nerd-icons-lblue)
      (variable :style "cod" :icon "symbol_variable" :face nerd-icons-lblue))))
+
+;; (use-package minibuffer-frame
+;;   :hook window-setup)
+
+(use-package material-icons
+  :hook
+  (dired-mode . material-icons-dired-icons-mode)
+  (ibuffer-mode . material-icons-ibuffer-icons-mode)
+  :init
+  (setq material-icons-size 22)
+  (with-eval-after-load 'speedbar
+    (material-icons-speedbar-icons-mode 1)))
 
 (provide 'init-display)

@@ -11,12 +11,31 @@
     (modify-syntax-entry ?/ ". 124b" table)
     (modify-syntax-entry ?* ". 23" table)
     (modify-syntax-entry ?\n "> b" table)
+    (modify-syntax-entry ?\" "\"" table)
+    (modify-syntax-entry ?\\ "\\" table)
+    (modify-syntax-entry ?\( "()" table)
+    (modify-syntax-entry ?\) ")(" table)
+    (modify-syntax-entry ?{ "(}" table)
+    (modify-syntax-entry ?} "){" table)
+    (modify-syntax-entry ?\[ "(]" table)
+    (modify-syntax-entry ?\] ")[" table)
     (modify-syntax-entry ?# "." table)
     (modify-syntax-entry ?' "\"" table)
     (modify-syntax-entry ?< "." table)
     (modify-syntax-entry ?> "." table)
     (modify-syntax-entry ?& "." table)
     (modify-syntax-entry ?% "." table)
+    (modify-syntax-entry ?+ "." table)
+    (modify-syntax-entry ?- "." table)
+    (modify-syntax-entry ?= "." table)
+    (modify-syntax-entry ?| "." table)
+    (modify-syntax-entry ?^ "." table)
+    (modify-syntax-entry ?! "." table)
+    (modify-syntax-entry ?~ "." table)
+    (modify-syntax-entry ?. "." table)
+    (modify-syntax-entry ?, "." table)
+    (modify-syntax-entry ?\; "." table)
+    (modify-syntax-entry ?_ "_" table)
     table))
 
 (defconst simpc-types
@@ -50,8 +69,8 @@
 (defconst simpc-font-lock-keywords
   `(("^\\s-*#\\s-*\\(warn\\|error\\)" 0 font-lock-warning-face)
     ("^\\s-*#\\s-*\\(?:[a-zA-Z0-9_]+\\)" 0 font-lock-preprocessor-face)
-    ("\\b\\(defined\\)\\b" 1 font-lock-preprocessor-face t)
     ("^\\s-*#\\s-*include\\(?:_next\\)?\\s-+\\(\\(<\\|\"\\).*\\(>\\|\"\\)\\)" 1 font-lock-string-face)
+    ("\\b\\(defined\\)\\b" 1 font-lock-preprocessor-face)
     (,(regexp-opt simpc-keywords 'symbols) 0 font-lock-keyword-face)
     (,(regexp-opt simpc-types 'symbols) 0 font-lock-type-face)
     ("\\_<\\(?:true\\|false\\|nullptr\\)\\_>" 0 font-lock-constant-face)
@@ -59,11 +78,12 @@
     ("\\_<0[bB][01_]+\\_>" 0 font-lock-constant-face)
     ("\\_<[0-9][0-9_]*\\(?:\\.[0-9_]*\\)?\\(?:[eE][+-]?[0-9_]*\\)?[uUlLfF]*\\_>" 0 font-lock-constant-face)
     ("\\([a-zA-Z_][a-zA-Z0-9_]*\\)::" 1 font-lock-constant-face)
+    ;; C++ template/generic type name: xxx<...>
+    ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)<[^>\n]*>" 1 font-lock-type-face)
     ("\\<\\(?:enum\\|using\\|struct\\|class\\)\\s-+\\([a-zA-Z0-9_]+\\)" 1 font-lock-type-face)
     ("\\<typedef\\b\\s-+[a-zA-Z_][a-zA-Z0-9_]*\\s-+\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\s-*;" 1 font-lock-type-face)
     ("\\<typedef\\b[^}]*}\\s-+\\([a-zA-Z_][a-zA-Z0-9_]*\\)" 1 font-lock-type-face)
-    ("\\<\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\([*&][ \t]*\\|[ \t]+[*&]\\)\\([a-zA-Z_][a-zA-Z0-9_]*\\b\\|[][;,}>\n)]\\)"
-     1 font-lock-type-face)
+    ("\\<\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\([*&][ \t]*\\|[ \t]+[*&]\\)\\([a-zA-Z_][a-zA-Z0-9_]*\\b\\|[][;,}>\n)]\\)" 1 font-lock-type-face)
     ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*[;=,({)]" 1 font-lock-type-face)
     ;; c++ func () -> return type
     (")\\s-*->\\s-*\\([^{\n]+\\)\\s-*{" 1 font-lock-type-face)
@@ -112,16 +132,19 @@
 
        (paren-start
         (let ((close-p (looking-at "[]})]"))
-              (case-label-p (looking-at "\\_<\\(case\\|default\\)\\_>")))
+              (case-label-p (looking-at "\\_<\\(case\\|default\\)\\_>"))
+              (access-spec-p (looking-at "\\_<\\(public\\|protected\\|private\\)\\_>")))
           (goto-char paren-start)
           (back-to-indentation)
           (if close-p
               (current-column)
             (+ (current-column)
                (* simpc-indent-width
-                  (if (looking-at "\\_<switch\\_>")
-                      (if case-label-p 1 2)
-                    1))))))
+                  (cond
+                   (access-spec-p 0)
+                   ((looking-at "\\_<switch\\_>")
+                    (if case-label-p 1 2))
+                   (t 1)))))))
 
        (t (prog-first-column))))))
 

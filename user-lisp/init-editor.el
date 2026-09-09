@@ -54,9 +54,9 @@
   :ensure nil
   :bind
   (:map hs-minor-mode-map
-   ("S-<return>" . hs-toggle-hiding)
    ("C-c [" . hs-show-all)
-   ("C-c ]" . my-hs-hide-level))
+   ("C-c ]" . my-hs-hide-level)
+   ("S-<return>" . hs-toggle-hiding))
   :hook
   (prog-mode . hs-minor-mode)
   ((js-json-mode
@@ -149,7 +149,7 @@
   ("M-n" . symbol-overlay-jump-next)
   ("M-p" . symbol-overlay-jump-prev)
   ("M-r" . symbol-overlay-rename)
-  :hook (prog-mode yaml-mode yaml-ts-mode)
+  :hook prog-mode
   :custom (symbol-overlay-idle-time 0.5))
 
 (use-package multiple-cursors
@@ -160,11 +160,11 @@
    ("C-M->" . mc/skip-to-next-like-this)
    ("C-M-<" . mc/skip-to-previous-like-this)
    :map mc/keymap
-   ("M-S-w" . my-mc/copy)
-   ("C-S-w" . my-mc/cat)
+   ("C-c M-w" . my-mc/copy)
+   ("C-c C-w" . my-mc/cat)
    ("C-;" . mc/vertical-align-with-space)
    ("<escape>" . multiple-cursors-mode))
-  :init (multiple-cursors-mode t)
+  :hook (nn-first-input . multiple-cursors-mode)
   :custom
   (mc/always-run-for-all t)
   (mc/list-file (concat nn-directory ".mc-lists.el"))

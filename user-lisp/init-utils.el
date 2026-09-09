@@ -121,14 +121,14 @@
 (use-package simple-mpv
   :ensure nil
   :custom (simple-mpv-debug nil)
-  :bind
-  (("C-c m" . simple-mpv-audio-browse)
-   :map dired-mode-map
-   ("C-c p" . simple-mpv-play-file)))
+  :bind ("C-c m" . simple-mpv-audio-browse)
+  :config
+  (with-eval-after-load 'dired
+    (keymap-set dired-mode-map "C-c p" #'simple-mpv-play-file)))
 
 (use-package nn-license-template
   :ensure nil
-  :defer nil
+  :commands nn-license-template-file nn-license-template-header
   :bind
   ("C-c l f" . nn-license-template-file)
   ("C-c l h" . nn-license-template-header))
