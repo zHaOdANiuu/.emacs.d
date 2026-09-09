@@ -70,7 +70,8 @@
 
 (use-package magit
   :bind
-  (("C-c g l" . magit-log-buffer-file)
+  (("C-x g" . magit-status-quick)
+   ("C-c g l" . magit-log-buffer-file)
    :map magit-status-mode-map
    ("<return>" . my-magit-fast-diff))
   :hook
@@ -79,7 +80,6 @@
   ;;   behavior of motions and TAB in obscure ways.
   ;; REVIEW: REmove when magit/magit#5320 is addressed.
   (magit-status-mode . (lambda () (setq long-line-threshold nil)))
-  (magit-process-mode . goto-address-mode)
   (magit-diff-visit-file . my-magit-reveal-point-if-invisible-h)
   :custom
   (git-commit-major-mode 'git-commit-elisp-text-mode)

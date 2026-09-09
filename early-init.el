@@ -91,9 +91,7 @@
   :init
   (setenv "TERM" "xterm-256color")
   (when (eq system-type 'windows-nt)
-    (setenv "GIT_TERMINAL_PROMPT" "0")
     (setenv "GIT_ASK_YESNO" "false")
-    (setenv "GIT_PAGER" "cat")
     (setenv "GIT_ASKPASS" "git-gui--askpass")
 
     (unless (getenv-internal "HOME")

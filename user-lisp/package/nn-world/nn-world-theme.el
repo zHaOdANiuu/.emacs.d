@@ -206,7 +206,7 @@
    `(completions-annotations      ((t :foreground ,bright)))
    `(completions-common-part      ((t :foreground ,pink)))
    `(completions-first-difference ((t :foreground ,pink)))
-   `(completions-group-separator  ((t :foreground ,dim :strike-through t)))
+   `(completions-group-separator  ((t :foreground ,bright :strike-through t)))
    `(completions-group-title      ((t :foreground ,pink :bold t)))
    `(completions-highlight        ((t :inherit highlight)))
 

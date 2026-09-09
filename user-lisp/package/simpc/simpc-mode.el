@@ -11,14 +11,6 @@
     (modify-syntax-entry ?/ ". 124b" table)
     (modify-syntax-entry ?* ". 23" table)
     (modify-syntax-entry ?\n "> b" table)
-    (modify-syntax-entry ?\" "\"" table)
-    (modify-syntax-entry ?\\ "\\" table)
-    (modify-syntax-entry ?\( "()" table)
-    (modify-syntax-entry ?\) ")(" table)
-    (modify-syntax-entry ?{ "(}" table)
-    (modify-syntax-entry ?} "){" table)
-    (modify-syntax-entry ?\[ "(]" table)
-    (modify-syntax-entry ?\] ")[" table)
     (modify-syntax-entry ?# "." table)
     (modify-syntax-entry ?' "\"" table)
     (modify-syntax-entry ?< "." table)
@@ -28,14 +20,6 @@
     (modify-syntax-entry ?+ "." table)
     (modify-syntax-entry ?- "." table)
     (modify-syntax-entry ?= "." table)
-    (modify-syntax-entry ?| "." table)
-    (modify-syntax-entry ?^ "." table)
-    (modify-syntax-entry ?! "." table)
-    (modify-syntax-entry ?~ "." table)
-    (modify-syntax-entry ?. "." table)
-    (modify-syntax-entry ?, "." table)
-    (modify-syntax-entry ?\; "." table)
-    (modify-syntax-entry ?_ "_" table)
     table))
 
 (defconst simpc-types
@@ -77,20 +61,21 @@
     ("\\_<0[xX][0-9a-fA-F_]+\\_>" 0 font-lock-constant-face)
     ("\\_<0[bB][01_]+\\_>" 0 font-lock-constant-face)
     ("\\_<[0-9][0-9_]*\\(?:\\.[0-9_]*\\)?\\(?:[eE][+-]?[0-9_]*\\)?[uUlLfF]*\\_>" 0 font-lock-constant-face)
-    ("\\([a-zA-Z_][a-zA-Z0-9_]*\\)::" 1 font-lock-constant-face)
-    ;; C++ template/generic type name: xxx<...>
-    ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)<[^>\n]*>" 1 font-lock-type-face)
     ("\\<\\(?:enum\\|using\\|struct\\|class\\)\\s-+\\([a-zA-Z0-9_]+\\)" 1 font-lock-type-face)
     ("\\<typedef\\b\\s-+[a-zA-Z_][a-zA-Z0-9_]*\\s-+\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\s-*;" 1 font-lock-type-face)
     ("\\<typedef\\b[^}]*}\\s-+\\([a-zA-Z_][a-zA-Z0-9_]*\\)" 1 font-lock-type-face)
-    ("\\<\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\([*&][ \t]*\\|[ \t]+[*&]\\)\\([a-zA-Z_][a-zA-Z0-9_]*\\b\\|[][;,}>\n)]\\)" 1 font-lock-type-face)
-    ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*[;=,({)]" 1 font-lock-type-face)
-    ;; c++ func () -> return type
-    (")\\s-*->\\s-*\\([^{\n]+\\)\\s-*{" 1 font-lock-type-face)
     ("\\b\\([a-zA-Z_][a-zA-Z0-9_]*\\)[ \t]*(" 1 font-lock-function-name-face)
-    ;; function pointer
-    ("(\\*\\([A-Za-z_][A-Za-z0-9_]*\\)\\s-*)\\s-*(" 1 font-lock-function-name-face)
-    (")[ \t]*(" ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)[*& \t]*[,)]" nil nil (1 font-lock-type-face)))))
+    ("\\([a-zA-Z_][a-zA-Z0-9_]*\\)::" 1 font-lock-constant-face)
+    ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)\\s-*<" 1 font-lock-type-face)
+    ("\\(?:<\\|,\\)\\s-*\\([A-Za-z_][A-Za-z0-9_]*\\)" 1 font-lock-type-face)
+    ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*[;=,({)]" 1 font-lock-type-face)
+    ("\\<\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\([*&]+[ \t]*\\|[ \t]+[*&]+\\)\\([a-zA-Z_][a-zA-Z0-9_]*\\b\\|[][;,}>\n)]\\)"
+     1 font-lock-type-face)
+    (")\\s-*->\\s-*\\([^{\n]+\\)\\s-*{" 1 font-lock-type-face) ;; c++ func () -> return type
+    ("(\\*\\([A-Za-z_][A-Za-z0-9_]*\\)\\s-*)\\s-*(" 1 font-lock-function-name-face) ;; func pointer
+    (")[ \t]*("
+     ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)[*& \t]*[,)]" nil nil (1 font-lock-type-face))) ;; fuc pointer args
+    ))
 
 (defun simpc--proper-indentation (parse-status)
   (let ((depth (nth 0 parse-status))             ; Depth in parens
@@ -103,7 +88,7 @@
         ;; (string-type (nth 7 parse-status))    ; Type of string or comment
         ;; (string-content (nth 8 parse-status)) ; Content of string or comment
         ;; (in-block (nth 9 parse-status))       ; Non-nil if inside a code block
-        )
+        (cur-line (string-trim-right (thing-at-point 'line t))))
     ;; Print all information for debugging
     ;; (message "=== Parse Status ===")
     ;; (message "Depth: %S" depth)
@@ -131,20 +116,17 @@
           (+ (current-indentation) simpc-indent-width)))
 
        (paren-start
-        (let ((close-p (looking-at "[]})]"))
-              (case-label-p (looking-at "\\_<\\(case\\|default\\)\\_>"))
-              (access-spec-p (looking-at "\\_<\\(public\\|protected\\|private\\)\\_>")))
+        (let* ((close-p (looking-at "[]})]"))
+               (label-p (string-suffix-p ":" cur-line)))
           (goto-char paren-start)
           (back-to-indentation)
-          (if close-p
-              (current-column)
-            (+ (current-column)
-               (* simpc-indent-width
-                  (cond
-                   (access-spec-p 0)
-                   ((looking-at "\\_<switch\\_>")
-                    (if case-label-p 1 2))
-                   (t 1)))))))
+          (+ (current-column)
+             (* simpc-indent-width
+                (cond
+                 (close-p 0)
+                 ((looking-at "\\_<switch\\_>") (if label-p 1 2))
+                 (label-p 0)
+                 (t 1))))))
 
        (t (prog-first-column))))))
 

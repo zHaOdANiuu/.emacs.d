@@ -37,8 +37,6 @@
 
 (defconst nn-edit-menu-items
   '("NN Edit Menu"
-    ["Comman Format" apheleia-format-buffer]
-    ["Debug Code"    dape]
     ["Lsp Connect"   eglot]
     ["Lsp Shutdown"  eglot-shutdown]
     ["Lsp Format"    eglot-format-buffer :active (nn-has-lsp)]
@@ -50,6 +48,8 @@
      ["Inline"           eglot-code-action-inline]
      ["Organize Imports" eglot-code-action-organize-imports]
      ["Rewrite"          eglot-code-action-rewrite])
+    ["Debug Code"    dape]
+    ["Comman Format" apheleia-format-buffer]
     "--"
     ["Translate Word"    my-translate-word]
     ["Translate Region"  my-translate-region]
@@ -66,17 +66,10 @@
   '("NN Project Menu"
     ["Create Tasg File" citre-create-tags-file]
     ["Update Tags File" citre-update-this-tags-file]
+    ["New File"         dired-create-empty-file]
+    ["New Folder"       dired-create-directory]
     ["On Live server"   nn-live-server]
-    ["On Explorer Open" nn-explorer-open]
-    ;; TODO
-    ("C/C++ Module"
-     ["New header File"     kill-buffer]
-     ["New C++ Module File" kill-buffer]
-     ["New C/C++ Project"   kill-buffer])
-    ("Web Module"
-     ["New HTML Project"  kill-buffer]
-     ["New Vue Project"   kill-buffer]
-     ["New React Project" kill-buffer])))
+    ["On Explorer Open" nn-explorer-open]))
 
 (defconst nn-leisure-menu-items
   '("NN Leisure Menu"

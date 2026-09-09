@@ -233,8 +233,8 @@ from `readable-foreground-color'."
      (value :style "cod" :icon "symbol_field" :face nerd-icons-lblue)
      (variable :style "cod" :icon "symbol_variable" :face nerd-icons-lblue))))
 
-;; (use-package minibuffer-frame
-;;   :hook window-setup)
+(use-package minibuffer-frame
+  :hook window-setup)
 
 (use-package material-icons
   :hook
