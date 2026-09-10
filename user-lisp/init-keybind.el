@@ -119,10 +119,21 @@
       ('above (split-window-below)))
     (switch-to-buffer buf)))
 
-(defun my-split-right-and-switch ()  (interactive) (my-split-and-switch 'right))
-(defun my-split-left-and-switch  ()  (interactive) (my-split-and-switch 'left))
-(defun my-split-below-and-switch ()  (interactive) (my-split-and-switch 'below))
-(defun my-split-above-and-switch ()  (interactive) (my-split-and-switch 'above))
+(defun my-split-right-and-switch ()
+  (interactive)
+  (my-split-and-switch 'right))
+
+(defun my-split-left-and-switch  ()
+  (interactive)
+  (my-split-and-switch 'left))
+
+(defun my-split-below-and-switch ()
+  (interactive)
+  (my-split-and-switch 'below))
+
+(defun my-split-above-and-switch ()
+  (interactive)
+  (my-split-and-switch 'above))
 
 (keymap-global-set "<escape>" #'keyboard-escape-quit)
 (keymap-global-set "C-c o f" #'my-split-right-and-switch)

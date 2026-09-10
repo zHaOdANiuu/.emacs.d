@@ -2,7 +2,7 @@
 (use-package fringe
   :ensure nil
   :custom
-  (fringe-mode '(16 . 0))
+  (fringe-mode '(16 . nil))
   (indicate-buffer-boundaries nil)
   (overflow-newline-into-fringe nil)
   :config

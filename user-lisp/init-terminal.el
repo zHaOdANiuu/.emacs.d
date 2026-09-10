@@ -7,6 +7,11 @@
   :if (featurep 'tty-child-frames)
   :hook (tty-setup . tty-tip-mode))
 
+(use-package ielm
+  :ensure nil
+  :bind ("C-c i" . ielm)
+  :custom (ielm-history-file-name (concat nn-directory "ielm-history.eld")))
+
 (use-package shell
   :ensure nil
   :bind
@@ -105,33 +110,6 @@
             (eshell-view-file file)
             (forward-line line))
         (my-eshell-view-file (pop args)))))  )
-
-(use-package ielm
-  :ensure nil
-  :custom (ielm-history-file-name (concat nn-directory "ielm-history.eld"))
-  :config
-  ;; Adapted from http://www.modernemacs.com/post/comint-highlighting/ to add
-  ;; syntax highlighting to ielm REPLs.
-  (setq ielm-font-lock-keywords
-        (append
-         '(("\\(^\\*\\*\\*[^*]+\\*\\*\\*\\)\\(.*$\\)"
-            (1 font-lock-comment-face)
-            (2 font-lock-constant-face)))
-         (cl-loop for (matcher . match-highlights)
-                  in (append lisp-el-font-lock-keywords-2
-                             lisp-cl-font-lock-keywords-2)
-                  collect
-                  `((lambda (limit)
-                      (when ,(if (symbolp matcher)
-                                 `(,matcher limit)
-                               `(re-search-forward ,matcher limit t))
-                        ;; Only highlight matches after the prompt
-                        (> (match-beginning 0) (car comint-last-prompt))
-                        ;; Make sure we're not in a comment or string
-                        (let ((state (syntax-ppss)))
-                          (not (or (nth 3 state)
-                                   (nth 4 state))))))
-                    ,@match-highlights)))))
 
 (use-package ghostel
   :commands ghostel

@@ -142,7 +142,6 @@ TRIGGER-HOOK is a list of quoted hooks and/or sharp-quoted functions."
 (nn-run-hook-on 'nn-first-input-hook '(pre-command-hook))
 (add-hook 'window-selection-change-functions #'nn-run-switch-window-hooks-h)
 (add-hook 'window-buffer-change-functions #'nn-run-switch-buffer-hooks-h)
-;; `window-buffer-change-functions' doesn't trigger for files visited via the server.
 (add-hook 'server-switch-hook #'nn-run-switch-buffer-hooks-h)
 
 (provide 'init-def)

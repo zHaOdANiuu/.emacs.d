@@ -376,7 +376,7 @@
   (telega-chat-input-markups '("markdown2" "org"))
   (telega-root-keep-cursor 'track)
   (telega-root-buffer-name "*Telega Root*")
-  (telega-root-fill-column 70)
+  (telega-root-fill-column 80)
   (telega-emoji-use-images nil)
   (telega-filters-custom nil)
   (telega-filter-custom-show-folders nil)
@@ -411,6 +411,21 @@
           :port ,nn-proxy-port
           :type (:@type "proxyTypeSocks5"))
       :enable-p 'enable))
+
+  (advice-add 'telega-ins--msg-reaction-type :around
+              (lambda (fn rt)
+                (if (eq (telega--tl-type rt) 'reactionTypeEmoji)
+                    (telega-ins
+                     (if (equal (telega-tl-str rt :emoji) "❤") "❤️"
+                       (telega-tl-str rt :emoji)))
+                  (funcall fn rt))))
+
+  (with-eval-after-load 'telega-util
+    (advice-add 'telega-msg-reaction-title-for-completion :filter-return
+                (lambda (s)
+                  (if (string-prefix-p "❤" s)
+                      (concat "❤️" (substring s 1))
+                    s))))
 
   (when (eq system-type 'windows-nt)
     (define-advice telega-server--start (:around (fn &rest args) my-telega-server--start)

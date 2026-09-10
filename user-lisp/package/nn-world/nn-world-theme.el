@@ -129,7 +129,7 @@
    `(dired-special           ((t :foreground ,yellow)))
    `(dired-symlink           ((t :foreground ,pink)))
    `(dired-warning           ((t :inherit warning)))
-   `(dired-directory         ((t :foreground ,(color-darken-name fg 10))))
+   `(dired-directory         ((t :foreground ,(color-darken-name fg 15))))
    `(dired-perm-write        ((t :foreground ,green)))
    `(dired-broken-symlink    ((t :foreground ,fg :background ,red)))
 

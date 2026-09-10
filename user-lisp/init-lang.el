@@ -21,10 +21,12 @@
 (use-package text-mode
   :ensure nil
   :mode "/.gitignore\\'" "/INSTALL\\'" "/LICENSE\\'"
+  :hook (text-mode . indent-tabs-mode)
   :custom (text-mode-ispell-word-completion nil))
 
 (use-package conf-mode
   :ensure nil
-  :mode "\\.env\\..*\\'" "\\.env\\'")
+  :mode "\\.env\\..*\\'" "\\.env\\'"
+  :hook (conf-mode . indent-tabs-mode))
 
 (provide 'init-lang)

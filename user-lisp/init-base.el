@@ -11,10 +11,20 @@
   (project-files-relative-names t)
   (project-search-function #'project-ripgrep))
 
+(use-package mule
+  :ensure nil
+  :config
+  (set-charset-priority 'unicode)
+  (set-default-coding-systems 'utf-8-unix)
+  (set-locale-environment "en_US.UTF-8")
+  (set-clipboard-coding-system
+   (if (eq system-type 'windows-nt)
+       'utf-16-le 'utf-8-unix)))
+
 (use-package simple
   :ensure nil
   :custom
-  (indent-tabs-mode nil)
+	(indent-tabs-mode nil)
   (idle-update-delay 0.5)
   (kill-whole-line t)
   (kill-region-dwim t)
@@ -212,7 +222,9 @@ files, so this replace calls to `pp' with the much faster `prin1'."
     (let ((name (buffer-name buf)))
       (or (member name nn-buffer-allow-names)
           (let ((first (aref name 0)))
-            (not (= first ?*))))))
+            (and (not (= first ?*))
+                 (not (memq (buffer-local-value 'major-mode buf)
+                            '(dired-mode org-agenda-mode))) )))))
   (set-frame-parameter nil 'buffer-predicate #'my-buffer-predicate))
 
 (use-package window

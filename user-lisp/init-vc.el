@@ -70,8 +70,7 @@
 
 (use-package magit
   :bind
-  (("C-x g" . magit-status-quick)
-   ("C-c g l" . magit-log-buffer-file)
+  (("C-c g l" . magit-log-buffer-file)
    :map magit-status-mode-map
    ("<return>" . my-magit-fast-diff))
   :hook
