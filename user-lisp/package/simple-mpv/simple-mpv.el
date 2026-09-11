@@ -27,7 +27,6 @@
 
 (defgroup simple-mpv nil
   "Simple external mpv media player."
-  :group 'multimedia
   :prefix "simple-mpv-")
 
 (defcustom simple-mpv-audio-progress-filled-char ?█

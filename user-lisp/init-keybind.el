@@ -77,7 +77,7 @@
 
 (defun my-surround-replace (char)
   (interactive "cReplace surrounding chars with: ")
-  (when-let ((bounds (bounds-of-thing-at-point 'word)))
+  (when-let* ((bounds (bounds-of-thing-at-point 'word)))
     (save-excursion
       (goto-char (car bounds))
       (when (search-backward-regexp "[^[:space:]]" (line-beginning-position) t)
@@ -88,7 +88,7 @@
 
 (defun my-surround-replace-pair (old-char new-char)
   (interactive "cWrap char? \ncReplace surrounding chars with: ")
-  (when-let ((bounds (bounds-of-thing-at-point 'word)))
+  (when-let* ((bounds (bounds-of-thing-at-point 'word)))
     (save-excursion
       (goto-char (car bounds))
       (when (search-backward (string old-char) (line-beginning-position) t)

@@ -243,6 +243,7 @@ from `readable-foreground-color'."
   :init
   (setq material-icons-size 22)
   (with-eval-after-load 'speedbar
+    (require 'material-icons-speedbar)
     (material-icons-speedbar-icons-mode 1)))
 
 (provide 'init-display)

@@ -1,9 +1,18 @@
 ;;; -*- lexical-binding: t -*-
 
-(defun nn-translate-word ()
+(defgroup nn-translate nil
+  ""
+  :prefix "nn-translate-")
+
+(defcustom nn-translate-apikey nil
+  ""
+  :type 'string
+  :group nn-translate)
+
+(defun nn-translate-read-apikey ()
   (interactive))
 
-(defun nn-translate-word-echo ()
+(defun nn-translate-word ()
   (interactive))
 
 (defun nn-translate-end ()

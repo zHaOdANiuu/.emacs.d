@@ -8,6 +8,16 @@
   :type 'directory
   :group 'nn)
 
+(defcustom nn-rss-list
+  '(("Xkcd" "https://xkcd.com/rss.xml")
+    ("Sacha Chua" "https://sachachua.com/blog/category/emacs-news/feed/")
+    ("Planet Emacslife" "https://planet.emacslife.com/atom.xml")
+    ("Emacs TIL" "https://emacstil.com/feed.xml")
+    ("60秒看世界" "https://60s.viki.moe/v2/60s/rss"))
+  "RSS link list."
+  :type 'list
+  :group 'nn)
+
 (defcustom nn-flyspell-everywhere t
   "Non-nil to enable flyspell in all buffers."
   :type 'boolean

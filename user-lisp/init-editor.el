@@ -5,12 +5,6 @@
   (ffap-machine-p-known 'accept)
   (ffap-machine-p-unknown 'accept))
 
-(use-package paragraphs
-  :ensure nil
-  :custom
-  (sentence-end-double-space nil)
-  (sentence-end "\\([   ]\\|  \\|[.?!][]\"')}]*\\($\\|[ \t]\\)\\)[ \t\n]*"))
-
 (use-package elec-pair
   :ensure nil
   :hook (nn-first-input . electric-pair-mode)

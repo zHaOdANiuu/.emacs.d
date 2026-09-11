@@ -45,19 +45,23 @@
   :custom
   (org-persist-directory (concat nn-directory "org/persist/"))
   (org-id-locations-file (concat nn-directory "org/id-locations.el"))
-  (org-publish-timestamp-directory (concat nn-directory "org/timestamps/"))
   (org-modules nil)
+  (org-modules-loaded t)
+  (org-ellipsis nn-fold-string)
+  (org-startup-indented t)
+  (org-startup-folded 'fold)
+  (org-src-tab-acts-natively t)
+  (org-src-fontify-natively t)
+  (org-pretty-entities t)
+  (org-hide-emphasis-markers nil)
+  (org-hide-leading-stars nil)
   (org-support-shift-select t)
   (org-auto-align-tags nil)
   (org-log-done 'time)
-  (org-pretty-entities t)
-  (org-ellipsis nn-fold-string)
   (org-enforce-todo-dependencies t)
   (org-tags-column 0)
   (org-confirm-babel-evaluate nil)
   (org-catch-invisible-edits 'show-and-error)
-  (org-hide-emphasis-markers t)
-  (org-hide-leading-stars t)
   (org-image-actual-width nil)
   (org-special-ctrl-a/e t)
   (org-M-RET-may-split-line nil)
@@ -66,10 +70,6 @@
   (org-fontify-done-headline t)
   (org-fontify-quote-and-verse-blocks t)
   (org-fontify-whole-heading-line t)
-  (org-src-tab-acts-natively t)
-  (org-src-fontify-natively t)
-  (org-startup-indented t)
-  (org-startup-folded nil)
   (org-use-sub-superscripts '{})
   (org-todo-keywords
    '((sequence
@@ -167,8 +167,8 @@
 (use-package org-clock
   :ensure nil
   :commands org-clock-save
+  :init  (setq org-clock-persist-file (concat nn-directory "org/clock-persist.el"))
   :custom
-  (org-clock-persist-file (concat nn-directory "org/clock-persist.el"))
   (org-clock-persist 'history)
   (org-clock-in-resume t)
   (org-clock-out-remove-zero-time-clocks t)
@@ -179,6 +179,8 @@
 
 (use-package org-crypt
   :ensure nil
+  :commands org-encrypt-entries org-encrypt-entry org-decrypt-entries org-decrypt-entry
+  :hook (org-load . org-crypt-use-before-save-magic)
   :config (org-crypt-use-before-save-magic))
 
 (use-package org-faces

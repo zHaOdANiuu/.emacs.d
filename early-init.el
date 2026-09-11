@@ -7,9 +7,6 @@
   :ensure nil
   :hook (window-setup . (lambda () (setq inhibit-redisplay nil inhibit-message nil)))
   :init
-  (put 'if-let 'byte-obsolete-info nil)
-  (put 'when-let 'byte-obsolete-info nil)
-  (set-default-toplevel-value 'lexical-binding t)
   (run-with-idle-timer 5 t #'garbage-collect)
 
   (setq native-comp-jit-compilation nil

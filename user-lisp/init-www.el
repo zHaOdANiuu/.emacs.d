@@ -1,7 +1,10 @@
 ;;; -*- lexical-binding: t -*-
 (setq user-full-name "zhaodaniu"
-      user-mail-address "zhaodaniu1@gmail.com"
-      url-configuration-directory (concat nn-directory "url/"))
+      user-mail-address "zhaodaniu1@gmail.com")
+
+(use-package url
+  :ensure nil
+  :custom (url-configuration-directory (concat nn-directory "url/")))
 
 (use-package server
   :ensure nil
@@ -21,10 +24,9 @@
 
 (use-package tramp
   :ensure nil
-  :init
-  (setq tramp-auto-save-directory (concat nn-directory "tramp/auto-save/")
-        tramp-persistency-file-name (concat nn-directory "tramp/persistency.el"))
   :custom
+  (tramp-persistency-file-name (concat nn-directory "tramp/persistency.el"))
+  (tramp-auto-save-directory (concat nn-directory "tramp/auto-save/"))
   (remote-file-name-inhibit-cache 60)
   (remote-file-name-inhibit-locks t)
   (remote-file-name-inhibit-auto-save-visited t)
@@ -112,12 +114,7 @@
    '("--quiet" "--no-hsts" "--output-document=-" "--append-output=/dev/null"))
   (newsticker-automatically-mark-items-as-old nil)
   (newsticker-url-list-defaults nil)
-  (newsticker-url-list
-   '(("Xkcd" "https://xkcd.com/rss.xml")
-     ("Sacha Chua" "https://sachachua.com/blog/category/emacs-news/feed/")
-     ("Planet Emacslife" "https://planet.emacslife.com/atom.xml")
-     ("Emacs TIL" "https://emacstil.com/feed.xml")
-     ("60秒看世界" "https://60s.viki.moe/v2/60s/rss")))
+  (newsticker-url-list nn-rss-list)
   :config
   (defun my-newsticker-show-news ()
     (interactive)
@@ -201,10 +198,6 @@
   (gnus-cache-remove-articles '(read))
   (gnus-cacheable-groups "^\\(nntp\\|nnimap\\)")
   :config
-  (with-eval-after-load 'gnus-win
-    (setf (alist-get 'article gnus-buffer-configuration)
-          '((horizontal 1.0 (summary 0.5 point) (article 1.0)))))
-
   (setq gnus-logo-colors '("#ff5591" "#c0c0c0")
         gnus-select-method '(nnnil "")
         gnus-secondary-select-methods
@@ -272,6 +265,12 @@
   (gnus-auto-select-first nil)
   (gnus-auto-select-next nil)
   (gnus-paging-select-next nil))
+
+(use-package gnus-win
+  :ensure nil
+  :config
+  (setf (alist-get 'article gnus-buffer-configuration)
+        '((horizontal 1.0 (summary 0.5 point) (article 1.0)))))
 
 (use-package rcirc
   :ensure nil

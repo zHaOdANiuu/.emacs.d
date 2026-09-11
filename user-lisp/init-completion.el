@@ -50,15 +50,14 @@
 (use-package icomplete
   :ensure nil
   :bind ("C-x C-r" . my-recentf-open)
-  :init
-  (fido-mode 1)
-  (fido-vertical-mode 1)
   :custom
   (icomplete-max-delay-chars 2)
   (icomplete-hide-common-prefix nil)
   (icomplete-tidy-shadowed-file-names t)
   (icomplete-show-matches-on-no-input nil)
   :config
+  (fido-mode 1)
+  (fido-vertical-mode 1)
   (defun my-recentf-open ()
     (interactive)
     (let ((file (completing-read "Find recent file: " recentf-list nil t)))
