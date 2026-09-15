@@ -271,7 +271,7 @@
    `(magit-diff-revision-summary       ((t :foreground ,blue)))
    `(magit-diff-added                  ((t :inherit diff-added)))
    `(magit-diff-removed                ((t :inherit diff-removed)))
-   `(magit-diff-file-heading           ((t :foreground ,pink)))
+   `(magit-diff-file-heading           ((t :foreground ,fg)))
    `(magit-diffstat-added              ((t :foreground ,green)))
    `(magit-diffstat-removed            ((t :foreground ,red)))
    `(magit-diff-hunk-heading           ((t :foreground ,fg)))

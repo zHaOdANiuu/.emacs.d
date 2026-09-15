@@ -58,9 +58,3 @@
   (add-hook hook #'nn-font-init -100)
   (add-hook hook #'nn-home-init -90)
   (add-hook hook #'nn-theme-init -90))
-
-(when (daemonp)
-  (require 'magit)
-  (require 'gnus)
-  (require 'corfu)
-  (require 'multiple-cursors))

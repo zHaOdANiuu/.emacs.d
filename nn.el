@@ -136,5 +136,8 @@ TRIGGER-HOOK is a list of quoted hooks and/or sharp-quoted functions."
   (message "Proxy disabled"))
 
 (defun nn-initialize ()
+  (setq tramp-persistency-file-name (concat nn-directory "tramp/persistency.el")
+        tramp-auto-save-directory (concat nn-directory "tramp/auto-save/"))
+
   (nn-run-hook-on 'nn-first-file-hook '(find-file-hook dired-initial-position-hook))
   (nn-run-hook-on 'nn-first-input-hook '(pre-command-hook)))

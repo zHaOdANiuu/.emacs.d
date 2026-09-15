@@ -21,8 +21,6 @@
 (use-package tramp
   :ensure nil
   :custom
-  (tramp-persistency-file-name (concat nn-directory "tramp/persistency.el"))
-  (tramp-auto-save-directory (concat nn-directory "tramp/auto-save/"))
   (remote-file-name-inhibit-cache 60)
   (remote-file-name-inhibit-locks t)
   (remote-file-name-inhibit-auto-save-visited t)

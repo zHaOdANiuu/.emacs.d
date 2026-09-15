@@ -82,6 +82,7 @@
   (magit-diff-visit-file . my-magit-reveal-point-if-invisible-h)
   :custom
   (git-commit-major-mode 'git-commit-elisp-text-mode)
+  (magit-git-executable "git")
   (magit-commit-show-diff nil)
   (magit-commit-ask-to-stage nil)
   (magit-auto-revert-mode nil)
@@ -95,57 +96,29 @@
   (magit-status-sections-hook
    '(magit-insert-status-headers
      magit-insert-untracked-files
-     my-magit-insert-unstaged-files
-     my-magit-insert-staged-files
+     magit-insert-unstaged-changes
+     magit-insert-staged-changes
      magit-insert-recent-commits))
   :config
-  (defconst my-magit--status-alist
-    '(("M" "modified" . (:foreground "#f9e2af"))
-      ("A" "new file" . (:foreground "#a6e3a1"))
-      ("D" "deleted"  . (:foreground "#f38ba8"))
-      ("R" "renamed"  . (:foreground "#89b4fa"))
-      ("C" "copied"   . (:foreground "#94e2d5"))
-      ("U" "unmerged" . (:foreground "#cba6f7"))))
-
-  (defun my-magit--insert (lines)
-    "Insert file status LINES as Magit file sections."
-    (dolist (line lines)
-      (let* ((parts (split-string line "\t"))
-             (code (car parts))
-             (file (car (last parts)))
-             (info (and code (assoc (substring code 0 1) my-magit--status-alist))))
-        (magit-insert-section (file file)
-          (insert
-           (propertize
-            (format "%-10s%s\n" (if info (cadr info) code) file)
-            'font-lock-face (if info (cddr info) 'magit-diff-file-heading))))))
-    (insert "\n"))
-
-  (defun my-magit-insert-unstaged-files ()
-    "Insert compact status entries for unstaged files."
-    (when-let* ((lines (magit-git-lines "diff" "--name-status")))
-      (magit-insert-section (unstaged)
-        (magit-insert-heading t "Unstaged changes")
-        (my-magit--insert lines))))
-
-  (defun my-magit-insert-staged-files ()
-    "Insert compact status entries for staged files."
-    (unless (magit-bare-repo-p)
-      (when-let* ((lines (magit-git-lines "diff" "--cached" "--name-status")))
-        (magit-insert-section (staged)
-          (magit-insert-heading t "Staged changes")
-          (my-magit--insert lines)))))
+  (require 'reveal)
 
   (defun my-magit-reveal-point-if-invisible-h ()
     "Reveal the point if in an invisible region."
     (if (derived-mode-p 'org-mode)
         (org-reveal '(4))
-      (require 'reveal)
       (reveal-post-command)))
 
   (defun my-magit-fast-diff ()
     (interactive)
     (when-let* ((file (magit-file-at-point)))
       (magit-diff-dwim nil `(,file)))))
+
+(use-package magit-fast
+  :ensure nil
+  :hook (magit-mode . magit-fast-mode))
+
+(use-package magit-prime
+  :commands magit-status magit-status-quick
+  :config (magit-prime-mode))
 
 (provide 'init-vc)

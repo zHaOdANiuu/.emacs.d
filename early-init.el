@@ -97,7 +97,8 @@
     (when-let* ((bash (executable-find "bash.exe")))
       (setq shell-file-name bash)
       (setenv "MSYSTEM" "UCRT64")
-      (setenv "SHELL" bash))))
+      (setenv "SHELL" bash)
+      (setenv "PATH" (concat (file-name-directory bash) ":" (getenv "PATH"))))))
 
 (load (expand-file-name "nn.el" user-emacs-directory))
 (nn-initialize)

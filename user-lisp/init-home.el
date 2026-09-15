@@ -127,7 +127,7 @@
                 display-line-numbers-mode nil)
     (use-local-map nn-home-keymap)
     (read-only-mode)
-    (add-hook 'kill-buffer-query-functions #'ignore nil t)
+    (add-hook 'kill-buffer-query-functions (lambda () nil) nil t)
     (add-hook 'window-size-change-functions
               (lambda (&rest _)
                 (when (get-buffer-window nn-home-buffer-name)

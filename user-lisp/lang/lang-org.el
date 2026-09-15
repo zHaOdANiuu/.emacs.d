@@ -53,7 +53,7 @@
   (org-src-tab-acts-natively t)
   (org-src-fontify-natively t)
   (org-pretty-entities t)
-  (org-hide-emphasis-markers nil)
+  (org-hide-emphasis-markers t)
   (org-hide-leading-stars nil)
   (org-support-shift-select t)
   (org-auto-align-tags nil)
