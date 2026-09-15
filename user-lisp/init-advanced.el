@@ -50,9 +50,101 @@
   (minibuffer-depth-indicate-mode 1)
   (minibuffer-electric-default-mode 1))
 
+(use-package help
+  :ensure nil
+  :custom (help-window-select t))
+
+(use-package help-mode
+  :ensure nil
+  :hook
+  (help-mode . visual-line-mode)
+  (help-mode . cursor-sensor-mode)
+  :bind (:map help-mode-map ("r" . my-remove-hook-at-point))
+  :config
+  (defun my-function-advices (function)
+    "Return FUNCTION's advices."
+    (let ((flist (indirect-function function)) advices)
+      (while (advice--p flist)
+        (setq advices `(,@advices ,(advice--car flist)))
+        (setq flist (advice--cdr flist)))
+      advices))
+
+  (defun my-help--update ()
+    "Update the help buffer."
+    (if (eq major-mode 'helpful-mode)
+        (helpful-update)
+      (revert-buffer nil t)))
+
+  (defun my-add-remove-advice-button (advice function)
+    (when (and (functionp advice) (functionp function))
+      (let ((inhibit-read-only t)
+            (msg (format "Remove advice `%s'" advice)))
+        (insert "\t")
+        (insert-button
+         "Remove"
+         'face 'custom-button
+         'cursor-sensor-functions `((lambda (&rest _) ,msg))
+         'help-echo msg
+         'action (lambda (_)
+                   (when (yes-or-no-p msg)
+                     (message "%s from function `%s'" msg function)
+                     (advice-remove function advice)
+                     (my-help--update)))
+         'follow-link t))))
+
+  (defun my-add-button-to-remove-advice (buffer-or-name function)
+    "Add a button to remove advice."
+    (with-current-buffer buffer-or-name
+      (save-excursion
+        (goto-char (point-min))
+        (let ((ad-list (my-function-advices function)))
+          (while (re-search-forward "^\\(?:This function has \\)?:[-a-z]+ advice: \\(.+\\)$" nil t)
+            (let ((advice (car ad-list)))
+              (my-add-remove-advice-button advice function)
+              (setq ad-list (delq advice ad-list))))))))
+
+  (defun my-remove-hook-at-point ()
+    "Remove the hook at the point in the *Help* buffer."
+    (interactive)
+    (unless (memq major-mode '(help-mode helpful-mode))
+      (error "Only for help-mode or helpful-mode"))
+    (let ((orig-point (point)))
+      (save-excursion
+        (when-let*
+            ((hook (progn (goto-char (point-min)) (symbol-at-point)))
+             (func
+              (when (and
+                     (or (re-search-forward (format "^Value:?[\s|\n]") nil t)
+                         (goto-char orig-point))
+                     (thing-at-point 'sexp))
+                (thing-at-point--end-of-sexp)
+                (backward-char 1)
+                (catch 'break
+                  (while t
+                    (condition-case _err
+                        (backward-sexp)
+                      (scan-error (throw 'break nil)))
+                    (let ((bounds (bounds-of-thing-at-point 'sexp)))
+                      (when (<= (car bounds) orig-point (cdr bounds))
+                        (throw 'break (thing-at-point 'sexp)))))))))
+          (when (yes-or-no-p (format "Remove %s from %s? " func hook))
+            (remove-hook hook (intern func))
+            (my-help--update))))))
+
+  (define-advice describe-function-1 (:after (f) my-advice-remove-button)
+    (my-add-button-to-remove-advice (help-buffer) f))
+
+  (define-advice helpful-update (:after () my-advice-remove-button)
+    (when helpful--callable-p
+      (my-add-button-to-remove-advice (current-buffer) helpful--sym))))
+
 (use-package wdired
   :ensure nil
   :commands wdired-change-to-wdired-mode
+  :bind
+  (:map wdired-mode-map
+   ("<escape>" . wdired-exit)
+   ("<return>" . wdired-finish-edit))
   :custom
   (wdired-allow-to-change-permissions t)
   (wdired-create-parent-directories t))
@@ -75,6 +167,7 @@
   (dired-create-destination-dirs 'always)
   (dired-no-confirm '(move copy delete))
   (dired-kill-when-opening-new-dired-buffer t)
+  (dired-isearch-filenames 'dwim)
   (dired-listing-switches "-alh --group-directories-first")
   :config
   (put 'dired-find-alternate-file 'disabled nil)
@@ -233,11 +326,11 @@
   (:map isearch-mode-map
    ([remap isearch-delete-char] . isearch-del-char))
   :custom
+  (isearch-lazy-count t)
   (isearch-lazy-highlight t)
   (isearch-wrap-pause t)
   (isearch-allow-motion t)
   (isearch-motion-changes-direction t)
-  (isearch-lazy-count t)
   (lazy-highlight-cleanup t)
   (lazy-count-prefix-format "%s/%s ")
   :config

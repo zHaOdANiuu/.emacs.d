@@ -2,5 +2,6 @@
 .pi
 eln-cache
 elpa
+server
 tree-sitter
 custom.el

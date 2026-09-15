@@ -6,10 +6,6 @@
   :ensure nil
   :custom (url-configuration-directory (concat nn-directory "url/")))
 
-(use-package server
-  :ensure nil
-  :custom (server-auth-dir (concat nn-directory "server/")))
-
 (use-package nsm
   :ensure nil
   :custom (nsm-settings-file (concat nn-directory "network-security.eld")))

@@ -99,19 +99,6 @@ TRIGGER-HOOK is a list of quoted hooks and/or sharp-quoted functions."
         (add-hook hook fn -101))
       fn)))
 
-(defun nn-run-switch-buffer-hooks-h (&optional _)
-  "Trigger `doom-switch-buffer-hook' when selecting a new buffer."
-  (let ((gc-cons-threshold most-positive-fixnum))
-    (run-hooks 'doom-switch-buffer-hook)))
-
-(defun nn-run-switch-window-hooks-h (&optional _)
-  "Trigger `doom-switch-window-hook' when selecting a window in the same frame."
-  (unless (or (minibufferp)
-              (not (equal (old-selected-frame) (selected-frame)))
-              (equal (old-selected-window) (minibuffer-window)))
-    (let ((gc-cons-threshold most-positive-fixnum))
-      (run-hooks 'doom-switch-window-hook))))
-
 (defun nn-childframe-workable-p ()
   (and (not noninteractive)
        (not emacs-basic-display)
@@ -148,10 +135,6 @@ TRIGGER-HOOK is a list of quoted hooks and/or sharp-quoted functions."
   (setq socks-server nil)
   (message "Proxy disabled"))
 
-(nn-run-hook-on 'nn-first-file-hook '(find-file-hook dired-initial-position-hook))
-(nn-run-hook-on 'nn-first-input-hook '(pre-command-hook))
-(add-hook 'window-selection-change-functions #'nn-run-switch-window-hooks-h)
-(add-hook 'window-buffer-change-functions #'nn-run-switch-buffer-hooks-h)
-(add-hook 'server-switch-hook #'nn-run-switch-buffer-hooks-h)
-
-(provide 'init-def)
+(defun nn-initialize ()
+  (nn-run-hook-on 'nn-first-file-hook '(find-file-hook dired-initial-position-hook))
+  (nn-run-hook-on 'nn-first-input-hook '(pre-command-hook)))

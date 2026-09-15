@@ -29,6 +29,8 @@
   (kill-whole-line t)
   (kill-region-dwim t)
   (kill-do-not-save-duplicates t)
+  (set-mark-command-repeat-pop t)
+  (save-interprogram-paste-before-kill t)
   (track-eol t)
   (read-extended-command-predicate #'command-completion-default-include-p)
   (completion-show-help nil)
@@ -199,7 +201,8 @@ files, so this replace calls to `pp' with the much faster `prin1'."
   (scroll-step 0)
   (scroll-conservatively 101)
   (scroll-preserve-screen-position t)
-  (pixel-scroll-precision-use-momentum nil))
+  (pixel-scroll-precision-use-momentum t)
+  (pixel-scroll-precision-interpolate-page t))
 
 (use-package frame
   :ensure nil

@@ -10,7 +10,6 @@
   (run-with-idle-timer 5 t #'garbage-collect)
 
   (setq native-comp-jit-compilation nil
-        native-comp-deferred-compilation nil
         read-process-output-max (* 64 1024)
         process-adaptive-read-buffering nil
         redisplay-skip-fontification-on-input t
@@ -99,3 +98,6 @@
       (setq shell-file-name bash)
       (setenv "MSYSTEM" "UCRT64")
       (setenv "SHELL" bash))))
+
+(load (expand-file-name "nn.el" user-emacs-directory))
+(nn-initialize)

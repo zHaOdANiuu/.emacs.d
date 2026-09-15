@@ -7,14 +7,16 @@
       visible-bell nil
       visible-cursor nil
       resize-mini-windows t
-      long-line-threshold 1000
-      large-hscroll-threshold 1000
-      bidi-display-reordering 'left-to-right
-      bidi-paragraph-direction 'left-to-right
+      delete-pair-push-mark t
       undo-limit (* 13 160000)
       undo-strong-limit (* 13 240000)
       undo-outer-limit (* 13 24000000)
-      delete-pair-push-mark t
+      word-wrap-by-category t
+      window-combination-resize t
+      bidi-inhibit-bpa t
+      bidi-display-reordering nil
+      long-line-threshold 1000
+      large-hscroll-threshold 1000
       default-process-coding-system
       (if (eq system-type 'windows-nt)
           `(utf-8-dos . ,locale-coding-system)
@@ -27,13 +29,12 @@
               truncate-partial-width-windows nil)
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(load custom-file)
 (let ((file-name-handler-alist nil))
-  (require 'nn-world-theme)
-  (require 'init-def)
-  (load custom-file)
   (require 'init-font)
   (require 'init-base)
   (require 'init-advanced)
+  (require 'init-theme)
   (require 'init-display)
   (require 'init-editor)
   (require 'init-debug)
@@ -50,3 +51,16 @@
   (require 'init-word-move)
   (require 'init-context-menu)
   (require 'init-home))
+
+(let ((hook (if (daemonp)
+                'server-after-make-frame-hook
+              'after-init-hook)))
+  (add-hook hook #'nn-font-init -100)
+  (add-hook hook #'nn-home-init -90)
+  (add-hook hook #'nn-theme-init -90))
+
+(when (daemonp)
+  (require 'magit)
+  (require 'gnus)
+  (require 'corfu)
+  (require 'multiple-cursors))

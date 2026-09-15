@@ -1,9 +1,7 @@
 ;;; -*- lexical-binding: t -*-
-(use-package ffap
+(use-package saveplace
   :ensure nil
-  :custom
-  (ffap-machine-p-known 'accept)
-  (ffap-machine-p-unknown 'accept))
+  :hook (nn-first-file-hook . save-place-mode))
 
 (use-package elec-pair
   :ensure nil
@@ -23,6 +21,12 @@
 (use-package delsel
   :ensure nil
   :hook (nn-first-input . delete-selection-mode))
+
+(use-package ffap
+  :ensure nil
+  :custom
+  (ffap-machine-p-known 'accept)
+  (ffap-machine-p-unknown 'accept))
 
 (use-package so-long
   :ensure nil

@@ -92,7 +92,6 @@
    ("S-SPC" . corfu-insert-separator))
   :hook (prog-mode . corfu-mode)
   :custom
-  (cor)
   (corfu-auto t)
   (corfu-auto-delay 0.2)
   (corfu-auto-prefix 2)

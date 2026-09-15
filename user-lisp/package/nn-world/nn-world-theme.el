@@ -25,7 +25,7 @@
       (blue         "#89b4fa")
       (purple       "#b180d7")
       (gold         "#b8860b")
-      (red-dark     "#f44747")
+      (red-dark     "#f85149")
       (red-deep     "#5a1d1d")
       (yellow-dark  "#eecc00")
       (green-dark   "#52ab52")

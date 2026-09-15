@@ -13,7 +13,7 @@
    'face '(:inherit font-lock-type-face :height 0.8)))
 
 (defvar-keymap nn-home-keymap
-  "q" #'kill-emacs
+  "q" #'nn-home-quit
   "n" #'nn-home-next-line
   "p" #'nn-home-previous-line
   "g" #'nn-home-refresh
@@ -79,6 +79,12 @@
       (if (nn-home--entry-p)
           (skip-chars-forward " \t" (line-end-position))
         (goto-char origin)))))
+
+(defun nn-home-quit ()
+  (interactive)
+  (if (daemonp)
+      (delete-frame)
+    (kill-emacs)))
 
 (defun nn-home-next-line ()
   (interactive)
@@ -159,12 +165,13 @@
   (when (eq (current-buffer) (get-buffer nn-home-buffer-name))
     (nn-home-render)))
 
-(nn-home-create)
-(nn-home-set-margins)
-(nn-home-render)
-(nn-home-show)
-(goto-char (point-min))
-(nn-home-next-line)
+(defun nn-home-init ()
+  (nn-home-create)
+  (nn-home-set-margins)
+  (nn-home-render)
+  (nn-home-show)
+  (goto-char (point-min))
+  (nn-home-next-line))
 
 (keymap-global-set "C-<f1>" #'nn-home-show)
 

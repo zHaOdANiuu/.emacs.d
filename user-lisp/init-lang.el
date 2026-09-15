@@ -15,8 +15,7 @@
 
 (use-package syntax
   :ensure nil
-  :config
-  (setq syntax-wholeline-max 1000))
+  :config (setq syntax-wholeline-max 1000))
 
 (use-package text-mode
   :ensure nil
