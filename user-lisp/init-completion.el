@@ -93,7 +93,7 @@
   :hook (prog-mode . corfu-mode)
   :custom
   (corfu-auto t)
-  (corfu-auto-delay 0.2)
+  (corfu-auto-delay 0)
   (corfu-auto-prefix 2)
   (corfu-auto-commands
    '("self-insert-command\\'"

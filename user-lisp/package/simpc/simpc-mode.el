@@ -51,30 +51,66 @@
     "atomic_commit" "atomic_noexcept"))
 
 (defconst simpc-font-lock-keywords
-  `(("^\\s-*#\\s-*\\(warn\\|error\\)" 0 font-lock-warning-face)
+  `(;; initilation
+    ("^\\s-*#\\s-*\\(warn\\|error\\)" 0 font-lock-warning-face)
     ("^\\s-*#\\s-*\\(?:[a-zA-Z0-9_]+\\)" 0 font-lock-preprocessor-face)
     ("^\\s-*#\\s-*include\\(?:_next\\)?\\s-+\\(\\(<\\|\"\\).*\\(>\\|\"\\)\\)" 1 font-lock-string-face)
     ("\\b\\(defined\\)\\b" 1 font-lock-preprocessor-face)
     (,(regexp-opt simpc-keywords 'symbols) 0 font-lock-keyword-face)
     (,(regexp-opt simpc-types 'symbols) 0 font-lock-type-face)
-    ("\\_<\\(?:true\\|false\\|nullptr\\)\\_>" 0 font-lock-constant-face)
-    ("\\_<0[xX][0-9a-fA-F_]+\\_>" 0 font-lock-constant-face)
-    ("\\_<0[bB][01_]+\\_>" 0 font-lock-constant-face)
-    ("\\_<[0-9][0-9_]*\\(?:\\.[0-9_]*\\)?\\(?:[eE][+-]?[0-9_]*\\)?[uUlLfF]*\\_>" 0 font-lock-constant-face)
-    ("\\<\\(?:enum\\|using\\|struct\\|class\\)\\s-+\\([a-zA-Z0-9_]+\\)" 1 font-lock-type-face)
-    ("\\<typedef\\b\\s-+[a-zA-Z_][a-zA-Z0-9_]*\\s-+\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\s-*;" 1 font-lock-type-face)
-    ("\\<typedef\\b[^}]*}\\s-+\\([a-zA-Z_][a-zA-Z0-9_]*\\)" 1 font-lock-type-face)
-    ("\\b\\([a-zA-Z_][a-zA-Z0-9_]*\\)[ \t]*(" 1 font-lock-function-name-face)
-    ("\\([a-zA-Z_][a-zA-Z0-9_]*\\)::" 1 font-lock-constant-face)
-    ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)\\s-*<" 1 font-lock-type-face)
-    ("\\(?:<\\|,\\)\\s-*\\([A-Za-z_][A-Za-z0-9_]*\\)" 1 font-lock-type-face)
-    ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*[;=,({)]" 1 font-lock-type-face)
-    ("\\<\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\([*&]+[ \t]*\\|[ \t]+[*&]+\\)\\([a-zA-Z_][a-zA-Z0-9_]*\\b\\|[][;,}>\n)]\\)"
+
+    ;; const var
+    ("\\_<\\(?:true\\|false\\|nullptr\\|0[xX][0-9a-fA-F_]+\\|0[bB][01_]+\\|[0-9][0-9_]*\\(?:\\.[0-9_]*\\)?\\(?:[eE][+-]?[0-9_]*\\)?[uUlLfF]*\\)\\_>"
+     0 font-lock-constant-face)
+
+    ;; define
+    ("\\<\\(?:enum\\|using\\|struct\\|class\\)\\s-+\\([a-zA-Z0-9_]+\\)"
      1 font-lock-type-face)
-    (")\\s-*->\\s-*\\([^{\n]+\\)\\s-*{" 1 font-lock-type-face) ;; c++ func () -> return type
-    ("(\\*\\([A-Za-z_][A-Za-z0-9_]*\\)\\s-*)\\s-*(" 1 font-lock-function-name-face) ;; func pointer
-    (")[ \t]*("
-     ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)[*& \t]*[,)]" nil nil (1 font-lock-type-face))) ;; fuc pointer args
+    ("\\<typedef\\b\\s-+[a-zA-Z_][a-zA-Z0-9_]*\\s-+\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\s-*;"
+     1 font-lock-type-face)
+    ("\\<typedef\\b[^}]*}\\s-+\\([a-zA-Z_][a-zA-Z0-9_]*\\)" 1
+     font-lock-type-face)
+
+    ;; variable: int a;
+    ("\\_<\\([A-Za-z_][A-Za-z0-9_]*\\)[ \t]+[A-Za-z_][A-Za-z0-9_]*[ \t]*[;=,{)]"
+     1 font-lock-type-face)
+
+    ;; class
+    ;; namespace: std::
+    ("\\_<\\(\\sw+\\)::"
+     1 font-lock-constant-face)
+
+    ;; generics: Map<K, vector<V>>
+    ("\\_<\\(\\sw+\\)<"
+     (1 font-lock-type-face)
+     ("\\(?:,\\s-*\\)?\\(\\sw+\\)\\s-*\\(?:,\\|>\\|<\\|$\\)"
+      nil nil (1 font-lock-type-face)))
+
+    ;; function
+    ;; tymplate: typename A / class A
+    ("\\_<\\(?:typename\\|class\\)\\s-+\\(\\sw+\\)"
+     1 font-lock-type-face)
+
+    ;; C++ end return type:：) -> Type {
+    (")[ \t]*->[ \t]*\\([^{\n]+\\)[ \t]*{"
+     1 font-lock-type-face)
+
+    ;; function name: test()
+    ("\\b\\([a-zA-Z_][a-zA-Z0-9_]*\\)[ \t]*("
+     1 font-lock-function-name-face)
+
+    ;; function define: type Name(args)
+    ("\\_<\\([a-zA-Z_][a-zA-Z0-9_]*\\)[ \t]*[*&]*\\(?:[ \t]*\n[ \t]*\\|[ \t]+\\)\\_<\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\s-*("
+     (1 font-lock-type-face)
+     (2 font-lock-function-name-face)
+     ("\\_<\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\s-*[*&]*\\s-*\\(?:\\_<[a-zA-Z_][a-zA-Z0-9_]*\\_>\\s-*[*&]*\\s-*\\)?[,)]"
+      nil nil (1 font-lock-type-face)))
+
+    ;; function pointer: type (*Name)(args)
+    ("(\\*\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\s-*)\\s-*("
+     (1 font-lock-function-name-face)
+     ("\\_<\\([a-zA-Z_][a-zA-Z0-9_]*\\)\\s-*[*&]*\\s-*\\(?:\\_<[a-zA-Z_][a-zA-Z0-9_]*\\_>\\s-*[*&]*\\s-*\\)?[,)]"
+      nil nil (1 font-lock-type-face)))
     ))
 
 (defun simpc--proper-indentation (parse-status)

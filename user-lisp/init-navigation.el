@@ -49,7 +49,6 @@
    ("M-<f12>" . citre-peek)
    :map citre-peek-keymap
    ("q" . keyboard-quit))
-  :hook (prog-mode . citre-mode)
   :custom-face
   (citre-peek-border-face ((t :inherit font-lock-keyword-face :strike-through t :extend t)))
   :custom

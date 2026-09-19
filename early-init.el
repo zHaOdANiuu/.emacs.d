@@ -94,11 +94,13 @@
         (setenv "HOME" home)
         (setq abbreviated-home-dir nil)))
 
-    (when-let* ((bash (executable-find "bash.exe")))
+    (when-let* ((bash (executable-find "bash")))
       (setq shell-file-name bash)
       (setenv "MSYSTEM" "UCRT64")
       (setenv "SHELL" bash)
-      (setenv "PATH" (concat (file-name-directory bash) ":" (getenv "PATH"))))))
+      (setenv "PATH" (concat (file-name-directory bash) ":" (getenv "PATH"))))
+
+    (setq exec-suffixes '("" ".exe" ".bat"))))
 
 (load (expand-file-name "nn.el" user-emacs-directory))
 (nn-initialize)

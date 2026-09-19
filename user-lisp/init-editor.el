@@ -70,7 +70,7 @@
   (hs-allow-nesting t)
   (hs-hide-comments-when-hiding-all nil)
   (hs-set-up-overlay #'my-hs-set-up-overlay)
-  :custom-face (hs-ellipsis ((t :inherit shadow)))
+  :custom-face (hs-ellipsis ((t :inherit shadow :height 0.95)))
   :config
   (defun my-hs-hide-level ()
     (interactive)
