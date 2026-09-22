@@ -15,11 +15,11 @@
       ,(concat "--compile-commands-dir="
                (expand-file-name (if proj (project-root proj) default-directory))))))
 
-(use-package simpc-mode
-  :ensure nil
+(use-package simpc++-mode
+  :vc (:url "https://github.com/zHaOdANiuu/simpcpp-mode" :rev :newest)
   :mode "\\.\\(c\\|h\\|cpp\\|hpp\\|cppm\\|ixx\\)\\'"
   :config
   (with-eval-after-load 'eglot
-    (add-to-list 'eglot-server-programs '(simpc-mode . my-clangd-args))))
+    (add-to-list 'eglot-server-programs '(simpc++-mode . my-clangd-args))))
 
 (provide 'lang-cc)

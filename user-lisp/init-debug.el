@@ -86,7 +86,7 @@
   (dape-buffer-window-arrangement 'right)
   :config
   (make-directory (concat nn-directory "dape/adapters/") t)
-  (when (eq system-type 'windows-nt)
+  (when _WIN32
     (setenv "LLDB_USE_NATIVE_PDB_READER" "1"))
 
   (add-hook 'dape-start-hook #'my-dape-toolbar-create)

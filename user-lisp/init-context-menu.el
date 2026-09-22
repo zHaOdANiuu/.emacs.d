@@ -37,10 +37,8 @@
 
 (defconst nn-edit-menu-items
   '("NN Edit Menu"
-    ["Lsp Connect"   eglot]
-    ["Lsp Shutdown"  eglot-shutdown]
-    ["Lsp Format"    eglot-format-buffer :active (nn-has-lsp)]
-    ["Lsp Log"       eglot-stderr-buffer :active (nn-has-lsp)]
+    ["Lsp Format" eglot-format-buffer :active (nn-has-lsp)]
+    ["Lsp Log"    eglot-stderr-buffer :active (nn-has-lsp)]
     ("Code Actions"
      :active (nn-has-lsp)
      ["Quick Fix"        eglot-code-actions]
@@ -64,12 +62,14 @@
 
 (defconst nn-project-menu-items
   '("NN Project Menu"
-    ["Create Tasg File" citre-create-tags-file]
-    ["Update Tags File" citre-update-this-tags-file]
     ["New File"         dired-create-empty-file]
     ["New Folder"       dired-create-directory]
-    ["On Live server"   nn-live-server]
-    ["On Explorer Open" nn-explorer-open]))
+    ["Create Tasg File" citre-create-tags-file]
+    ["Update Tags File" citre-update-this-tags-file]
+    "--"
+    ["On Lsp Server"    eglot]
+    ["On Lsp Close"     eglot-shutdown]
+    ["On Live server"   nn-live-server]))
 
 (defconst nn-leisure-menu-items
   '("NN Leisure Menu"

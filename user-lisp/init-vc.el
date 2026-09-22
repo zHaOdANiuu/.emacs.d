@@ -4,15 +4,19 @@
   :custom
   (vc-follow-symlinks t)
   (vc-handled-backends '(Git))
-  (vc-ignored-dir-regexp (format "%s\\|%s" locate-dominating-stop-dir-regexp "[/\\\\]node_modules")))
+  (vc-git-program (executable-find "git"))
+  (vc-ignore-dir-regexp
+   (format "%s\\|%s"
+           locate-dominating-stop-dir-regexp
+           "[/\\\\]node_modules")))
 
 (use-package vc-dir
   :ensure nil
   :bind
   (:map vc-dir-mode-map
-   ("RET" . vc-diff)
    ("c" . vc-next-action)
-   ("f" . vc-pull))
+   ("f" . vc-pull)
+   ("<return>" . vc-diff))
   :hook (vc-dir-refresh . my-vc-dir-hide-dirs)
   :config
   (defun my-vc-dir-hide-dirs ()
@@ -32,6 +36,7 @@
 
 (use-package ediff
   :ensure nil
+  :commands ediff-buffers ediff-files ediff-buffers3 ediff-files3
   :hook
   (ediff-quit . tab-bar-history-back)
   (ediff-prepare-buffer . outline-show-all)
@@ -39,6 +44,9 @@
   ((ediff-quit ediff-suspend) . my-ediff-restore-wconf-h)
   :custom
   (ediff-diff-options "-w")
+  (ediff-keep-variants nil)
+  (ediff-make-buffers-readonly-at-startup nil)
+  (ediff-show-clashes-only t)
   (ediff-window-setup-function #'ediff-setup-windows-plain)
   (ediff-split-window-function #'split-window-horizontally)
   (ediff-merge-split-window-function #'split-window-horizontally)
@@ -68,6 +76,9 @@
   (transient-levels-file (concat nn-directory "transient/levels.el"))
   (transient-values-file (concat nn-directory "transient/values.el")))
 
+;; (use-package majutsu
+;;   :vc (:url "https://github.com/0WD0/majutsu" :rev :newest))
+
 (use-package magit
   :bind
   (("C-c g l" . magit-log-buffer-file)
@@ -78,23 +89,27 @@
   ;; HACK: See magit/magit#5320: large/long status buffers can change the
   ;;   behavior of motions and TAB in obscure ways.
   ;; REVIEW: REmove when magit/magit#5320 is addressed.
-  (magit-status-mode . (lambda () (setq long-line-threshold nil)))
+  (magit-status-mode . (lambda () (setq-local long-line-threshold nil)))
   (magit-diff-visit-file . my-magit-reveal-point-if-invisible-h)
   :custom
   (git-commit-major-mode 'git-commit-elisp-text-mode)
-  (magit-git-executable "git")
   (magit-commit-show-diff nil)
   (magit-commit-ask-to-stage nil)
-  (magit-auto-revert-mode nil)
+  (magit-log-section-commit-count 5)
+  (magit-process-connection-type nil)
   (magit-refresh-verbose nil)
   (magit-refresh-status-buffer nil)
   (magit-revision-insert-related-refs nil)
   (magit-save-repository-buffers nil)
   (magit-uniquify-buffer-names nil)
   (magit-no-confirm '(stage-all-changes unstage-all-changes))
-  (magit-run-hooks-from-githooks (not (eq system-type 'windows-nt)))
+  (magit-run-hooks-from-githooks (not _WIN32))
+  ;; (magit-status-headers-hook
+  ;;  '(magit-insert-error-header
+  ;;    magit-insert-head-branch-header
+  ;;    ))
   (magit-status-sections-hook
-   '(magit-insert-status-headers
+   '(magit-insert-error-header
      magit-insert-untracked-files
      magit-insert-unstaged-changes
      magit-insert-staged-changes
@@ -104,21 +119,26 @@
 
   (defun my-magit-reveal-point-if-invisible-h ()
     "Reveal the point if in an invisible region."
-    (if (derived-mode-p 'org-mode)
-        (org-reveal '(4))
-      (reveal-post-command)))
+    (reveal-post-command))
 
   (defun my-magit-fast-diff ()
     (interactive)
     (when-let* ((file (magit-file-at-point)))
-      (magit-diff-dwim nil `(,file)))))
+      (magit-diff-dwim nil `(,file))))
+
+  (transient-append-suffix 'magit-fetch "-t"
+    '("-d" "Depth 1" "--depth=1")))
 
 (use-package magit-fast
   :ensure nil
-  :hook (magit-mode . magit-fast-mode))
-
-(use-package magit-prime
-  :commands magit-status magit-status-quick
-  :config (magit-prime-mode))
+  :demand t
+  :after magit
+  :init
+  (magit-auto-revert-mode -1)
+  (setq with-editor-emacsclient-executable (executable-find "emacsclient"))
+  :config
+  (remove-hook 'server-switch-hook 'magit-commit-diff)
+  (remove-hook 'magit-pre-start-git-hook #'magit-maybe-save-repository-buffers)
+  (magit-fast-mode))
 
 (provide 'init-vc)

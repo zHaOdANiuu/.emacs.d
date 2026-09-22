@@ -24,6 +24,7 @@
    '(:inlayHintProvider
      :documentHighlightProvider
      :foldingRangeProvider))
+  (jsonrpc-event-hook nil)
   :config
   (define-fringe-bitmap 'eglot--fringe-action
     [#b0000000000000000
@@ -111,6 +112,13 @@
   (global-corfu-minibuffer nil)
   (global-corfu-modes '((not erc-mode help-mode gud-mode) t))
   :config
+  (with-eval-after-load 'corfu
+    (defun my-close-multiple-cursors-corfu ()
+      (if multiple-cursors-mode
+          (corfu-mode -1)
+        (corfu-mode 1)))
+    (add-hook 'multiple-cursors-mode-hook #'my-close-multiple-cursors-corfu))
+
   ;; HACK: If you want to update the visual hints after completing minibuffer
   ;;   commands with Corfu and exiting, you have to do it manually.
   (define-advice exit-minibuffer
@@ -172,7 +180,6 @@
    yas-visit-snippet-file
    yas-activate-extra-mode
    yas-deactivate-extra-mode
-   yas-maybe-expand-abbrev-key-filter)
-  :hook (nn-first-input . yas-global-mode))
+   yas-maybe-expand-abbrev-key-filter))
 
 (provide 'init-completion)

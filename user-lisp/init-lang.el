@@ -1,9 +1,10 @@
 ;;; -*- lexical-binding: t -*-
 (require 'treesit)
 (require 'lang-cc)
-(require 'lang-elisp)
 (require 'lang-javascript)
 (require 'lang-web)
+(require 'lang-python)
+(require 'lang-elisp)
 (require 'lang-shell)
 (require 'lang-org)
 (require 'lang-markdown)
@@ -19,13 +20,12 @@
 
 (use-package text-mode
   :ensure nil
-  :mode "/.gitignore\\'" "/INSTALL\\'" "/LICENSE\\'"
-  :hook (text-mode . indent-tabs-mode)
+  :mode "/INSTALL\\'" "/LICENSE\\'"
   :custom (text-mode-ispell-word-completion nil))
 
 (use-package conf-mode
   :ensure nil
-  :mode "\\.env\\..*\\'" "\\.env\\'"
+  :mode "\\.env\\..*\\'" "\\.env\\'" "/.gitignore\\'"
   :hook (conf-mode . indent-tabs-mode))
 
 (provide 'init-lang)

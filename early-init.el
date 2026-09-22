@@ -3,6 +3,8 @@
 ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=81506
 ;; (setq w32-ime-preedit t)
 
+(load (expand-file-name "nn.el" user-emacs-directory))
+
 (use-package emacs
   :ensure nil
   :hook (window-setup . (lambda () (setq inhibit-redisplay nil inhibit-message nil)))
@@ -10,10 +12,12 @@
   (run-with-idle-timer 5 t #'garbage-collect)
 
   (setq native-comp-jit-compilation nil
-        read-process-output-max (* 64 1024)
-        process-adaptive-read-buffering nil
-        redisplay-skip-fontification-on-input t
+        native-comp-deferred-compilation nil
+        native-comp-async-on-battery-power nil
+        process-adaptive-read-buffering t
+        read-process-output-max (* 4 1024 1024)
         load-path-filter-function #'load-path-filter-cache-directory-files
+        redisplay-skip-fontification-on-input t
         inhibit-message t
         inhibit-redisplay t
         menu-bar-mode -1
@@ -38,7 +42,7 @@
   (when (boundp 'w32-get-true-file-attributes)
     (setq w32-get-true-file-attributes nil
           w32-pipe-read-delay 0
-          w32-pipe-buffer-size (* 64 1024)))
+          w32-pipe-buffer-size read-process-output-max))
   :custom
   (user-lisp-auto-scrape nil)
   (gc-cons-percentage (if noninteractive #x8000000 most-positive-fixnum))
@@ -61,7 +65,45 @@
       (tool-bar-lines . 0)
       (horizontal-scroll-bars)
       (vertical-scroll-bars)
-      (fullscreen . maximized))))
+      (fullscreen . maximized)))
+  :config
+  (setq browse-url-firefox-program nil
+        browse-url-chrome-program nil
+        browse-url-chromium-program nil
+        browse-url-text-browser nil
+        browse-url-browser-function 'eww-browse-url
+        sgml-validate-command nil)
+
+  ;; exec
+  (when _WIN32
+    (setq exec-suffixes '("" ".exe" ".bat")))
+
+  (defvar my-executable-find-cache (make-hash-table :test 'equal :size 100))
+  (defvar my-executable-find-cache-miss (make-symbol "miss"))
+
+  (defun my-executable-find-clear-cache ()
+    (clrhash my-executable-find-cache))
+
+  (define-advice executable-find
+      (:around (orig-fun command &optional remote)
+       my-executable-find-cache-advice)
+    (if remote
+        (funcall orig-fun command remote)
+      (let ((cached (gethash command my-executable-find-cache my-executable-find-cache-miss)))
+        (if (eq cached my-executable-find-cache-miss)
+            (puthash command (funcall orig-fun command) my-executable-find-cache)
+          cached))))
+
+  ;; dired
+  (setq dired-chown-program (not _WIN32)
+        shell-command-guess-open nil)
+
+  (with-eval-after-load 'dired
+    (define-key dired-mode-map [remap dired-do-open] #'nn-open-in-external-app))
+
+  ;; find-gile
+  (remove-hook 'find-file-hook #'vc-refresh-state)
+  (remove-hook 'find-file-hook #'epa-file-find-file-hook))
 
 (use-package package
   :ensure nil
@@ -86,7 +128,9 @@
   :ensure nil
   :init
   (setenv "TERM" "xterm-256color")
-  (when (eq system-type 'windows-nt)
+  (when _WIN32
+    (setq process-connection-type nil)
+
     (setenv "GIT_ASKPASS" "git-gui--askpass")
 
     (unless (getenv-internal "HOME")
@@ -98,9 +142,6 @@
       (setq shell-file-name bash)
       (setenv "MSYSTEM" "UCRT64")
       (setenv "SHELL" bash)
-      (setenv "PATH" (concat (file-name-directory bash) ":" (getenv "PATH"))))
+      (push (file-name-directory bash) exec-path))))
 
-    (setq exec-suffixes '("" ".exe" ".bat"))))
-
-(load (expand-file-name "nn.el" user-emacs-directory))
 (nn-initialize)

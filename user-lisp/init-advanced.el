@@ -13,12 +13,9 @@
   :bind
   ("C-c h ." . my-eldoc-copy)
   ("M-<return>" . eldoc-print-current-symbol-info)
-  :custom
-  (eldoc-idle-delay 0.5)
-  (eldoc-idle-delay-visible-only t)
-  (eldoc-echo-area-use-multiline-p nil)
-  (eldoc-documentation-strategy 'eldoc-documentation-enthusiast)
+  :custom (eldoc-documentation-strategy 'eldoc-documentation-enthusiast)
   :config
+  (global-eldoc-mode -1)
   (defun my-eldoc-copy ()
     (interactive)
     (when-let* ((buf (eldoc-doc-buffer)))
@@ -52,7 +49,9 @@
 
 (use-package help
   :ensure nil
-  :custom (help-window-select t))
+  :custom
+  (help-window-select t)
+  (view-lossage-auto-refresh t))
 
 (use-package help-mode
   :ensure nil
@@ -157,7 +156,7 @@
    ("e" . dired-toggle-read-only)
    ("-" . dired-create-empty-file)
    ("C-c C-e" . wdired-change-to-wdired-mode))
-  :hook (dired-mode . my-dired-vc-ignores)
+  :hook (dired-before-readin . my-dired-vc-ignores)
   :custom
   (dired-dwim-target t)
   (dired-mouse-drag-files t)
@@ -177,20 +176,32 @@
     "Don't auto-revert in dired-virtual buffers (see `dired-virtual-revert')."
     (not (eq revert-buffer-function #'dired-virtual-revert)))
 
-  ;; git ignore face
+  (defun my-dired-vc-ignores--matcher (limit)
+    "Font-lock matcher: highlight Dired filenames ignored by VC."
+    (when-let* ((backend (ignore-errors (vc-responsible-backend default-directory)))
+                (ig (vc-call-backend backend 'ignore-completion-table default-directory)))
+      (let ((names (cl-remove-if (lambda (i) (eq (aref i 0) ?*)) ig))
+            (exts  (cl-loop for i in ig
+                            when (eq (aref i 0) ?*)
+                            collect (substring i 1))))
+        (cl-loop while (re-search-forward dired-move-to-filename-regexp limit t)
+                 thereis (let* ((beg  (save-excursion (goto-char (match-beginning 0))
+                                                      (dired-move-to-filename)))
+                                (name (and beg (buffer-substring-no-properties
+                                                beg (line-end-position)))))
+                           (when (and name (or (member name names)
+                                               (cl-some
+                                                (lambda (e) (string-suffix-p e name))
+                                                exts)))
+                             (set-match-data (list beg (line-end-position)))
+                             (goto-char (line-end-position))
+                             t)))
+        )))
+
   (defun my-dired-vc-ignores ()
-    (when-let* ((root (vc-root-dir))
-                (backend (vc-responsible-backend root))
-                (ignores (vc-call-backend
-                          backend
-                          'ignore-completion-table default-directory))
-                (pattern (concat "\\=\\(" (regexp-opt ignores)
-                                 "\\)\\(?:$\\|\\s-\\)")))
-      (font-lock-add-keywords
-       nil
-       `((,dired-move-to-filename-regexp
-          (,pattern (dired-move-to-filename) nil (1 'dired-ignored t))))
-       'add-to-end))))
+    (font-lock-add-keywords
+     nil '((my-dired-vc-ignores--matcher (0 'dired-ignored t)))
+     'append)))
 
 (use-package dired-x
   :ensure nil
@@ -211,7 +222,7 @@
   :config
   (let ((cmd (cond ((eq system-type 'darwin) "open")
                    ((eq system-type 'gnu/linux) "xdg-open")
-                   ((eq system-type 'windows-nt) "start")
+                   (_WIN32 "start")
                    (t ""))))
     (setq dired-guess-shell-alist-user
           `(("\\.pdf\\'" ,cmd)
@@ -326,21 +337,15 @@
   (:map isearch-mode-map
    ([remap isearch-delete-char] . isearch-del-char))
   :custom
-  (isearch-lazy-count t)
-  (isearch-lazy-highlight t)
-  (isearch-wrap-pause t)
-  (isearch-allow-motion t)
-  (isearch-motion-changes-direction t)
   (lazy-highlight-cleanup t)
   (lazy-count-prefix-format "%s/%s ")
-  :config
-  (defvar my-isearch--direction nil)
-  (define-advice isearch-exit (:after nil)
-    (setq-local my-isearch--direction nil))
-  (define-advice isearch-repeat-forward (:after (_))
-    (setq-local my-isearch--direction 'forward))
-  (define-advice isearch-repeat-backward (:after (_))
-    (setq-local my-isearch--direction 'backward)))
+  (lazy-count-suffix-format nil)
+  (search-whitespace-regexp ".*?")
+  (isearch-lazy-count t)
+  (isearch-lazy-highlight t)
+  (isearch-wrap-pause nil)
+  (isearch-allow-motion t)
+  (isearch-motion-changes-direction t))
 
 (use-package ibuffer
   :ensure nil

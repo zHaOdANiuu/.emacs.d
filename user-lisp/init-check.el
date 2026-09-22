@@ -2,32 +2,35 @@
 (use-package ispell
   :ensure nil
   :custom
-  (ispell-program-name "aspell")
+  (ispell-program-name (executable-find "aspell"))
   (ispell-local-dictionary "en_US")
   (ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--run-together"))
-  (ispell-alternate-dictionary nil))
+  (ispell-alternate-dictionary nil)
+  :config
+  (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:"))
+  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
+  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_EXAMPLE" . "#\\+END_EXAMPLE")))
 
 (use-package flyspell
   :ensure nil
-  :if (executable-find "aspell")
   :bind
   (:map flyspell-mode-map
-   ("C-;" . nil)
    ("C-," . nil)
-   ("C-." . nil))
-  :hook (org-mode markdown-ts-mode TeX-mode rst-mode message-mode git-commit-setup)
+   ("C-M-," . flyspell-goto-next-error))
+  :hook (org-mode markdown-ts-mode git-commit-setup)
   :custom
   (flyspell-issue-message-flag nil)
-  (flyspell-issue-welcome-flag nil))
+  (flyspell-issue-welcome-flag nil)
+  :config (ispell-set-spellchecker-params))
 
 (use-package flymake
   :ensure nil
   :bind
   (:map flymake-mode-map
-   ("<f8>"   . flymake-goto-next-error)
+   ("<f8>" . flymake-goto-next-error)
    ("<S-f8>" . flymake-goto-prev-error)
    ("<C-f8>" . flymake-show-buffer-diagnostics))
-  :hook (flymake-mode .  (lambda () (setq-local next-error-function #'flymake-goto-next-error)))
+  :hook (flymake-mode . (lambda () (setq-local next-error-function #'flymake-goto-next-error)))
   :custom
   (flymake-no-changes-timeout nil)
   (flymake-wrap-around nil)
@@ -54,4 +57,4 @@
                  (not (buffer-modified-p)))
             (flymake-start t))))))
 
-(provide 'init-diagnostics)
+(provide 'init-check)

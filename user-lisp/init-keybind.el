@@ -13,19 +13,18 @@
 
 (defun my-move-line-up ()
   (interactive)
-  (transpose-lines 1)
-  (forward-line -2))
+  (let ((col (current-column)))
+    (transpose-lines 1)
+    (forward-line -2)
+    (move-to-column col)))
 
 (defun my-move-line-down ()
   (interactive)
-  (forward-line 1)
-  (transpose-lines 1)
-  (forward-line -1))
-
-(defun my-copy-line-and-move-down ()
-  (interactive)
-  (duplicate-line)
-  (next-line 1))
+  (let ((col (current-column)))
+    (forward-line 1)
+    (transpose-lines 1)
+    (forward-line -1)
+    (move-to-column col)))
 
 (defun my-delete-whole-line-no-kill ()
   (interactive)
@@ -155,8 +154,12 @@
 (keymap-global-set "C-x C-k" #'kill-buffer)
 (keymap-global-set "C-S-<backspace>" #'my-delete-whole-line-no-kill)
 (keymap-global-set "C-c r" #'my-replace)
+(keymap-global-set "C-c j" #'pop-to-mark-command)
 (keymap-global-set "C-~" #'my-home-dired)
-(keymap-global-set "C-," #'my-copy-line-and-move-down)
+
+(setq duplicate-line-final-position 1)
+(keymap-global-set "C-," #'duplicate-dwim)
+
 (keymap-global-set "C-'" #'imenu)
 (keymap-global-set "C-1" #'scroll-up-command)
 (keymap-global-set "C-2" #'scroll-down-command)

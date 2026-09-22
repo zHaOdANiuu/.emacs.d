@@ -67,7 +67,7 @@
   :hook
   (before-save . delete-trailing-whitespace)
   (emacs-lisp-mode
-   simpc-mode c-mode c++-mode
+   simpc++-mode c-mode c++-mode
    js-mode js-json-mode json-ts-mode
    typescript-ts-mode tsx-ts-mode
    web-mode sh-mode powershell-mode
@@ -95,10 +95,7 @@
   (add-function :before-while whitespace-enable-predicate #'my-whitespace--in-parent-frame-p))
 
 (use-package indent-bars
-  :hook
-  (python-mode
-   python-ts-mode
-   yaml-mode yaml-ts-mode)
+  :hook python-mode yaml-mode yaml-ts-mode
   :custom
   (indent-bars-display-on-blank-lines nil)
   (indent-bars-highlight-current-depth nil)
@@ -106,7 +103,7 @@
   ;; (indent-bars-color '(highlight :blend 0.4))
   (indent-bars-color '(highlight :face-bg t :blend 0.2))
   (indent-bars-zigzag nil)
-  (indent-bars-pattern "|"))
+  (indent-bars-pattern " "))
 
 (use-package rainbow-delimiters
   :hook prog-mode)

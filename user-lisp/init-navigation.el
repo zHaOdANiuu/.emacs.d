@@ -11,7 +11,7 @@
   ("M-g ." . xref-find-definitions)
   ("M-g ," . xref-go-back)
   :custom
-  (xref-search-program (if (executable-find "rg") 'ripgrep 'grep))
+  (xref-search-program 'ripgrep)
   (xref-show-definitions-function #'xref-show-definitions-completing-read)
   (xref-show-xrefs-function #'xref-show-definitions-completing-read))
 
@@ -52,8 +52,8 @@
   :custom-face
   (citre-peek-border-face ((t :inherit font-lock-keyword-face :strike-through t :extend t)))
   :custom
-  (citre-readtags-program "readtags")
-  (citre-ctags-program "ctags")
+  (citre-readtags-program (executable-find "readtags"))
+  (citre-ctags-program (executable-find "ctags"))
   (citre-peek-fill-fringe nil)
   (citre-completion-case-sensitive t)
   (citre-imenu-create-tags-file-threshold (* 20 1024 1024))

@@ -6,6 +6,8 @@
   (project-vc-ignores
    '("node_modules" ".git" ".svn" "vendor" "dist" "build"
      ".cache" ".tox" "__pycache__" "target" "out"))
+  (project-vc-extra-root-markers
+   '("Cargo.toml" "package.json" "go.mod" "*.asd"))
   (project-vc-include-untracked t)
   (project-vc-merge-submodules nil)
   (project-files-relative-names t)
@@ -18,13 +20,13 @@
   (set-default-coding-systems 'utf-8-unix)
   (set-locale-environment "en_US.UTF-8")
   (set-clipboard-coding-system
-   (if (eq system-type 'windows-nt)
+   (if _WIN32
        'utf-16-le 'utf-8-unix)))
 
 (use-package simple
   :ensure nil
   :custom
-	(indent-tabs-mode nil)
+  (indent-tabs-mode nil)
   (idle-update-delay 0.5)
   (kill-whole-line t)
   (kill-region-dwim t)
@@ -61,12 +63,13 @@
   (backup-by-copying t)
   (find-file-visit-truename t)
   (find-file-suppress-same-file-warnings t)
-  (require-final-newline t))
+  (require-final-newline t)
+  (insert-directory-program (executable-find "ls")))
 
 (use-package ls-lisp
   :ensure nil
   :custom
-  (ls-lisp-use-insert-directory-program (when (executable-find "ls") t))
+  (ls-lisp-use-insert-directory-program (when insert-directory-program t))
   (ls-lisp-emulation 'UNIX)
   (ls-lisp-use-string-collate nil)
   (ls-lisp-use-localized-time-format t)
@@ -75,7 +78,7 @@
   (ls-lisp-verbosity '(links uid modes))
   :config
   (when (and ls-lisp-use-insert-directory-program
-             (eq system-type 'windows-nt))
+             _WIN32)
     (define-advice insert-directory (:around (orig &rest args) my-w32-msys-ls)
       "Pass ANSI-codepage argv to `insert-directory-program', decode its UTF-8 output."
       (let ((coding-system-for-read 'utf-8))
@@ -112,12 +115,13 @@
 
 (use-package autorevert
   :ensure nil
-  :hook (nn-first-file . global-auto-revert-mode)
+  :hook (prog-mode . auto-revert-mode)
   :custom
   (auto-revert-verbose t)
   (auto-revert-use-notify t)
   (auto-revert-avoid-polling t)
-  (auto-revert-stop-on-user-input nil))
+  (auto-revert-stop-on-user-input nil)
+  :config (remove-hook 'find-file-hook #'auto-revert--global-adopt-current-buffer))
 
 (use-package comint
   :ensure nil
@@ -237,6 +241,7 @@ files, so this replace calls to `pp' with the much faster `prin1'."
   (split-height-threshold nil)
   (window-resize-pixelwise t)
   (window-combination-resize t)
+  (switch-to-buffer-obey-display-actions t)
   (display-buffer-alist
    '(("\\*\\(Backtrace\\|Warnings\\|Compile-Log\\|Messages\\|Bookmark List\\|Occur\\|eldoc\\)\\*"
       (display-buffer-in-side-window)
@@ -248,6 +253,11 @@ files, so this replace calls to `pp' with the much faster `prin1'."
       (window-width . 0.5)
       (side . right)
       (slot . 0))
+     ("\\*eldoc"
+      (display-buffer-in-side-window)
+      (window-height . 0.35)
+      (side . bottom)
+      (slot . 1))
      ("\\*\\(Flymake diagnostics\\)\\*"
       (display-buffer-in-side-window)
       (window-height . 0.35)

@@ -3,6 +3,9 @@
   :ensure nil
   :if (treesit-language-available-p 'markdown)
   :mode "\\.md\\'" "/README\\'"
+  :hook
+  (markdown-ts-mode . display-fill-column-indicator-mode)
+  (markdown-ts-mode . markdown-ts-toggle-hide-markup)
   :init
   (add-to-list 'treesit-language-source-alist
                '(markdown . ("https://github.com/tree-sitter-grammars/tree-sitter-markdown"

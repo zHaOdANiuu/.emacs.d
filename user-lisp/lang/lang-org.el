@@ -6,10 +6,10 @@
    "file"
    :face
    (lambda (path)
-     (if (or (if (eq system-type 'windows-nt)
+     (if (or (if _WIN32
                  (string-prefix-p "//" path))
              (file-remote-p path)
-             (if (eq system-type 'windows-nt)
+             (if _WIN32
                  (string-prefix-p "\\\\" path))
              (file-exists-p path))
          'org-link
@@ -22,6 +22,12 @@
    ("C-c o b" . org-switchb)
    ("C-c o x" . org-capture)
    (:map org-mode-map
+    ("M-<up>"       . my-org-move-line-up)
+    ("M-<down>"     . my-org-move-line-down)
+    ("M-{"          . org-shiftmetaleft)
+    ("M-}"          . org-shiftmetaright)
+    ("M-S-<left>"   . nil)
+    ("M-S-<right>"  . nil)
     ("C-<return>"   . org-insert-heading-respect-content)
     ("C-S-<return>" . org-insert-todo-heading-respect-content)
     ("C-M-<return>" . org-insert-subheading)
@@ -41,7 +47,9 @@
     ("C-c C-x e"    . org-export-dispatch)
     ("C-c C-x C-w"  . org-cut-subtree)
     ("C-c C-x C-a"  . org-archive-subtree-default)))
-  :hook ((org-babel-after-execute org-mode) . org-redisplay-inline-images)
+  :hook
+  (org-mode . display-fill-column-indicator-mode)
+  ((org-babel-after-execute org-mode) . org-redisplay-inline-images)
   :custom
   (org-persist-directory (concat nn-directory "org/persist/"))
   (org-id-locations-file (concat nn-directory "org/id-locations.el"))
@@ -49,6 +57,7 @@
   (org-modules-loaded t)
   (org-ellipsis nn-fold-string)
   (org-startup-indented t)
+  (org-adapt-indentation 'headline-data)
   (org-startup-folded 'fold)
   (org-src-tab-acts-natively t)
   (org-src-fontify-natively t)
@@ -69,7 +78,6 @@
   (org-indirect-buffer-display 'current-window)
   (org-fontify-done-headline t)
   (org-fontify-quote-and-verse-blocks t)
-  (org-fontify-whole-heading-line t)
   (org-use-sub-superscripts '{})
   (org-todo-keywords
    '((sequence
@@ -94,6 +102,25 @@
                '("\\.\\(x?html?\\|pdf\\)\\'"  .
                  (lambda (file _link)
                    (centaur-browse-url-of-file (browse-url-file-url file)))))
+
+  (defun my-org--at-movable-node-p ()
+    (or (org-at-table-p)
+        (and (featurep 'org-inlinetask)
+             (org-inlinetask-in-task-p))
+        (org-at-heading-p)
+        (org-at-item-p)))
+
+  (defun my-org-move-line-up ()
+    (interactive)
+    (if (my-org--at-movable-node-p)
+        (org-metaup)
+      (my-move-line-up)))
+
+  (defun my-org-move-line-down ()
+    (interactive)
+    (if (my-org--at-movable-node-p)
+        (org-metadown)
+      (my-move-line-down)))
 
   (dolist (abbrev '(("github"     . "https://github.com/%s")
                     ("youtube"    . "https://youtube.com/watch?v=%s")

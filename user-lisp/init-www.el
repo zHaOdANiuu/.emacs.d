@@ -4,7 +4,8 @@
 
 (use-package url
   :ensure nil
-  :custom (url-configuration-directory (concat nn-directory "url/")))
+  :custom (url-configuration-directory (concat nn-directory "url/"))
+  :config (remove-hook 'find-file-hook #'url-handlers-set-buffer-mode))
 
 (use-package nsm
   :ensure nil
@@ -30,7 +31,7 @@
   (tramp-use-scp-direct-remote-copying t)
   (tramp-completion-reread-directory-timeout 60)
   :config
-  (unless (eq system-type 'windows-nt)
+  (unless _WIN32
     (setq tramp-default-method "ssh"))
   (connection-local-set-profile-variables
    'remote-direct-async-process
@@ -358,11 +359,11 @@
 
 (use-package telega
   :hook
+  ;; (telega-load . telega-autoplay-mode)
   (telega-before-auth . my-telega-proxy)
   (telega-chat-mode . telega-completions-setup-capf)
   (telega-image-mode . image-transform-fit-to-window)
   :custom
-  (telega-server-libs-prefix "D:/local")
   (telega-avatar-workaround-gaps-for (when (display-graphic-p) '(return t)))
   (telega-translate-to-language-by-default "zh")
   (telega-msg-save-dir "~/Downloads")
@@ -386,8 +387,6 @@
   (telega-symbol-summarize-in (nerd-icons-octicon "nf-oct-fold"))
   (telega-symbol-summarize-out (nerd-icons-octicon "nf-oct-unfold"))
   :config
-  (telega-autoplay-mode 1)
-  (telega-notifications-mode 1)
   (setq telega-symbols-emojify
         (cl-reduce
          (lambda (emojify key)
@@ -420,7 +419,7 @@
                       (concat "❤️" (substring s 1))
                     s))))
 
-  (when (eq system-type 'windows-nt)
+  (when _WIN32
     (define-advice telega-server--start (:around (fn &rest args) my-telega-server--start)
       (apply fn args)
       (let* ((buf telega-server--buffer)

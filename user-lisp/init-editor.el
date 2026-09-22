@@ -15,7 +15,7 @@
   :hook
   (java-mode
    js-mode typescript-ts-mode tsx-ts-mode
-   csharp-mode c++-mode simpc-mode go-mode)
+   csharp-mode c++-mode simpc++-mode go-mode)
   ((c-mode python-mode rust-mode) . superword-mode))
 
 (use-package delsel
@@ -54,24 +54,31 @@
   (:map hs-minor-mode-map
    ("C-c [" . hs-show-all)
    ("C-c ]" . my-hs-hide-level)
-   ("S-<return>" . hs-toggle-hiding))
+   ("S-<return>" . hs-toggle-hiding)
+   ("<TAB>" . my-hs-tab))
   :hook
   (prog-mode . hs-minor-mode)
-  ((js-json-mode
-    json-ts-mode
+  ((conf-mode
+    js-json-mode json-ts-mode
     python-mode python-ts-mode
     yaml-ts-mode sh-mode)
    . hs-indentation-mode)
   ((powershell-mode
-    simpc-mode c-mode c++-mode
+    simpc++-mode c-mode c++-mode
     js-mode typescript-ts-mode tsx-ts-mode)
    . (lambda () (setq-local hs-adjust-block-end-function (lambda (p) (1- (line-beginning-position))))))
   :custom
   (hs-allow-nesting t)
   (hs-hide-comments-when-hiding-all nil)
   (hs-set-up-overlay #'my-hs-set-up-overlay)
-  :custom-face (hs-ellipsis ((t :inherit shadow :height 0.95)))
+  :custom-face (hs-ellipsis ((t :height 0.95)))
   :config
+  (setq hs-special-modes-alist
+        '((web-mode "<!--\\|<[^/>]*[^/]>"
+           "-->\\|</[^/>]*[^/]>"
+           "<!--" sgml-skip-tag-forward nil)
+          (t)))
+
   (defun my-hs-hide-level ()
     (interactive)
     (hs-hide-level 0))
@@ -81,17 +88,13 @@
       (overlay-put ov 'face 'hs-ellipsis)
       (overlay-put ov 'display nn-fold-string)))
 
-  (setq hs-special-modes-alist
-        '((c++-mode "\\s(" "\\s)" "/[*/]" nil nil)
-          (c-mode "\\s(" "\\s)" "/[*/]" nil nil)
-          (simpc-mode "\\s(" "\\s)" "/[*/]" nil nil)
-          (js-ts-mode "\\s(" "\\s)" "/[*/]" nil nil)
-          (js-mode "\\s(" "\\s)" "/[*/]" nil nil)
-          (typescript-ts-mode "\\s(" "\\s)" "/[*/]" nil nil)
-          (web-mode "<!--\\|<[^/>]*[^/]>"
-                    "-->\\|</[^/>]*[^/]>"
-                    "<!--" sgml-skip-tag-forward nil)
-          (t))))
+  (defun my-hs-tab ()
+    (interactive)
+    (if (and (not (use-region-p))
+             (or (hs-already-hidden-p)
+                 (hs-hideable-block-p t)))
+        (hs-cycle)
+      (indent-for-tab-command))))
 
 (use-package outline
   :ensure nil
@@ -99,10 +102,10 @@
   (:map outline-minor-mode-map
    ("S-<return>" . outline-toggle-children)
    ("C-c [" . outline-show-all)
-   ("C-c ]" . outline-hide-body))
+   ("C-c ]" . outline-hide-body)
+   ("<TAB> . outline-cycle"))
   :hook
   (text-mode . outline-minor-mode)
-  (conf-mode . outline-minor-mode)
   (outline-minor-mode . my-outline-set-buffer-local-ellipsis)
   :config
   ;; https://www.jamescherti.com/emacs-customize-ellipsis-outline-minor-mode/
@@ -128,7 +131,7 @@
   :custom (apheleia-log-only-errors t)
   :config
   (add-to-list 'apheleia-mode-alist '(sh-mode . shfmt))
-  (add-to-list 'apheleia-mode-alist '(simpc-mode . clang-format))
+  (add-to-list 'apheleia-mode-alist '(simpc++-mode . clang-format))
   (add-to-list 'apheleia-mode-alist '(cuda-mode . clang-format))
   (add-to-list 'apheleia-mode-alist '(protobuf-mode . clang-format))
 
@@ -238,7 +241,7 @@
   (setq viper-inhibit-startup-message t
         viper-expert-level 5)
   :config
-  (when (eq system-type 'windows-nt)
+  (when _WIN32
     (add-hook 'viper-vi-state-hook (lambda () (w32-set-ime-open-status nil)))))
 
 (provide 'init-editor)

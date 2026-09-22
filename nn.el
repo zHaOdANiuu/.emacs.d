@@ -1,4 +1,8 @@
 ;;; -*- lexical-binding: t -*-
+(defconst _WIN32 (eq system-type 'windows-nt))
+(defconst _GUI (display-graphic-p))
+(defconst _TUI (not _GUI))
+
 (defgroup nn nil
   "Personal customization group."
   :prefix "nn-")
@@ -106,6 +110,13 @@ TRIGGER-HOOK is a list of quoted hooks and/or sharp-quoted functions."
            (featurep 'tty-child-frames))
        (eq (frame-parameter (selected-frame) 'minibuffer) 't)))
 
+(defun nn-initialize ()
+  (setq tramp-persistency-file-name (concat nn-directory "tramp/persistency.el")
+        tramp-auto-save-directory (concat nn-directory "tramp/auto-save/"))
+
+  (nn-run-hook-on 'nn-first-file-hook '(find-file-hook dired-initial-position-hook))
+  (nn-run-hook-on 'nn-first-input-hook '(pre-command-hook)))
+
 (defun nn-drag-frame (event)
   (interactive "e")
   (let* ((frame (window-frame (posn-window (event-start event))))
@@ -118,6 +129,11 @@ TRIGGER-HOOK is a list of quoted hooks and/or sharp-quoted functions."
            frame
            (+ (car pos) (car cur) (- (car start)))
            (+ (cdr pos) (cdr cur) (- (cdr start)))))))))
+
+(defun nn-check-line-column ()
+  (let ((whitespace-style '(face lines-tail))
+        (whitespace-line-column fill-column))
+    (whitespace-mode 1)))
 
 (defun nn-proxy-enable ()
   "Enable proxy for all network connections in Emacs."
@@ -135,9 +151,27 @@ TRIGGER-HOOK is a list of quoted hooks and/or sharp-quoted functions."
   (setq socks-server nil)
   (message "Proxy disabled"))
 
-(defun nn-initialize ()
-  (setq tramp-persistency-file-name (concat nn-directory "tramp/persistency.el")
-        tramp-auto-save-directory (concat nn-directory "tramp/auto-save/"))
-
-  (nn-run-hook-on 'nn-first-file-hook '(find-file-hook dired-initial-position-hook))
-  (nn-run-hook-on 'nn-first-input-hook '(pre-command-hook)))
+(defun nn-open-in-external-app (&optional filename)
+  "Open the current file or Dired marked files in external app.
+When called from Lisp, if FILENAME is given, open that."
+  (interactive)
+  (let* ((file-list (cond
+                     (filename `(,filename))
+                     ((eq major-mode 'dired-mode) (dired-get-marked-files))
+                     (t '(,(buffer-file-name)))))
+         (do-it-p (if (<= (length file-list) 5)
+                      t (y-or-n-p "Open more than 5 files? "))))
+    (when do-it-p
+      (dolist (fpath file-list)
+        (let ((expanded (expand-file-name fpath)))
+          (pcase system-type
+            ('windows-nt
+             (start-process
+              "open-external" nil
+              "powershell" "-Command" "Invoke-Item -LiteralPath"
+              expanded))
+            ('darwin
+             (start-process "open-external" nil "open" expanded))
+            ('gnu/linux
+             (let ((process-connection-type nil))
+               (start-process "open-external" nil "xdg-open" expanded)))))))))

@@ -1,7 +1,9 @@
 ;;; live-server.el --- Emacs frontend for the Python Live Server  -*- lexical-binding: t; -*-
 (defconst live-server--script
   (expand-file-name "live-server.py" (file-name-directory load-file-name)))
+
 (defvar live-server--process nil)
+
 (defvar live-server--buffer "*Live Server*")
 
 (defgroup live-server nil
@@ -43,10 +45,13 @@
 ;;;###autoload
 (defun live-server-start (&optional directory)
   "Start the Python server for DIRECTORY."
-  (interactive `(,(read-directory-name "Serve directory: " live-server-root nil t)))
+  (interactive
+   `(,(read-directory-name "Serve directory: " live-server-root nil t)))
   (live-server-stop)
-  (setq live-server-root (file-name-as-directory (expand-file-name (or directory live-server-root))))
-  (setq live-server--process
+  (setq live-server-root
+        (file-name-as-directory
+         (expand-file-name (or directory live-server-root)))
+        live-server--process
         (make-process
          :name "live-server"
          :command `(,live-server-python

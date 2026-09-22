@@ -1,12 +1,14 @@
 ;;; -*- lexical-binding: t -*-
 (put 'if-let 'byte-obsolete-info nil)
 (put 'when-let 'byte-obsolete-info nil)
-(set-default-toplevel-value 'lexical-binding t)
+(set-default-toplevel-value 'lexical-binding nil)
 
 (setq cursor-type 'box
       visible-bell nil
       visible-cursor nil
       resize-mini-windows t
+      delete-by-moving-to-trash t
+      delete-pair-blink-delay 0
       delete-pair-push-mark t
       undo-limit (* 13 160000)
       undo-strong-limit (* 13 240000)
@@ -27,7 +29,6 @@
               fill-column 80
               truncate-lines t
               truncate-partial-width-windows nil)
-
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (load custom-file)
 (let ((file-name-handler-alist nil))
@@ -38,7 +39,7 @@
   (require 'init-display)
   (require 'init-editor)
   (require 'init-debug)
-  (require 'init-diagnostics)
+  (require 'init-check)
   (require 'init-completion)
   (require 'init-navigation)
   (require 'init-lang)
@@ -58,3 +59,12 @@
   (add-hook hook #'nn-font-init -100)
   (add-hook hook #'nn-home-init -90)
   (add-hook hook #'nn-theme-init -90))
+
+(setq-default display-fill-column-indicator-character ?\s)
+(defun adjust-fill-column-indicator-stipple ()
+  "Adjust the fill-column-indicator face with stipple using set-face-attribute."
+  (let* ((w (window-font-width))
+         (stipple `(,w 1 ,(apply #'unibyte-string (append (make-list (ash (1- w) -3) ?\0) '(1))))))
+    (set-face-attribute 'fill-column-indicator nil :stipple stipple)))
+(add-hook 'emacs-startup-hook #'adjust-fill-column-indicator-stipple)
+(add-hook 'text-scale-mode-hook #'adjust-fill-column-indicator-stipple)
