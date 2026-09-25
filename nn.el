@@ -32,9 +32,13 @@
   :type 'boolean
   :group 'nn)
 
-(defcustom nn-fold-string "…"
+(defcustom nn-ellipsis "…"
   "String used for folding/truncating display."
   :type 'string
+  :group 'nn)
+
+(defface nn-ellipsis '((t :height 0.9))
+  "Display fold style face"
   :group 'nn)
 
 (defcustom nn-indent-offset 2

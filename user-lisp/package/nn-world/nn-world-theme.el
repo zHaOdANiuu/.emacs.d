@@ -31,7 +31,7 @@
       (green-dark   "#52ab52")
       (green-deep   "#2a4a2a")
       (blue-muted   "#7da6e0")
-      (purple-muted "#c586c0"))
+      (purple-muted "#c080c0"))
   (custom-theme-set-faces
    'nn-world
    `(default        ((t :background ,bg :foreground ,fg)))
@@ -97,13 +97,13 @@
    `(whitespace-trailing         ((t :foreground ,orange :background ,orange)))
    `(trailing-whitespace         ((t :inherit whitespace-trailing)))
 
-   `(font-lock-bracket-face              ((t :foreground ,fg)))
    `(font-lock-builtin-face              ((t :foreground ,red)))
+   `(font-lock-bracket-face              ((t :foreground ,fg)))
    `(font-lock-comment-face              ((t :foreground ,green-dark)))
    `(font-lock-comment-delimiter-face    ((t :inherit font-lock-comment-face)))
    `(font-lock-constant-face             ((t :foreground ,yellow)))
    `(font-lock-delimiter-face            ((t :foreground ,bright)))
-   `(font-lock-escape-face               ((t :foreground ,bright)))
+   `(font-lock-escape-face               ((t :foreground ,teal)))
    `(font-lock-function-name-face        ((t :foreground ,purple :inherit italic)))
    `(font-lock-keyword-face              ((t :foreground ,pink :inherit italic)))
    `(font-lock-negation-char-face        ((t :foreground ,red)))
@@ -117,7 +117,6 @@
    `(font-lock-string-face               ((t :foreground ,green)))
    `(font-lock-type-face                 ((t :foreground ,purple-muted :inherit italic)))
    `(font-lock-variable-name-face        ((t :foreground ,fg)))
-   `(font-lock-variable-use-face         ((t :foreground ,fg)))
 
    `(sh-heredoc ((t :inherit font-lock-string-face)))
 
@@ -501,7 +500,6 @@
    `(org-warning                   ((t :foreground ,red :bold t)))
    `(org-hide                      ((t :foreground ,bg)))
    `(org-indent                    ((t :foreground ,bg)))
-   `(org-ellipsis                  ((t :inherit font-lock-comment-face)))
    `(org-meta-line                 ((t :foreground ,green)))
    `(org-document-title            ((t :foreground ,pink :bold t)))
    `(org-document-info             ((t :foreground ,red)))

@@ -71,7 +71,7 @@
   (hs-allow-nesting t)
   (hs-hide-comments-when-hiding-all nil)
   (hs-set-up-overlay #'my-hs-set-up-overlay)
-  :custom-face (hs-ellipsis ((t :height 0.95)))
+  :custom-face (hs-ellipsis ((t :inherit nn-ellipsis)))
   :config
   (setq hs-special-modes-alist
         '((web-mode "<!--\\|<[^/>]*[^/]>"
@@ -86,7 +86,7 @@
   (defun my-hs-set-up-overlay (ov)
     (when (eq 'code (overlay-get ov 'hs))
       (overlay-put ov 'face 'hs-ellipsis)
-      (overlay-put ov 'display nn-fold-string)))
+      (overlay-put ov 'display nn-ellipsis)))
 
   (defun my-hs-tab ()
     (interactive)
@@ -103,18 +103,15 @@
    ("S-<return>" . outline-toggle-children)
    ("C-c [" . outline-show-all)
    ("C-c ]" . outline-hide-body)
-   ("<TAB> . outline-cycle"))
-  :hook
-  (text-mode . outline-minor-mode)
-  (outline-minor-mode . my-outline-set-buffer-local-ellipsis)
+   ("<TAB>" . outline-cycle))
+  :hook (outline-minor-mode . my-outline-set-buffer-local-ellipsis)
   :config
   ;; https://www.jamescherti.com/emacs-customize-ellipsis-outline-minor-mode/
   (defun my-outline-set-buffer-local-ellipsis ()
     (let* ((display-table (or buffer-display-table (make-display-table)))
            (face-offset (* (face-id 'shadow) (ash 1 22)))
-           (value (vconcat (mapcar (lambda (c)
-                                     (+ face-offset c))
-                                   (string-trim-right nn-fold-string)))))
+           (value (vconcat (mapcar (lambda (c) (+ face-offset c))
+                                   (string-trim-right nn-ellipsis)))))
       (set-display-table-slot display-table 'selective-display value)
       (setq buffer-display-table display-table))))
 

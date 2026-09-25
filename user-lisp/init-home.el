@@ -106,7 +106,7 @@
     (dolist (item items)
       (let ((start (point))
             (line (truncate-string-to-width
-                   (format " %s" item) 64 nil nil nn-fold-string)))
+                   (format " %s" item) 64 nil nil nn-ellipsis)))
         (insert line "\n")
         (add-text-properties
          start (point)

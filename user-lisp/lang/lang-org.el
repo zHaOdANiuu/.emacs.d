@@ -50,12 +50,13 @@
   :hook
   (org-mode . display-fill-column-indicator-mode)
   ((org-babel-after-execute org-mode) . org-redisplay-inline-images)
+  :custom-face (org-ellipsis ((t :inherit nn-ellipsis)))
   :custom
   (org-persist-directory (concat nn-directory "org/persist/"))
   (org-id-locations-file (concat nn-directory "org/id-locations.el"))
   (org-modules nil)
   (org-modules-loaded t)
-  (org-ellipsis nn-fold-string)
+  (org-ellipsis nn-ellipsis)
   (org-startup-indented t)
   (org-adapt-indentation 'headline-data)
   (org-startup-folded 'fold)
