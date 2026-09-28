@@ -19,6 +19,7 @@
       bidi-display-reordering nil
       long-line-threshold 1000
       large-hscroll-threshold 1000
+      x-underline-at-descent-line t
       default-process-coding-system
       (if (eq system-type 'windows-nt)
           `(utf-8-dos . ,locale-coding-system)

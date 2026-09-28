@@ -119,12 +119,18 @@
 
 (use-package message
   :ensure nil
-  :hook (message-mode . auto-fill-mode)
+  :hook
+  (message-mode . auto-fill-mode)
+  (message-mode . display-fill-column-indicator-mode)
   :custom
   (message-kill-buffer-on-exit t)
   (message-signature user-full-name)
   (message-mail-alias-type 'ecomplete)
   (message-send-mail-function #'message-use-send-mail-function))
+
+(use-package mml
+  :ensure nil
+  :custom (mml-content-disposition-alist '((t . "attachment"))))
 
 (use-package smtpmail
   :ensure nil

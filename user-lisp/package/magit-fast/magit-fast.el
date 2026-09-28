@@ -166,8 +166,8 @@ Otherwise restore originals."
   (if magit-fast-mode
       (progn
         (magit-fast--replace-sections t)
-        (add-hook 'magit-pre-refresh-hook #'magit-fast--porcelain-invalidate))
+        (add-hook 'magit-refresh-buffer-hook #'magit-fast--porcelain-invalidate))
     (magit-fast--replace-sections nil)
-    (remove-hook 'magit-pre-refresh-hook #'magit-fast--porcelain-invalidate)))
+    (remove-hook 'magit-refresh-buffer-hook #'magit-fast--porcelain-invalidate)))
 
 (provide 'magit-fast)

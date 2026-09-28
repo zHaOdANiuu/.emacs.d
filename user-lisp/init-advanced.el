@@ -156,7 +156,7 @@
    ("e" . dired-toggle-read-only)
    ("-" . dired-create-empty-file)
    ("C-c C-e" . wdired-change-to-wdired-mode))
-  :hook (dired-before-readin . my-dired-vc-ignores)
+  :hook (dired-after-readin . my-dired-ignores)
   :custom
   (dired-dwim-target t)
   (dired-mouse-drag-files t)
@@ -176,32 +176,33 @@
     "Don't auto-revert in dired-virtual buffers (see `dired-virtual-revert')."
     (not (eq revert-buffer-function #'dired-virtual-revert)))
 
-  (defun my-dired-vc-ignores--matcher (limit)
-    "Font-lock matcher: highlight Dired filenames ignored by VC."
-    (when-let* ((backend (ignore-errors (vc-responsible-backend default-directory)))
-                (ig (vc-call-backend backend 'ignore-completion-table default-directory)))
-      (let ((names (cl-remove-if (lambda (i) (eq (aref i 0) ?*)) ig))
-            (exts  (cl-loop for i in ig
-                            when (eq (aref i 0) ?*)
-                            collect (substring i 1))))
-        (cl-loop while (re-search-forward dired-move-to-filename-regexp limit t)
-                 thereis (let* ((beg  (save-excursion (goto-char (match-beginning 0))
-                                                      (dired-move-to-filename)))
-                                (name (and beg (buffer-substring-no-properties
-                                                beg (line-end-position)))))
-                           (when (and name (or (member name names)
-                                               (cl-some
-                                                (lambda (e) (string-suffix-p e name))
-                                                exts)))
-                             (set-match-data (list beg (line-end-position)))
-                             (goto-char (line-end-position))
-                             t)))
-        )))
+  (defvar dired-ignores--cache (make-hash-table :test #'equal)
+    "Repo root -> list of git-ignored files.")
 
-  (defun my-dired-vc-ignores ()
-    (font-lock-add-keywords
-     nil '((my-dired-vc-ignores--matcher (0 'dired-ignored t)))
-     'append)))
+  (defun my-dired-ignores ()
+    (when-let* ((root (ignore-errors (vc-root-dir))))
+      (let ((ignored
+             (or (gethash root dired-ignores--cache)
+                 (puthash root
+                          (let ((default-directory root)
+                                (set (make-hash-table :test #'equal)))
+                            (dolist (f (split-string
+                                        (shell-command-to-string
+                                         "git ls-files -zoi --exclude-standard --directory")
+                                        "\0" t))
+                              (puthash (directory-file-name f) t set))
+                            set)
+                          dired-ignores--cache))))
+        (with-silent-modifications
+          (save-excursion
+            (goto-char (point-min))
+            (while (not (eobp))
+              (when-let* ((beg (dired-move-to-filename))
+                          (file (ignore-errors (dired-get-filename nil t))))
+                (when (gethash (file-relative-name file root) ignored)
+                  (font-lock-prepend-text-property
+                   beg (line-end-position) 'font-lock-face 'dired-ignored)))
+              (forward-line 1))))))))
 
 (use-package dired-x
   :ensure nil
@@ -379,14 +380,16 @@
       ("Assets" (or (name . "\\.\\(png\\|jpe?g\\|svg\\|webp\\|bpm\\|ppm\\|mp[34]\\|mov\\|avi\\|obj\\)$")))
       ("News" (name . "^\\*Newsticker.*"))
       ("Gnus" (or
-               (mode  . message-mode)
-               (mode  . gnus-group-mode)
-               (mode  . gnus-summary-mode)
-               (mode  . gnus-article-mode)
-               (name  . "^\\*Group\\*")
-               (name  . "^\\*Summary\\*")
-               (name  . "^\\*Article\\*")
-               (name  . "^\\*BBDB\\*")))
+               (mode . gnus-server-mode)
+               (mode . gnus-group-mode)
+               (mode . gnus-summary-mode)
+               (mode . gnus-article-mode)
+               (name . "^\\.newsrc-dribble")
+               (name . "^\\*Gnus Browse Server\\*")
+               (name . "^\\*Group\\*")
+               (name . "^\\*Summary\\*")
+               (name . "^\\*Article\\*")
+               (name . "^\\*BBDB\\*")))
       ("Chat" (or (mode . telega-root-mode)
                   (mode . telega-chat-mode)
                   (mode . rcirc-mode)
@@ -397,8 +400,6 @@
       ("VC" (name . "\\*vc-"))
       ("Magit" (or (name . "\\*magit")
                    (name . "COMMIT_EDITMSG")))
-      ("LLM" (or (mode . gptel-mode)
-                 (mode . gptel-chat-mode)))
       ("LSP" (or (name . "\\`\\*\\(EGLOT\\|eldoc\\|LSP\\|lsp-help\\|Flymake\\)")
                  (derived-mode . eglot--managed-mode)))
       ("Debug" (or (name . "\\`\\*\\(Backtrace\\|debug\\|Messages\\|Warnings\\|Compile-Log\\|gud-\\|dap-\\)")
