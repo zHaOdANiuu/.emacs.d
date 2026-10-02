@@ -74,7 +74,35 @@
   :custom
   (transient-history-file (concat nn-directory "transient/history.el"))
   (transient-levels-file (concat nn-directory "transient/levels.el"))
-  (transient-values-file (concat nn-directory "transient/values.el")))
+  (transient-values-file (concat nn-directory "transient/values.el"))
+  :config
+  (defvar my-transient-defer-autoload--inhibit nil
+    "Non-nil while a Transient layout is being built.")
+
+  (define-advice transient--load-command-if-autoload
+      (:around (orig cmd) my-transient-defer-autoload--load-command)
+    "Skip autoload loading of CMD while a layout is being built.
+The actual load still happens on key press via `transient--wrap-command'."
+    (if my-transient-defer-autoload--inhibit
+        cmd
+      (funcall orig cmd)))
+
+  (define-advice transient--init-suffix
+      (:around (orig levels spec parent) my-transient-defer-autoload--init-suffix)
+    "Defer autoload loading while building a single suffix.
+LEVELS, SPEC and PARENT are passed to ORIG."
+    (let ((my-transient-defer-autoload--inhibit t))
+      (when (listp spec)
+        (let ((cmd (plist-get (cdr spec) :command)))
+          (when (and cmd (symbolp cmd))
+            (unless (fboundp cmd)
+              (defalias cmd
+                (lambda ()
+                  (interactive)
+                  (error "Command `%s' is not available; the package providing it may not be installed"
+                         cmd))
+                (format "Stub for missing Transient command `%s'." cmd))))))
+      (funcall orig levels spec parent))))
 
 ;; (use-package majutsu
 ;;   :vc (:url "https://github.com/0WD0/majutsu" :rev :newest))
@@ -130,15 +158,13 @@
     '("-d" "Depth 1" "--depth=1")))
 
 (use-package magit-fast
-  :ensure nil
-  :demand t
-  :after magit
+  :vc (:url "https://github.com/zHaOdANiuu/magit-fast" :rev :newest)
   :init
   (magit-auto-revert-mode -1)
   (setq with-editor-emacsclient-executable (executable-find "emacsclient"))
-  :config
-  (remove-hook 'server-switch-hook 'magit-commit-diff)
-  (remove-hook 'magit-pre-start-git-hook #'magit-maybe-save-repository-buffers)
-  (magit-fast-mode))
+  (with-eval-after-load 'magit
+    (remove-hook 'server-switch-hook 'magit-commit-diff)
+    (remove-hook 'magit-pre-start-git-hook #'magit-maybe-save-repository-buffers)
+    (magit-fast-mode)))
 
 (provide 'init-vc)

@@ -15,10 +15,6 @@
   :ensure nil
   :custom (ecomplete-database-file (concat nn-directory "ecompleterc")))
 
-(use-package mm-decode
-  :ensure nil
-  :custom (mm-text-html-renderer 'shr))
-
 (use-package tramp
   :ensure nil
   :custom
@@ -128,10 +124,6 @@
   (message-mail-alias-type 'ecomplete)
   (message-send-mail-function #'message-use-send-mail-function))
 
-(use-package mml
-  :ensure nil
-  :custom (mml-content-disposition-alist '((t . "attachment"))))
-
 (use-package smtpmail
   :ensure nil
   :custom
@@ -156,11 +148,15 @@
 (use-package gnus
   :ensure nil
   :custom
+  (mm-url-program (executable-find "curl"))
+  (mm-url-arguments '("-fsSL" "-o" "-"))
+  (mm-text-html-renderer 'shr)
+  (mml-content-disposition-alist '((t . "attachment")))
   (gnus-init-file (concat nn-directory ".gnus.el"))
   (gnus-startup-file (concat nn-directory ".newsrc"))
   (gnus-always-read-dribble-file t)
   (gnus-activate-level 3)
-  (gnus-use-cache t)
+  ;; (gnus-use-cache t)
   (gnus-use-scoring nil)
   (gnus-use-full-window nil)
   (gnus-suppress-duplicates t)
@@ -198,12 +194,12 @@
   (gnus-cache-enter-articles '(ticked dormant unread))
   (gnus-cache-remove-articles '(read))
   (gnus-cacheable-groups "^\\(nntp\\|nnimap\\)")
+  (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
   :config
   (setq gnus-logo-colors '("#ff5591" "#c0c0c0")
-        gnus-select-method '(nnnil "")
+        gnus-select-method '(nntp "news.gmane.io")
         gnus-secondary-select-methods
-        '((nntp "news.gmane.io")
-          ;; (nntp "nntp.lore.kernel.org")
+        '(;; (nntp "nntp.lore.kernel.org")
           (nnimap "imap.gmail.com"
                   (nnimap-expunge t)
                   (nnimap-server-port 993)
@@ -244,8 +240,8 @@
   (gnus-summary-line-format "%U%R %3d %[%-23,23f%] %B %s\n")
   ;; Loose threads
   (gnus-summary-make-false-root 'adopt)
-  (gnus-simplify-subject-functions '(gnus-simplify-subject-re gnus-simplify-whitespace))
   (gnus-summary-thread-gathering-function 'gnus-gather-threads-by-subject)
+  (gnus-simplify-subject-functions '(gnus-simplify-subject-re gnus-simplify-whitespace))
   ;; Filling in threads
   ;; Do not fetch extra old headers when opening a group
   (gnus-fetch-old-headers 0)
@@ -263,6 +259,7 @@
   (gnus-view-pseudos-separately t)
   (gnus-view-pseudo-asynchronously t)
   ;; No auto select
+  (gnus-auto-center-summary nil)
   (gnus-auto-select-first nil)
   (gnus-auto-select-next nil)
   (gnus-paging-select-next nil))

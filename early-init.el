@@ -114,8 +114,8 @@
   (package-install-upgrade-built-in nil)
   (package-check-signature nil)
   (package-archives
-   '(("melpa-cn" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/")
-     ("gnu-cn"   . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/"))))
+   '(("gnu-cn"   . "https://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
+     ("melpa-cn" . "https://mirrors.tuna.tsinghua.edu.cn/elpa/melpa/"))))
 
 (use-package use-package
   :ensure nil

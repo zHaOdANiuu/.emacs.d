@@ -9,7 +9,8 @@
   :config
   (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:"))
   (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
-  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_EXAMPLE" . "#\\+END_EXAMPLE")))
+  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_EXAMPLE" . "#\\+END_EXAMPLE"))
+  (ispell-set-spellchecker-params))
 
 (use-package flyspell
   :ensure nil
@@ -19,9 +20,9 @@
    ("C-M-," . flyspell-goto-next-error))
   :hook (org-mode markdown-ts-mode git-commit-setup)
   :custom
+  (flyspell-check-changes t)
   (flyspell-issue-message-flag nil)
-  (flyspell-issue-welcome-flag nil)
-  :config (ispell-set-spellchecker-params))
+  (flyspell-issue-welcome-flag nil))
 
 (use-package flymake
   :ensure nil

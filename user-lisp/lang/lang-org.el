@@ -28,6 +28,8 @@
     ("M-}"          . org-shiftmetaright)
     ("M-S-<left>"   . nil)
     ("M-S-<right>"  . nil)
+    ("C-S-<up>"     . nil)
+    ("C-S-<down>"   . nil)
     ("C-<return>"   . org-insert-heading-respect-content)
     ("C-S-<return>" . org-insert-todo-heading-respect-content)
     ("C-M-<return>" . org-insert-subheading)

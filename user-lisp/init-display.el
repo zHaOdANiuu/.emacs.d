@@ -175,7 +175,7 @@ from `readable-foreground-color'."
                       'pointer 'hand))
         (overlay-put ov 'face nil)))))
 
-(use-package minibuffer-frame
-  :hook window-setup)
+;; (use-package minibuffer-frame
+;;   :hook window-setup)
 
 (provide 'init-display)

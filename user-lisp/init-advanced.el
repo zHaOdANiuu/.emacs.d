@@ -176,33 +176,24 @@
     "Don't auto-revert in dired-virtual buffers (see `dired-virtual-revert')."
     (not (eq revert-buffer-function #'dired-virtual-revert)))
 
-  (defvar dired-ignores--cache (make-hash-table :test #'equal)
-    "Repo root -> list of git-ignored files.")
+  (defun my-dired-ignores-get-cur-dir (root subdir)
+    (mapcar
+     #'directory-file-name
+     (split-string
+      (shell-command-to-string
+       (format
+        "git -C %s ls-files -zoi --exclude-standard --directory -- %s"
+        root subdir))
+      "\0" t)))
 
   (defun my-dired-ignores ()
-    (when-let* ((root (ignore-errors (vc-root-dir))))
-      (let ((ignored
-             (or (gethash root dired-ignores--cache)
-                 (puthash root
-                          (let ((default-directory root)
-                                (set (make-hash-table :test #'equal)))
-                            (dolist (f (split-string
-                                        (shell-command-to-string
-                                         "git ls-files -zoi --exclude-standard --directory")
-                                        "\0" t))
-                              (puthash (directory-file-name f) t set))
-                            set)
-                          dired-ignores--cache))))
-        (with-silent-modifications
-          (save-excursion
-            (goto-char (point-min))
-            (while (not (eobp))
-              (when-let* ((beg (dired-move-to-filename))
-                          (file (ignore-errors (dired-get-filename nil t))))
-                (when (gethash (file-relative-name file root) ignored)
-                  (font-lock-prepend-text-property
-                   beg (line-end-position) 'font-lock-face 'dired-ignored)))
-              (forward-line 1))))))))
+    (when-let* ((root (vc-root-dir)))
+      (font-lock-add-keywords
+       nil
+       `((,(regexp-opt
+            (my-dired-ignores-get-cur-dir
+             root (file-relative-name default-directory root)))
+          . 'dired-ignored))))))
 
 (use-package dired-x
   :ensure nil

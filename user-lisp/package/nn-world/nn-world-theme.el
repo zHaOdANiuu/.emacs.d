@@ -249,6 +249,11 @@
    `(vc-dir-status-up-to-date ((t :foreground ,green)))
    `(vc-dir-status-ignored    ((t :foreground ,dim)))
 
+   `(smerge-markers ((t :inherit error)))
+   `(smerge-base    ((t :background ,(color-darken-name yellow-dark 50))))
+   `(smerge-upper   ((t :inherit diff-removed)))
+   `(smerge-lower   ((t :inherit diff-added)))
+
    `(git-commit-summary               ((t :foreground ,fg)))
    `(git-commit-overlong-summary      ((t :foreground ,red :underline t)))
    `(git-commit-nonempty-second-line  ((t :foreground ,red :bold t)))

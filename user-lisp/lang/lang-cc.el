@@ -15,10 +15,17 @@
       ,(concat "--compile-commands-dir="
                (expand-file-name (if proj (project-root proj) default-directory))))))
 
-(use-package simpc++-mode
-  :vc (:url "https://github.com/zHaOdANiuu/simpcpp-mode" :rev :newest)
-  :mode "\\.\\(c\\|h\\|cpp\\|hpp\\|cppm\\|ixx\\)\\'"
+(use-package simpcc-mode
+  :vc (:url "https://github.com/zHaOdANiuu/simpcc-mode" :rev :newest)
+  :mode "\\.\\(c\\|h\\|cc\\|hh\\|cpp\\|hpp\\|cppm\\|ixx\\|rc\\)\\'"
   :config
+  (setq simpcc-types
+        (append
+         simpcc-types
+         '("f16" "f32" "f64" "f128"
+           "i8" "i16" "i32" "i64"
+           "u8" "u16" "u32" "u64"
+           "char8" "char16" "char32")))
   (with-eval-after-load 'eglot
     (add-to-list 'eglot-server-programs '(simpc++-mode . my-clangd-args))))
 

@@ -25,7 +25,7 @@
 
 (use-package conf-mode
   :ensure nil
-  :mode "\\.env\\..*\\'" "\\.env\\'" "/.gitignore\\'"
+  :mode "\\.env\\..*\\'" "\\.env\\'" "/.gitignore\\'" "/..gitmodules\\'"
   :hook (conf-mode . indent-tabs-mode))
 
 (provide 'init-lang)
