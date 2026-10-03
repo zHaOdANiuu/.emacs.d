@@ -61,9 +61,7 @@ As seen on: https://www.reddit.com/r/emacs/comments/1kfblch/need_help_with_addin
   ("\\.ts\\'" . typescript-ts-mode)
   ("\\.tsx\\'" . tsx-ts-mode)
   :hook
-  (tsx-ts-mode . eglot-ensure)
   (tsx-ts-mode . my-add-jsdoc-in-typescript-ts-mode)
-  (typescript-ts-mode . eglot-ensure)
   (typescript-ts-mode . my-add-jsdoc-in-typescript-ts-mode)
   :init
   (add-to-list 'treesit-language-source-alist

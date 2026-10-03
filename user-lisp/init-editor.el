@@ -15,7 +15,7 @@
   :hook
   (java-mode
    js-mode typescript-ts-mode tsx-ts-mode
-   csharp-mode c++-mode simpc++-mode go-mode)
+   csharp-mode c++-mode simpcc-mode go-mode)
   ((c-mode python-mode rust-mode) . superword-mode))
 
 (use-package delsel
@@ -64,7 +64,7 @@
     yaml-ts-mode sh-mode)
    . hs-indentation-mode)
   ((powershell-mode
-    simpc++-mode c-mode c++-mode
+    simpcc-mode c-mode c++-mode
     js-mode typescript-ts-mode tsx-ts-mode)
    . (lambda () (setq-local hs-adjust-block-end-function (lambda (p) (1- (line-beginning-position))))))
   :custom
@@ -128,7 +128,7 @@
   :custom (apheleia-log-only-errors t)
   :config
   (add-to-list 'apheleia-mode-alist '(sh-mode . shfmt))
-  (add-to-list 'apheleia-mode-alist '(simpc++-mode . clang-format))
+  (add-to-list 'apheleia-mode-alist '(simpcc-mode . clang-format))
   (add-to-list 'apheleia-mode-alist '(cuda-mode . clang-format))
   (add-to-list 'apheleia-mode-alist '(protobuf-mode . clang-format))
 

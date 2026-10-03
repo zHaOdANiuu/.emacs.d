@@ -67,7 +67,7 @@
   :hook
   (before-save . delete-trailing-whitespace)
   (emacs-lisp-mode
-   simpc++-mode c-mode c++-mode
+   simpcc-mode c-mode c++-mode
    js-mode js-json-mode json-ts-mode
    typescript-ts-mode tsx-ts-mode
    web-mode sh-mode powershell-mode
@@ -175,7 +175,7 @@ from `readable-foreground-color'."
                       'pointer 'hand))
         (overlay-put ov 'face nil)))))
 
-;; (use-package minibuffer-frame
-;;   :hook window-setup)
+(use-package minibuffer-frame
+  :hook window-setup)
 
 (provide 'init-display)

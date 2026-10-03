@@ -91,7 +91,7 @@
    ("<return>" . corfu-complete)
    ("<escape>" . corfu-quit)
    ("S-SPC" . corfu-insert-separator))
-  :hook (prog-mode . corfu-mode)
+  :hook prog-mode
   :custom
   (corfu-auto t)
   (corfu-auto-delay 0)
@@ -170,16 +170,26 @@
       (corfu-popupinfo-mode -1))))
 
 (use-package yasnippet
-  :commands
-  (yas-minor-mode-on
-   yas-expand
-   yas-expand-snippet
-   yas-lookup-snippet
-   yas-insert-snippet
-   yas-new-snippet
-   yas-visit-snippet-file
-   yas-activate-extra-mode
-   yas-deactivate-extra-mode
-   yas-maybe-expand-abbrev-key-filter))
+  :hook
+  (nn-first-input . yas-global-mode)
+  (yas-minor-mode . my-completion-add-yas-capf-h)
+  :init (setq yas-verbosity 2)
+  :config
+  (defun my-yas-capf ()
+    (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
+      (let ((keys (delete-dups
+                   (mapcan (lambda (tbl)
+                             (copy-sequence (hash-table-keys (yas--table-hash tbl))))
+                           (yas--get-snippet-tables)))))
+        (when keys
+          (list
+           (match-beginning 0) (match-end 0) keys
+           :company-kind (lambda (_) 'snippet)
+           :exit-function (lambda (_ status)
+                            (when (string= status "finished")
+                              (yas-expand))))))))
+
+  (defun my-completion-add-yas-capf-h ()
+    (add-hook 'completion-at-point-functions #'my-yas-capf 30 t)))
 
 (provide 'init-completion)

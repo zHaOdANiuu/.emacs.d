@@ -27,6 +27,6 @@
            "u8" "u16" "u32" "u64"
            "char8" "char16" "char32")))
   (with-eval-after-load 'eglot
-    (add-to-list 'eglot-server-programs '(simpc++-mode . my-clangd-args))))
+    (add-to-list 'eglot-server-programs '(simpcc-mode . my-clangd-args))))
 
 (provide 'lang-cc)
