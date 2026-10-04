@@ -179,3 +179,16 @@ When called from Lisp, if FILENAME is given, open that."
             ('gnu/linux
              (let ((process-connection-type nil))
                (start-process "open-external" nil "xdg-open" expanded)))))))))
+
+(defun nn-print-install-font ()
+  (interactive)
+  (with-current-buffer (scratch-buffer)
+    (let ((sorted
+           (sort (delete-dups (delete "" (font-family-list)))
+                 #'string<))
+          prev)
+      (dolist (f sorted)
+        (unless (and prev (string-prefix-p (concat prev " ") f))
+          (insert f "\n")
+          (setq prev f))))
+    (goto-char (point-min))))

@@ -1,7 +1,4 @@
 ;;; -*- lexical-binding: t -*-
-(unless (display-graphic-p)
-  (setq-default auto-composition-mode nil))
-
 (use-package tty-tip
   :ensure nil
   :if (featurep 'tty-child-frames)

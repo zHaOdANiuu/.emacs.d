@@ -10,43 +10,6 @@
   (proced-format 'medium)
   (proced-filter 'user))
 
-(use-package time
-  :ensure nil
-  :custom
-  (world-clock-time-format "%A %d %B %H:%M:%S %Z")
-  (world-clock-sort-order "%FT%T")
-  (display-time-day-and-date t)
-  (display-time-default-load-average nil)
-  (display-time-mail-string "")
-  (zoneinfo-style-world-list ; use `M-x worldclock RET' to see it
-   '(("America/Los_Angeles" "Los Angeles")
-     ("America/Vancouver" "Vancouver")
-     ("Canada/Pacific" "Canada/Pacific")
-     ("America/Chicago" "Chicago")
-     ("America/Toronto" "Toronto")
-     ("America/New_York" "New York")
-     ("Canada/Atlantic" "Canada/Atlantic")
-     ("Brazil/East" "Brasília")
-     ("America/Sao_Paulo" "São Paulo")
-     ("UTC" "UTC")
-     ("Europe/Lisbon" "Lisbon")
-     ("Europe/Brussels" "Brussels")
-     ("Europe/Athens" "Athens")
-     ("Asia/Riyadh" "Riyadh")
-     ("Asia/Amman" "Jordan")
-     ("Asia/Tehran" "Tehran")
-     ("Asia/Tbilisi" "Tbilisi")
-     ("Asia/Yekaterinburg" "Yekaterinburg")
-     ("Asia/Kolkata" "Kolkata")
-     ("Asia/Singapore" "Singapore")
-     ("Asia/Shanghai" "Shanghai")
-     ("Asia/Seoul" "Seoul")
-     ("Asia/Tokyo" "Tokyo")
-     ("Asia/Vladivostok" "Vladivostok")
-     ("Australia/Brisbane" "Brisbane")
-     ("Australia/Sydney" "Sydney")
-     ("Pacific/Auckland" "Auckland"))))
-
 (use-package man
   :ensure nil
   :commands man
@@ -73,6 +36,33 @@
     (require 'eww)
     (let ((webjump-use-internal-browser arg))
       (call-interactively #'webjump))))
+
+(use-package bookmark
+  :ensure nil
+  :custom (bookmark-default-file (concat nn-directory "bookmark-default.el"))
+  :config
+  (define-advice bookmark-bmenu--revert (:after (&rest _) my-bookmark-bmenu--icons)
+    "Prepend nerd-icons to bookmark names."
+    (when _GUI
+      (dolist (entry tabulated-list-entries)
+        (let* ((rec (car entry))
+               (row (cadr entry))
+               (loc (bookmark-get-filename rec))
+               (file (and (stringp loc)
+                          (not (string-empty-p loc))
+                          (file-name-nondirectory loc)))
+               (icon (cond ((not loc) nil)
+                           ((file-remote-p loc)
+                            (nerd-icons-codicon "nf-cod-radio_tower"))
+                           ((file-directory-p loc)
+                            (nerd-icons-icon-for-dir loc))
+                           ((and file (not (string-empty-p file)))
+                            (nerd-icons-icon-for-file file))))
+               (idx (if bookmark-bmenu-toggle-filenames 1 0)))
+          (when icon
+            (setf (elt row idx)
+                  (concat icon "  " (elt row idx))))))
+      (tabulated-list-print t))))
 
 (use-package wgrep
   :custom

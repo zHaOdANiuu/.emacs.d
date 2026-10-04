@@ -1,6 +1,20 @@
 ;;; -*- lexical-binding: t -*-
-(setq user-full-name "zhaodaniu"
-      user-mail-address "zhaodaniu1@gmail.com")
+(use-package shr
+  :ensure nil
+  :custom
+  (shr-use-fonts t)
+  (shr-width 80)
+  (shr-indentation 2)
+  (shr-bullet "• ")
+  (shr-cookie-policy nil)
+  (shr-href-highlight t)
+  (shr-image-animate t)
+  (shr-inhibit-images t)
+  (shr-table-corners ?┼)
+  (shr-table-horizontal-line ?─)
+  (shr-table-vertical-line ?│)
+  (shr-color-visible-luminance-min 60)
+  (shr-color-visible-distance-min 5))
 
 (use-package url
   :ensure nil
@@ -367,7 +381,7 @@
   (telega-chat-mode . telega-completions-setup-capf)
   (telega-image-mode . image-transform-fit-to-window)
   :custom
-  (telega-avatar-workaround-gaps-for (when (display-graphic-p) '(return t)))
+  (telega-avatar-workaround-gaps-for (when _GUI '(return t)))
   (telega-translate-to-language-by-default "zh")
   (telega-msg-save-dir "~/Downloads")
   (telega-chat-input-markups '("markdown2" "org"))

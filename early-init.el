@@ -3,14 +3,16 @@
 ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=81506
 ;; (setq w32-ime-preedit t)
 
+(put 'if-let 'byte-obsolete-info nil)
+(put 'when-let 'byte-obsolete-info nil)
+(set-default-toplevel-value 'lexical-binding nil)
+(run-with-idle-timer 5 t #'garbage-collect)
 (load (expand-file-name "nn.el" user-emacs-directory))
 
 (use-package emacs
   :ensure nil
   :hook (window-setup . (lambda () (setq inhibit-redisplay nil inhibit-message nil)))
   :init
-  (run-with-idle-timer 5 t #'garbage-collect)
-
   (setq native-comp-jit-compilation nil
         native-comp-deferred-compilation nil
         native-comp-async-on-battery-power nil
@@ -18,6 +20,14 @@
         read-process-output-max (* 4 1024 1024)
         load-path-filter-function #'load-path-filter-cache-directory-files
         redisplay-skip-fontification-on-input t
+        long-line-threshold 1000
+        large-hscroll-threshold 1000
+        bidi-inhibit-bpa t
+        bidi-display-reordering nil
+        default-process-coding-system
+        (if (eq system-type 'windows-nt)
+            `(utf-8-dos . ,locale-coding-system)
+          '(utf-8-unix . utf-8-unix))
         inhibit-message t
         inhibit-redisplay t
         menu-bar-mode -1
@@ -27,6 +37,13 @@
         '(:eval (concat
                  (if (and buffer-file-name (buffer-modified-p)) "● " "")
                  (buffer-name))))
+
+  (setq-default tab-width 2
+                tab-always-indent 'complete
+                fill-column 80
+                truncate-lines t
+                truncate-partial-width-windows nil
+                auto-composition-mode _GUI)
 
   (let ((default-file-name-handler-alist file-name-handler-alist)
         (default-load-file-rep-suffixes load-file-rep-suffixes))
@@ -44,6 +61,8 @@
           w32-pipe-read-delay 0
           w32-pipe-buffer-size read-process-output-max))
   :custom
+  (user-full-name "zhaodaniu")
+  (user-mail-address "zhaodaniu1@gmail.com")
   (user-lisp-auto-scrape nil)
   (gc-cons-percentage (if noninteractive #x8000000 most-positive-fixnum))
   (gc-cons-threshold (if noninteractive #x8000000 most-positive-fixnum))
@@ -55,6 +74,19 @@
   (use-short-answers t)
   (use-dialog-box nil)
   (use-file-dialog nil)
+  (cursor-type 'box)
+  (visible-bell nil)
+  (visible-cursor nil)
+  (resize-mini-windows t)
+  (delete-by-moving-to-trash t)
+  (delete-pair-blink-delay 0)
+  (delete-pair-push-mark t)
+  (undo-limit (* 13 160000))
+  (undo-strong-limit (* 13 240000))
+  (undo-outer-limit (* 13 24000000))
+  (word-wrap-by-category t)
+  (window-combination-resize t)
+  (x-underline-at-descent-line t)
   (inhibit-startup-screen t)
   (inhibit-startup-echo-area-message user-login-name)
   (inhibit-compacting-font-caches t)
@@ -105,6 +137,68 @@
   (remove-hook 'find-file-hook #'vc-refresh-state)
   (remove-hook 'find-file-hook #'epa-file-find-file-hook))
 
+(use-package env
+  :ensure nil
+  :hook (after-init . nn-set-exec-path-from-shell-PATH)
+  :init
+  (setenv "TERM" "xterm-256color")
+  (when _WIN32
+    (setq process-connection-type nil)
+
+    (setenv "GIT_ASKPASS" "git-gui--askpass")
+
+    (unless (getenv-internal "HOME")
+      (when-let* ((home (getenv "USERPROFILE")))
+        (setenv "HOME" home)
+        (setq abbreviated-home-dir nil)))
+
+    (when-let* ((bash (executable-find "bash")))
+      (setq shell-file-name bash)
+      (setenv "MSYSTEM" "UCRT64")
+      (setenv "SHELL" bash)
+      ;; (push (file-name-directory bash) exec-path)
+      ))
+
+  (defun nn-set-exec-path-from-shell-PATH ()
+    "Set up Emacs' `exec-path' and PATH environment the same as the user's shell.
+This works with bash, zsh, or fish.
+
+The shell is spawned ASYNCHRONOUSLY so it never blocks startup: PATH is
+updated from the sentinel once the shell responds (typically within a
+~100ms after init).  Commands issued in that tiny initial window may not
+yet see the updated PATH."
+    (interactive)
+    (let* ((shell (getenv "SHELL"))
+           (shell-name (file-name-nondirectory (or shell "")))
+           (command
+            (cond
+             ((string= shell-name "fish")
+              "fish -c 'string join : $PATH'")
+             ((string= shell-name "zsh")
+              "zsh -i -c 'printenv PATH'")
+             ((string= shell-name "bash")
+              "bash --login -c 'echo $PATH'")
+             (t nil))))
+      (if (not command)
+          (message ">>> nn: `%s' shell is not supported" shell-name)
+        (let ((output ""))
+          (make-process
+           :name "nn-exec-path"
+           :buffer nil
+           :noquery t
+           :connection-type 'pipe
+           :command `(,shell-file-name ,shell-command-switch ,command)
+           :filter (lambda (_proc chunk) (setq output (concat output chunk)))
+           :sentinel
+           (lambda (_proc event)
+             (when (string-prefix-p "finished" event)
+               (let ((path-from-shell
+                      (replace-regexp-in-string "[ \t\n]*$" "" output)))
+                 (when (and path-from-shell (not (string= path-from-shell "")))
+                   (setenv "PATH" path-from-shell)
+                   (setq exec-path (split-string path-from-shell path-separator))
+                   (message ">>> nn: environment variable PATH loaded from `%s' shell" shell-name)))))))))))
+
 (use-package package
   :ensure nil
   :custom
@@ -123,25 +217,5 @@
   (use-package-always-ensure t)
   (use-package-always-defer t)
   (use-package-expand-minimally t))
-
-(use-package env
-  :ensure nil
-  :init
-  (setenv "TERM" "xterm-256color")
-  (when _WIN32
-    (setq process-connection-type nil)
-
-    (setenv "GIT_ASKPASS" "git-gui--askpass")
-
-    (unless (getenv-internal "HOME")
-      (when-let* ((home (getenv "USERPROFILE")))
-        (setenv "HOME" home)
-        (setq abbreviated-home-dir nil)))
-
-    (when-let* ((bash (executable-find "bash")))
-      (setq shell-file-name bash)
-      (setenv "MSYSTEM" "UCRT64")
-      (setenv "SHELL" bash)
-      (push (file-name-directory bash) exec-path))))
 
 (nn-initialize)

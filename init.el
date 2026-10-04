@@ -1,71 +1,106 @@
 ;;; -*- lexical-binding: t -*-
-(put 'if-let 'byte-obsolete-info nil)
-(put 'when-let 'byte-obsolete-info nil)
-(set-default-toplevel-value 'lexical-binding nil)
 
-(setq cursor-type 'box
-      visible-bell nil
-      visible-cursor nil
-      resize-mini-windows t
-      delete-by-moving-to-trash t
-      delete-pair-blink-delay 0
-      delete-pair-push-mark t
-      undo-limit (* 13 160000)
-      undo-strong-limit (* 13 240000)
-      undo-outer-limit (* 13 24000000)
-      word-wrap-by-category t
-      window-combination-resize t
-      bidi-inhibit-bpa t
-      bidi-display-reordering nil
-      long-line-threshold 1000
-      large-hscroll-threshold 1000
-      x-underline-at-descent-line t
-      default-process-coding-system
-      (if (eq system-type 'windows-nt)
-          `(utf-8-dos . ,locale-coding-system)
-        '(utf-8-unix . utf-8-unix)))
+;; Font download link
+;; [IBM Plex Mono](https://github.com/IBM/plex)
+;; [Iosevka SS13](https://github.com/be5invis/Iosevka)
+;; [LXGW WenKai Mono](https://github.com/lxgw/LxgwWenKai)
+;; [Maple Mono](https://github.com/subframe7536/maple-font)
+;; [Sarasa Mono SC](https://github.com/be5invis/Sarasa-Gothic)
 
-(setq-default tab-width 2
-              tab-always-indent 'complete
-              fill-column 80
-              truncate-lines t
-              truncate-partial-width-windows nil)
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-(load custom-file)
-(let ((file-name-handler-alist nil))
-  (require 'init-font)
-  (require 'init-base)
-  (require 'init-advanced)
-  (require 'init-theme)
-  (require 'init-display)
-  (require 'init-editor)
-  (require 'init-debug)
-  (require 'init-check)
-  (require 'init-completion)
-  (require 'init-navigation)
-  (require 'init-lang)
-  (require 'init-vc)
-  (require 'init-www)
-  (require 'init-utils)
-  (require 'init-mode-line)
-  (require 'init-terminal)
-  (require 'init-keybind)
-  (require 'init-word-move)
-  (require 'init-context-menu)
-  (require 'init-home))
+(require 'cl-lib)
 
-(let ((hook (if (daemonp)
-                'server-after-make-frame-hook
-              'after-init-hook)))
-  (add-hook hook #'nn-font-init -100)
-  (add-hook hook #'nn-home-init -90)
-  (add-hook hook #'nn-theme-init -90))
+(use-package nn-init
+  :ensure nil
+  :init
+  (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+  (load custom-file)
 
-(setq-default display-fill-column-indicator-character ?\s)
-(defun adjust-fill-column-indicator-stipple ()
-  "Adjust the fill-column-indicator face with stipple using set-face-attribute."
-  (let* ((w (window-font-width))
-         (stipple `(,w 1 ,(apply #'unibyte-string (append (make-list (ash (1- w) -3) ?\0) '(1))))))
-    (set-face-attribute 'fill-column-indicator nil :stipple stipple)))
-(add-hook 'emacs-startup-hook #'adjust-fill-column-indicator-stipple)
-(add-hook 'text-scale-mode-hook #'adjust-fill-column-indicator-stipple)
+  (let ((file-name-handler-alist nil))
+    (require 'init-builtin)
+    (require 'init-display)
+    (require 'init-editor)
+    (require 'init-debug)
+    (require 'init-lang)
+    (require 'init-vc)
+    (require 'init-terminal)
+    (require 'init-utils)
+    (require 'init-www)
+    (require 'init-keybind)
+    (require 'init-home))
+
+  (defun nn-font-init ()
+    (setq use-default-font-for-symbols nil)
+
+    ;; Unicode
+    (cl-loop for font in '("Segoe UI" "Arial Unicode MS")
+             for spec = (font-spec :family font)
+             when (find-font spec)
+             return (set-fontset-font t 'unicode spec))
+    ;; Symbol
+    (cl-loop for font in '("Segoe UI Symbol" "Apple Symbols" "Symbol")
+             for spec = (font-spec :family font)
+             when (find-font spec)
+             return (set-fontset-font t 'symbol spec))
+    ;; Emoji
+    (cl-loop for font in '("Segoe UI Emoji" "Apple Color Emoji" "Noto Color Emoji")
+             for spec = (font-spec :family font)
+             when (find-font spec)
+             return (set-fontset-font t 'emoji spec))
+    ;; Nerd Fonts
+    (cl-loop for font in '("Symbols Nerd Font Mono")
+             for spec = (font-spec :family font)
+             when (find-font spec)
+             return (progn
+                      (set-fontset-font t '(#xe000 . #xf8ff) spec)
+                      (set-fontset-font t '(#xf0000 . #xfffff) spec)))
+    ;; Extra
+    (cl-loop for font in '("Maple Mono NL NF CN")
+             for spec = (font-spec :family font)
+             when (find-font spec)
+             return (progn
+                      ;; Box Drawing
+                      (set-fontset-font t '(#x2500 . #x257F) spec)
+                      ;; Geometric Shapes
+                      (set-fontset-font t '(#x25A0 . #x25FF) spec)))
+    ;; Chinese
+    (cl-loop for font in '("LXGW WenKai Mono" "Sarasa Mono SC"
+                           "Microsoft YaHei" "DengXian" "Simhei")
+             for spec = (font-spec :family font)
+             when (find-font spec)
+             return (progn
+                      (set-fontset-font t 'han spec)
+                      ;; Greek letters
+                      (set-fontset-font t '(#x0370 . #x03FF) spec)))
+    ;; Default
+    (cl-loop for font in '("IBM Plex Mono" "JetBrains Mono" "Iosevka SS13" "Cascadia Mono")
+             for spec = (font-spec :family font)
+             when (find-font spec)
+             return (set-face-attribute 'default nil :family font :height 140))
+
+    ;; Font Ligature
+    ;; (cl-loop for chars in '("::" "..." "->" "=>" "<=" ">=" "!==" "!=" "===" "==")
+    ;;          for key = (aref chars 0)
+    ;;          do (set-char-table-range
+    ;;              composition-function-table  key
+    ;;              (nconc (char-table-range composition-function-table key)
+    ;;                     `(,(vector (regexp-quote chars) 0 'font-shape-gstring)))))
+    )
+
+  (defun nn-home-init ()
+    (nn-home-create)
+    (nn-home-set-margins)
+    (nn-home-render)
+    (nn-home-show)
+    (goto-char (point-min))
+    (nn-home-next-line))
+
+  (defun nn-theme-init ()
+    (require 'nn-world-theme)
+    (load-theme 'nn-world t))
+
+  (let ((hook (if (daemonp)
+                  'server-after-make-frame-hook
+                'after-init-hook)))
+    (add-hook hook #'nn-font-init -100)
+    (add-hook hook #'nn-home-init -90)
+    (add-hook hook #'nn-theme-init -90)))
