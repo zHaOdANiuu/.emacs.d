@@ -1,13 +1,13 @@
-;;; nn-world-theme.el --- Custom dark theme -*- lexical-binding: t; -*-
+;;; elegant-world-world-theme.el --- Custom dark theme -*- lexical-binding: t; -*-
 
 (require 'color)
 
-(deftheme nn-world)
+(deftheme elegant-world)
 
-(defun nn-world-reload ()
+(defun elegant-world-reload ()
   (interactive)
-  (disable-theme 'nn-world)
-  (load-theme 'nn-world t))
+  (disable-theme 'elegant-world)
+  (load-theme 'elegant-world t))
 
 (let ((bg           "#1a1a1e")
       (fg           "#cccccc")
@@ -33,7 +33,7 @@
       (blue-muted   "#7da6e0")
       (purple-muted "#c080c0"))
   (custom-theme-set-faces
-   'nn-world
+   'elegant-world
    `(default        ((t :background ,bg :foreground ,fg)))
    `(success        ((t :foreground ,green)))
    `(warning        ((t :foreground ,yellow-dark)))
@@ -680,5 +680,5 @@
   (add-to-list 'custom-theme-load-path
                (file-name-as-directory (file-name-directory load-file-name))))
 
-(provide-theme 'nn-world)
-;;; nn-world-theme.el ends here
+(provide-theme 'elegant-world)
+;;; elegant-world-theme.el ends here

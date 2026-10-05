@@ -1,4 +1,4 @@
-;;; simple-mpv.el --- Simple mpv media player  -*- lexical-binding: t; -*-
+;;; -*- lexical-binding: t -*-
 (require 'cl-lib)
 (require 'json)
 
@@ -8,6 +8,8 @@
 (defvar simple-mpv--bridge nil)
 (defvar simple-mpv--bridge-buffer nil)
 (defvar simple-mpv--bridge-events nil)
+(defvar simple-mpv--bridge-timeout 30
+  "Seconds after which a pending IPC request is considered abandoned.")
 (defvar simple-mpv--audio-list nil
   "Flat, ordered list of absolute paths to all audio files.")
 (defvar simple-mpv--current-index nil
@@ -16,6 +18,10 @@
 (defvar simple-mpv--audio-control-buffer nil)
 (defvar simple-mpv--audio-control-play-flag nil
   "Non-nil when mpv is currently playing (pause == false).")
+(defvar simple-mpv--render-timer nil
+  "Pending timer used to coalesce frequent redraws.")
+(defvar simple-mpv--button-keymap-cache nil
+  "Alist of (COMMAND . KEYMAP) used by audio control buttons.")
 (defconst simple-mpv--audio-control-initial-state
   '((title    . "")
     (author   . "")
@@ -23,7 +29,6 @@
     (duration . 0)))
 (defvar simple-mpv--audio-control-state
   (copy-tree simple-mpv--audio-control-initial-state))
-
 (defvar-keymap simple-mpv--audio-list-map
   "q"        #'delete-window
   "<return>" #'simple-mpv--audio-list-buffer-play)
@@ -88,6 +93,7 @@ that needs its accompanying init segment to decode correctly."
   :group 'simple-mpv)
 
 
+;;; IPC plumbing
 
 (defun simple-mpv--ipc-begin ()
   "Start mpv in idle mode and connect the PowerShell IPC bridge."
@@ -95,37 +101,46 @@ that needs its accompanying init segment to decode correctly."
         simple-mpv--current-index nil
         simple-mpv--process
         (apply #'make-process
-               :coding '(utf-8-dos . gbk-dos)
-               :name "simple-mpv-process"
-               :command `(,simple-mpv-exe
-                          "--idle=yes"
-                          "--no-video"
-                          ,@(unless simple-mpv-debug '("--no-terminal"))
-                          "--input-ipc-server=simple-mpv")
-               (when simple-mpv-debug
-                 '(:buffer "*Simple mpv process*")))
+               (append
+                (list :coding '(utf-8-dos . gbk-dos)
+                      :name "simple-mpv-process"
+                      :command
+                      (append
+                       (list simple-mpv-exe
+                             "--idle=yes"
+                             "--no-video")
+                       (unless simple-mpv-debug '("--no-terminal"))
+                       (list "--input-ipc-server=simple-mpv")))
+                (when simple-mpv-debug
+                  (list :buffer "*Simple mpv process*"))))
         simple-mpv--bridge
         (make-process
          :coding 'utf-8-emacs-unix
          :name "simple-mpv-bridge"
          :command `("powershell" "-File" ,simple-mpv-audio-bridge-script)
          :filter #'simple-mpv--ipc-filter))
-  (dolist (prop '("metadata" "pause" "media-title" "duration" "time-pos"))
-    (simple-mpv--ipc-dispatch
-     nil "observe_property" (cl-incf simple-mpv--observe-seq) prop)))
+  (cl-loop for prop in '("metadata" "pause" "media-title" "duration" "time-pos")
+           do (simple-mpv--ipc-dispatch
+               nil "observe_property" (cl-incf simple-mpv--observe-seq) prop)))
 
 (defun simple-mpv--ipc-end ()
   "Kill mpv and the IPC bridge."
   (when simple-mpv--process
-    (when simple-mpv-debug
-      (when-let* ((buf (process-buffer simple-mpv--process)))
-        (when (buffer-live-p buf)
-          (kill-buffer buf))))
+    (when-let* ((buf (process-buffer simple-mpv--process)))
+      (when (buffer-live-p buf)
+        (kill-buffer buf)))
     (delete-process simple-mpv--process)
     (setq simple-mpv--process nil))
   (when simple-mpv--bridge
     (delete-process simple-mpv--bridge)
     (setq simple-mpv--bridge nil)))
+
+(defun simple-mpv--ipc-sweep-stale ()
+  "Drop callbacks whose responses never arrived within the timeout."
+  (let ((cutoff (- (float-time) simple-mpv--bridge-timeout)))
+    (setq simple-mpv--bridge-events
+          (cl-remove-if (lambda (entry) (< (cddr entry) cutoff))
+                        simple-mpv--bridge-events))))
 
 (defun simple-mpv--ipc-dispatch (callback &rest args)
   "Send a JSON-RPC command to mpv via the bridge.
@@ -133,7 +148,11 @@ CALLBACK is called with the `data' field of the response on success."
   (if (process-live-p simple-mpv--bridge)
       (let ((id (cl-incf simple-mpv--ipc-seq)))
         (when callback
-          (push (cons id callback) simple-mpv--bridge-events))
+          ;; FIX: store a timestamp so we can sweep abandoned requests.
+          (push (cons id (cons callback (float-time)))
+                simple-mpv--bridge-events))
+        ;; OPT: opportunistically drop stale pending requests.
+        (simple-mpv--ipc-sweep-stale)
         (process-send-string
          simple-mpv--bridge
          (concat
@@ -145,13 +164,15 @@ CALLBACK is called with the `data' field of the response on success."
 
 (defun simple-mpv--ipc-post (parsed)
   "Dispatch a response message to its registered callback."
-  (let* ((req-id   (cdr (assq 'request_id parsed)))
-         (callback (cdr (assq req-id simple-mpv--bridge-events))))
-    (when (and callback
-               (string= (cdr (assq 'error parsed)) "success"))
-      (funcall callback (cdr (assq 'data parsed))))
-    (setq simple-mpv--bridge-events
-          (assq-delete-all req-id simple-mpv--bridge-events))))
+  (let* ((req-id  (cdr (assq 'request_id parsed)))
+         (entry   (assq req-id simple-mpv--bridge-events)))
+    (when entry
+      (let ((callback (cadr entry))
+            (err      (cdr (assq 'error parsed))))
+        (when (equal err "success")
+          (funcall callback (cdr (assq 'data parsed)))))
+      (setq simple-mpv--bridge-events
+            (assq-delete-all req-id simple-mpv--bridge-events)))))
 
 (defun simple-mpv--ipc-filter (_proc output)
   "Parse newline-delimited JSON from mpv and route each message."
@@ -174,6 +195,12 @@ CALLBACK is called with the `data' field of the response on success."
 (defun simple-mpv--cleanup ()
   "Tear down all simple-mpv state.  Runs on the list buffer's kill hook."
   (simple-mpv--ipc-end)
+  (when (buffer-live-p simple-mpv--audio-control-buffer)
+    (when-let* ((win (get-buffer-window simple-mpv--audio-control-buffer t)))
+      (delete-window win))
+    (kill-buffer simple-mpv--audio-control-buffer))
+  (when (timerp simple-mpv--render-timer)
+    (cancel-timer simple-mpv--render-timer))
   (setq simple-mpv--audio-list-buffer nil
         simple-mpv--audio-control-buffer nil
         simple-mpv--current-index nil
@@ -182,14 +209,12 @@ CALLBACK is called with the `data' field of the response on success."
         simple-mpv--bridge-events nil
         simple-mpv--ipc-seq 0
         simple-mpv--observe-seq 0
+        simple-mpv--render-timer nil
         simple-mpv--audio-control-state
-        (copy-tree simple-mpv--audio-control-initial-state))
-  (when (buffer-live-p simple-mpv--audio-control-buffer)
-    (when-let* ((win (get-buffer-window simple-mpv--audio-control-buffer t)))
-      (delete-window win))
-    (kill-buffer simple-mpv--audio-control-buffer)))
+        (copy-tree simple-mpv--audio-control-initial-state)))
 
 
+;;; Playback controls
 
 (defun simple-mpv--audio-control-auto-play ()
   "Toggle play / pause."
@@ -198,25 +223,22 @@ CALLBACK is called with the `data' field of the response on success."
    nil "set_property" "pause"
    (if simple-mpv--audio-control-play-flag "yes" "no")))
 
+(defun simple-mpv--play-relative (delta)
+  "Play the track DELTA positions away from the current one (wrapping)."
+  (when simple-mpv--current-index
+    (let* ((len  (length simple-mpv--audio-list))
+           (next (mod (+ simple-mpv--current-index delta) len)))
+      (simple-mpv--play-index next))))
+
 (defun simple-mpv--audio-control-last ()
   "Play the previous track."
   (interactive)
-  (when simple-mpv--current-index
-    (let* ((len  (length simple-mpv--audio-list))
-           (prev (if (<= simple-mpv--current-index 0)
-                     (1- len)
-                   (1- simple-mpv--current-index))))
-      (simple-mpv--play-index prev))))
+  (simple-mpv--play-relative -1))
 
 (defun simple-mpv--audio-control-next ()
   "Play the next track."
   (interactive)
-  (when simple-mpv--current-index
-    (let* ((len  (length simple-mpv--audio-list))
-           (next (if (>= (1+ simple-mpv--current-index) len)
-                     0
-                   (1+ simple-mpv--current-index))))
-      (simple-mpv--play-index next))))
+  (simple-mpv--play-relative +1))
 
 (defun simple-mpv--audio-control-random ()
   "Play a random track from the list."
@@ -239,12 +261,16 @@ CALLBACK is called with the `data' field of the response on success."
       (simple-mpv--ipc-dispatch nil "seek" target "absolute"))))
 
 
+;;; Control-bar state & rendering
 
-(defun simple-mpv--audio-control-state-update (key value)
-  "Set KEY to VALUE in the control state, redrawing if it changed."
+(defun simple-mpv--audio-control-state-update (key value &optional soon)
+  "Set KEY to VALUE in the control state, redrawing if it changed.
+When SOON is non-nil, the redraw is coalesced via a short timer."
   (unless (equal (alist-get key simple-mpv--audio-control-state) value)
     (setf (alist-get key simple-mpv--audio-control-state) value)
-    (simple-mpv--audio-control-render)))
+    (if soon
+        (simple-mpv--audio-control-render-soon)
+      (simple-mpv--audio-control-render))))
 
 (defun simple-mpv--audio-control-metadata-lookup (value key)
   (cdr
@@ -270,20 +296,18 @@ CALLBACK is called with the `data' field of the response on success."
     ("metadata"
      (let ((author (or (simple-mpv--audio-control-metadata-lookup value "author")
                        (simple-mpv--audio-control-metadata-lookup value "artist"))))
-       (setf (alist-get 'author simple-mpv--audio-control-state)
-             (if (and (stringp author) (not (string-empty-p author)))
-                 author
-               ""))
-       (simple-mpv--audio-control-render)))
+       (simple-mpv--audio-control-state-update
+        'author
+        (if (and (stringp author) (not (string-empty-p author)))
+            author
+          ""))))
     ("time-pos"
-     (simple-mpv--audio-control-state-update 'time-pos (or value 0)))
+     (simple-mpv--audio-control-state-update 'time-pos (or value 0) 'soon))
     ("duration"
-     (simple-mpv--audio-control-state-update 'duration (or value 0)))
+     (simple-mpv--audio-control-state-update 'duration (or value 0) 'soon))
     ("pause"
      (setq simple-mpv--audio-control-play-flag (eq value :json-false))
      (simple-mpv--audio-control-render))))
-
-
 
 (defun simple-mpv--audio-control-ensure ()
   "Make sure the control buffer, its window, and its timer exist."
@@ -314,19 +338,38 @@ CALLBACK is called with the `data' field of the response on success."
               (% seconds 60))
     (format "%02d:%02d" (/ seconds 60) (% seconds 60))))
 
+(defun simple-mpv--audio-control-button-keymap (command)
+  "Return a cached keymap binding <down-mouse-1> to COMMAND."
+  (or (cdr (assq command simple-mpv--button-keymap-cache))
+      (let ((map (make-sparse-keymap)))
+        (keymap-set map "<down-mouse-1>" command)
+        (push (cons command map) simple-mpv--button-keymap-cache)
+        map)))
+
 (defun simple-mpv--audio-control-button (text help command height)
-  (let ((map (make-sparse-keymap)))
-    (keymap-set map "<down-mouse-1>" command)
-    (propertize
-     text
-     'face `(:height ,height)
-     'mouse-face 'highlight
-     'help-echo help
-     'pointer 'hand
-     'keymap map)))
+  (propertize
+   text
+   'face `(:height ,height)
+   'mouse-face 'highlight
+   'help-echo help
+   'pointer 'hand
+   'keymap (simple-mpv--audio-control-button-keymap command)))
+
+(defun simple-mpv--audio-control-render-soon ()
+  "Request a redraw, merging multiple requests within ~150ms."
+  (unless (timerp simple-mpv--render-timer)
+    (setq simple-mpv--render-timer
+          (run-with-timer
+           0.15 nil
+           (lambda ()
+             (setq simple-mpv--render-timer nil)
+             (when (buffer-live-p simple-mpv--audio-control-buffer)
+               (simple-mpv--audio-control-render)))))))
 
 (defun simple-mpv--audio-control-render ()
   "Redraw the control bar."
+  (unless (buffer-live-p simple-mpv--audio-control-buffer)
+    (cl-return-from simple-mpv--audio-control-render))
   (with-current-buffer simple-mpv--audio-control-buffer
     (setq tabulated-list-format
           [("Track"    50 nil)
@@ -365,17 +408,14 @@ CALLBACK is called with the `data' field of the response on success."
     (tabulated-list-print t)))
 
 
+;;; Events
 
 (defun simple-mpv--handle-end-file (parsed)
   "Advance to the next track when the current one reaches EOF."
   (when (string= (or (cdr (assq 'reason parsed)) "") "eof")
-    (when simple-mpv--current-index
-      (let* ((len  (length simple-mpv--audio-list))
-             (next (if (>= (1+ simple-mpv--current-index) len)
-                       0
-                     (1+ simple-mpv--current-index))))
-        (when (> len 1)
-          (simple-mpv--play-index next))))))
+    (when (and simple-mpv--current-index
+               (> (length simple-mpv--audio-list) 1))
+      (simple-mpv--play-relative +1))))
 
 (defun simple-mpv--handle-event (parsed)
   "Route a mpv event to the appropriate handler."
@@ -392,7 +432,6 @@ CALLBACK is called with the `data' field of the response on success."
   (let ((file (nth index simple-mpv--audio-list)))
     (unless file
       (user-error "No audio track at index %s" index))
-    ;; Reset the display state before loading.
     (setf (alist-get 'title simple-mpv--audio-control-state) "Unknown"
           (alist-get 'author simple-mpv--audio-control-state) "Unknown"
           (alist-get 'time-pos simple-mpv--audio-control-state) 0
@@ -406,6 +445,11 @@ CALLBACK is called with the `data' field of the response on success."
        (simple-mpv--ipc-dispatch nil "set_property" "pause" "no")
        (simple-mpv--audio-control-refresh))
      "loadfile" file "replace")))
+
+(defun simple-mpv--audio-control-refresh ()
+  "Force a redraw of the control bar (for callbacks)."
+  (when (buffer-live-p simple-mpv--audio-control-buffer)
+    (simple-mpv--audio-control-render)))
 
 (defun simple-mpv--audio-list-buffer-play ()
   "Play the track under point in the audio list buffer."
@@ -443,6 +487,7 @@ CALLBACK is called with the `data' field of the response on success."
     (read-only-mode 1)))
 
 
+;;; Entry points
 
 ;;;###autoload
 (defun simple-mpv-audio-browse ()

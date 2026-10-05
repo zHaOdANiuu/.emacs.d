@@ -12,9 +12,6 @@
 (use-package nn-init
   :ensure nil
   :init
-  (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-  (load custom-file)
-
   (let ((file-name-handler-alist nil))
     (require 'init-builtin)
     (require 'init-display)
@@ -95,8 +92,8 @@
     (nn-home-next-line))
 
   (defun nn-theme-init ()
-    (require 'nn-world-theme)
-    (load-theme 'nn-world t))
+    (require 'elegant-world-theme)
+    (load-theme 'elegant-world t))
 
   (let ((hook (if (daemonp)
                   'server-after-make-frame-hook

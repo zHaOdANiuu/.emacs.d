@@ -1,13 +1,13 @@
 ;;; -*- lexical-binding: t -*-
-(require 'recentf)
-(require 'bookmark)
-(recentf-mode 1)
-
 (use-package nn-home
   :ensure nil
   :no-require t
   :bind ("C-<f1>" . nn-home-show)
   :init
+  (require 'recentf)
+  (require 'bookmark)
+  (recentf-mode)
+
   (defconst nn-home-buffer-name "*HOME*")
   (defconst nn-home-logo (create-image (concat user-lisp-directory "logo.png")))
   (defconst nn-home-emacs-init-string

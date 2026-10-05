@@ -12,22 +12,6 @@
   :type 'directory
   :group 'nn-license-template)
 
-;;;###autoload
-(defun nn-license-template-header ()
-  "Insert a license file header at the beginning of the current buffer.
-The header is wrapped in the major-mode's comment syntax."
-  (interactive)
-  (let* ((choices (nn-license-template--list))
-         (name (completing-read "Header license: " choices nil t))
-         (content (nn-license-template--read name)))
-    (save-excursion
-      (goto-char (point-min))
-      (let ((beg (point)))
-        (insert content)
-        (unless (bolp) (insert "\n"))
-        (comment-region beg (point))
-        (insert "\n")))))
-
 (defun nn-license-template--list ()
   "Return list of available license names (without .txt extension)."
   (mapcar (lambda (f)
@@ -46,6 +30,22 @@ The header is wrapped in the major-mode's comment syntax."
       (while (search-forward "{{ organization }}" nil t)
         (replace-match (or user-full-name "Author")))
       (buffer-string))))
+
+;;;###autoload
+(defun nn-license-template-header ()
+  "Insert a license file header at the beginning of the current buffer.
+The header is wrapped in the major-mode's comment syntax."
+  (interactive)
+  (let* ((choices (nn-license-template--list))
+         (name (completing-read "Header license: " choices nil t))
+         (content (nn-license-template--read name)))
+    (save-excursion
+      (goto-char (point-min))
+      (let ((beg (point)))
+        (insert content)
+        (unless (bolp) (insert "\n"))
+        (comment-region beg (point))
+        (insert "\n")))))
 
 ;;;###autoload
 (defun nn-license-template-file ()

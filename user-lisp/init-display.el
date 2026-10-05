@@ -244,7 +244,7 @@
   :custom (color-picker-scale 2.0))
 
 (use-package colorful-mode
-  :hook (prog-mode . colorful-mode)
+  :hook prog-mode
   :custom
   (colorful-use-prefix t)
   (colorful-only-strings 'only-prog)

@@ -436,9 +436,12 @@ files, so this replace calls to `pp' with the much faster `prin1'."
   (:map dired-mode-map
    ("e" . dired-toggle-read-only)
    ("-" . dired-create-empty-file)
-   ("C-c C-e" . wdired-change-to-wdired-mode))
+   ("C-c C-e" . wdired-change-to-wdired-mode)
+   ([remap dired-do-open] . nn-open-in-external-app))
   :hook (dired-after-readin . my-dired-ignores)
   :custom
+  (shell-command-guess-open nil)
+  (dired-chown-program (not _WIN32))
   (dired-dwim-target t)
   (dired-mouse-drag-files t)
   (dired-auto-revert-buffer #'dired-buffer-stale-p)

@@ -8,18 +8,28 @@
 (set-default-toplevel-value 'lexical-binding nil)
 (run-with-idle-timer 5 t #'garbage-collect)
 (load (expand-file-name "nn.el" user-emacs-directory))
+(load (setq custom-file (expand-file-name "custom.el" user-emacs-directory)))
+(nn-initialize)
 
 (use-package emacs
   :ensure nil
   :hook (window-setup . (lambda () (setq inhibit-redisplay nil inhibit-message nil)))
   :init
+  (setq-default tab-width 2
+                tab-always-indent 'complete
+                fill-column 80
+                truncate-lines t
+                truncate-partial-width-windows nil
+                auto-composition-mode _GUI)
+
   (setq native-comp-jit-compilation nil
         native-comp-deferred-compilation nil
         native-comp-async-on-battery-power nil
+        process-connection-type nil
         process-adaptive-read-buffering t
         read-process-output-max (* 4 1024 1024)
-        load-path-filter-function #'load-path-filter-cache-directory-files
         redisplay-skip-fontification-on-input t
+        load-path-filter-function #'load-path-filter-cache-directory-files
         long-line-threshold 1000
         large-hscroll-threshold 1000
         bidi-inhibit-bpa t
@@ -38,13 +48,6 @@
                  (if (and buffer-file-name (buffer-modified-p)) "● " "")
                  (buffer-name))))
 
-  (setq-default tab-width 2
-                tab-always-indent 'complete
-                fill-column 80
-                truncate-lines t
-                truncate-partial-width-windows nil
-                auto-composition-mode _GUI)
-
   (let ((default-file-name-handler-alist file-name-handler-alist)
         (default-load-file-rep-suffixes load-file-rep-suffixes))
     (setq file-name-handler-alist nil
@@ -60,6 +63,20 @@
     (setq w32-get-true-file-attributes nil
           w32-pipe-read-delay 0
           w32-pipe-buffer-size read-process-output-max))
+
+  (when _WIN32
+    (setq exec-suffixes '("" ".exe" ".bat")))
+
+  (defvar my-executable-find-cache (make-hash-table :test #'equal))
+  (define-advice executable-find
+      (:around (orig-fun command &optional remote) my-advice)
+    (if remote
+        (funcall orig-fun command remote)
+      (or (gethash command my-executable-find-cache)
+          (puthash command (funcall orig-fun command) my-executable-find-cache))))
+
+  (remove-hook 'find-file-hook #'vc-refresh-state)
+  (remove-hook 'find-file-hook #'epa-file-find-file-hook)
   :custom
   (user-full-name "zhaodaniu")
   (user-mail-address "zhaodaniu1@gmail.com")
@@ -68,9 +85,22 @@
   (gc-cons-threshold (if noninteractive #x8000000 most-positive-fixnum))
   (load-prefer-newer t)
   (idle-update-delay 1.0)
+  (window-combination-resize t)
+  (inhibit-startup-screen t)
+  (inhibit-startup-echo-area-message user-login-name)
+  (inhibit-compacting-font-caches t)
+  (frame-resize-pixelwise t)
+  (frame-inhibit-implied-resize t)
+  (default-frame-alist
+    '((menu-bar-lines . 0)
+      (tool-bar-lines . 0)
+      (horizontal-scroll-bars)
+      (vertical-scroll-bars)
+      (fullscreen . maximized)))
   (select-active-regions 'only)
   (fast-but-imprecise-scrolling t)
   (ring-bell-function #'ignore)
+  (x-underline-at-descent-line t)
   (use-short-answers t)
   (use-dialog-box nil)
   (use-file-dialog nil)
@@ -85,69 +115,22 @@
   (undo-strong-limit (* 13 240000))
   (undo-outer-limit (* 13 24000000))
   (word-wrap-by-category t)
-  (window-combination-resize t)
-  (x-underline-at-descent-line t)
-  (inhibit-startup-screen t)
-  (inhibit-startup-echo-area-message user-login-name)
-  (inhibit-compacting-font-caches t)
-  (frame-resize-pixelwise t)
-  (frame-inhibit-implied-resize t)
-  (default-frame-alist
-    '((menu-bar-lines . 0)
-      (tool-bar-lines . 0)
-      (horizontal-scroll-bars)
-      (vertical-scroll-bars)
-      (fullscreen . maximized)))
-  :config
-  (setq browse-url-firefox-program nil
-        browse-url-chrome-program nil
-        browse-url-chromium-program nil
-        browse-url-text-browser nil
-        browse-url-browser-function 'eww-browse-url
-        sgml-validate-command nil)
-
-  ;; exec
-  (when _WIN32
-    (setq exec-suffixes '("" ".exe" ".bat")))
-
-  (defvar my-executable-find-cache (make-hash-table :test 'equal :size 100))
-  (defvar my-executable-find-cache-miss (make-symbol "miss"))
-
-  (defun my-executable-find-clear-cache ()
-    (clrhash my-executable-find-cache))
-
-  (define-advice executable-find
-      (:around (orig-fun command &optional remote)
-       my-executable-find-cache-advice)
-    (if remote
-        (funcall orig-fun command remote)
-      (let ((cached (gethash command my-executable-find-cache my-executable-find-cache-miss)))
-        (if (eq cached my-executable-find-cache-miss)
-            (puthash command (funcall orig-fun command) my-executable-find-cache)
-          cached))))
-
-  ;; dired
-  (setq dired-chown-program (not _WIN32)
-        shell-command-guess-open nil)
-
-  (with-eval-after-load 'dired
-    (define-key dired-mode-map [remap dired-do-open] #'nn-open-in-external-app))
-
-  ;; find-gile
-  (remove-hook 'find-file-hook #'vc-refresh-state)
-  (remove-hook 'find-file-hook #'epa-file-find-file-hook))
+  (sgml-validate-command nil)
+  (browse-url-firefox-program nil)
+  (browse-url-chrome-program nil)
+  (browse-url-chromium-program nil)
+  (browse-url-text-browser nil)
+  (browse-url-browser-function 'eww-browse-url))
 
 (use-package env
   :ensure nil
-  :hook (after-init . nn-set-exec-path-from-shell-PATH)
   :init
   (setenv "TERM" "xterm-256color")
-  (when _WIN32
-    (setq process-connection-type nil)
 
+  (when _WIN32
     (setenv "GIT_ASKPASS" "git-gui--askpass")
 
-    (unless (getenv-internal "HOME")
+    (unless (getenv "HOME")
       (when-let* ((home (getenv "USERPROFILE")))
         (setenv "HOME" home)
         (setq abbreviated-home-dir nil)))
@@ -156,48 +139,7 @@
       (setq shell-file-name bash)
       (setenv "MSYSTEM" "UCRT64")
       (setenv "SHELL" bash)
-      ;; (push (file-name-directory bash) exec-path)
-      ))
-
-  (defun nn-set-exec-path-from-shell-PATH ()
-    "Set up Emacs' `exec-path' and PATH environment the same as the user's shell.
-This works with bash, zsh, or fish.
-
-The shell is spawned ASYNCHRONOUSLY so it never blocks startup: PATH is
-updated from the sentinel once the shell responds (typically within a
-~100ms after init).  Commands issued in that tiny initial window may not
-yet see the updated PATH."
-    (interactive)
-    (let* ((shell (getenv "SHELL"))
-           (shell-name (file-name-nondirectory (or shell "")))
-           (command
-            (cond
-             ((string= shell-name "fish")
-              "fish -c 'string join : $PATH'")
-             ((string= shell-name "zsh")
-              "zsh -i -c 'printenv PATH'")
-             ((string= shell-name "bash")
-              "bash --login -c 'echo $PATH'")
-             (t nil))))
-      (if (not command)
-          (message ">>> nn: `%s' shell is not supported" shell-name)
-        (let ((output ""))
-          (make-process
-           :name "nn-exec-path"
-           :buffer nil
-           :noquery t
-           :connection-type 'pipe
-           :command `(,shell-file-name ,shell-command-switch ,command)
-           :filter (lambda (_proc chunk) (setq output (concat output chunk)))
-           :sentinel
-           (lambda (_proc event)
-             (when (string-prefix-p "finished" event)
-               (let ((path-from-shell
-                      (replace-regexp-in-string "[ \t\n]*$" "" output)))
-                 (when (and path-from-shell (not (string= path-from-shell "")))
-                   (setenv "PATH" path-from-shell)
-                   (setq exec-path (split-string path-from-shell path-separator))
-                   (message ">>> nn: environment variable PATH loaded from `%s' shell" shell-name)))))))))))
+      (push (file-name-directory bash) exec-path))))
 
 (use-package package
   :ensure nil
@@ -217,5 +159,3 @@ yet see the updated PATH."
   (use-package-always-ensure t)
   (use-package-always-defer t)
   (use-package-expand-minimally t))
-
-(nn-initialize)

@@ -7,7 +7,7 @@
   "Personal customization group."
   :prefix "nn-")
 
-(defcustom nn-directory (expand-file-name "~/.emacs.d/.nn/")
+(defcustom nn-directory (expand-file-name "~/.emacs.d/var/")
   "Base directory for nn."
   :type 'directory
   :group 'nn)
