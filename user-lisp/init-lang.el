@@ -3,7 +3,7 @@
 
 (use-package syntax
   :ensure nil
-  :config (setq syntax-wholeline-max 1000))
+  :init (setq syntax-wholeline-max 1000))
 
 (use-package text-mode
   :ensure nil
@@ -14,38 +14,6 @@
   :ensure nil
   :mode "\\.env\\..*\\'" "\\.env\\'" "/.gitignore\\'" "/..gitmodules\\'"
   :hook (conf-mode . indent-tabs-mode))
-
-
-
-(use-package simpcc-mode
-  :vc (:url "https://github.com/zHaOdANiuu/simpcc-mode" :rev :newest)
-  :mode "\\.\\(c\\|h\\|cc\\|hh\\|cpp\\|hpp\\|cppm\\|ixx\\|rc\\)\\'"
-  :config
-  (setq simpcc-types
-        (append
-         simpcc-types
-         '("f16" "f32" "f64" "f128"
-           "i8" "i16" "i32" "i64"
-           "u8" "u16" "u32" "u64"
-           "char8" "char16" "char32")))
-  (with-eval-after-load 'eglot
-    (defvar my-clangd--query-driver
-      (concat (executable-find "gcc") "," (executable-find "g++")))
-
-    (defun my-clangd-args (_interactive)
-      (let ((proj (project-current)))
-        `("clangd"
-          "--clang-tidy"
-          "--limit-results=15"
-          "--header-insertion=never"
-          "--background-index"
-          "--pch-storage=memory"
-          "--experimental-modules-support"
-          ,(concat "--query-driver=" my-clangd--query-driver)
-          ,(concat "--compile-commands-dir="
-                   (expand-file-name (if proj (project-root proj) default-directory))))))
-
-    (add-to-list 'eglot-server-programs '(simpcc-mode . my-clangd-args))))
 
 (use-package elisp-mode
   :ensure nil
@@ -301,19 +269,37 @@ Adapted from URL `https://www.reddit.com/r/emacs/comments/d7x7x8/finally_fixing_
                 (desired-indent)
                 (normal-indent)))))))
 
-(use-package python
-  :ensure nil
-  :mode ("/\\(?:Pipfile\\|\\.?flake8\\)\\'" . conf-mode)
-  :custom
-  (python-check-command nil)
-  (python-indent-guess-indent-offset-verbose nil)
+
+
+(use-package simpcc-mode
+  :vc (:url "https://github.com/zHaOdANiuu/simpcc-mode" :rev :newest)
+  :mode "\\.\\(c\\|h\\|cc\\|hh\\|cpp\\|hpp\\|cppm\\|ixx\\|rc\\)\\'"
   :config
-  ;; HACK: Python 3.13's pyrepl mishandles SIGINT under Emacs's comint
-  ;;   (TERM=dumb), particularly on macOS. The ^C character is treated as
-  ;;   literal input rather than triggering an interrupt signal. Disabling
-  ;;   pyrepl forces the classic readline-based REPL which handles signals
-  ;;   correctly. See #8391, also used by VS Code's Python extension.
-  (add-to-list 'python-shell-process-environment "PYTHON_BASIC_REPL=1"))
+  (setq simpcc-types
+        (append
+         simpcc-types
+         '("f16" "f32" "f64" "f128"
+           "i8" "i16" "i32" "i64"
+           "u8" "u16" "u32" "u64"
+           "char8" "char16" "char32")))
+  (with-eval-after-load 'eglot
+    (defvar my-clangd--query-driver
+      (concat (executable-find "gcc") "," (executable-find "g++")))
+
+    (defun my-clangd-args (_interactive)
+      (let ((proj (project-current)))
+        `("clangd"
+          "--clang-tidy"
+          "--limit-results=15"
+          "--header-insertion=never"
+          "--background-index"
+          "--pch-storage=memory"
+          "--experimental-modules-support"
+          ,(concat "--query-driver=" my-clangd--query-driver)
+          ,(concat "--compile-commands-dir="
+                   (expand-file-name (if proj (project-root proj) default-directory))))))
+
+    (add-to-list 'eglot-server-programs '(simpcc-mode . my-clangd-args))))
 
 
 
@@ -497,6 +483,20 @@ snippet, or `emmet-expand-yas'/`emmet-expand-line', depending on whether
            (#'emmet-expand-line)))))
 
 
+
+(use-package python
+  :ensure nil
+  :mode ("/\\(?:Pipfile\\|\\.?flake8\\)\\'" . conf-mode)
+  :custom
+  (python-check-command nil)
+  (python-indent-guess-indent-offset-verbose nil)
+  :config
+  ;; HACK: Python 3.13's pyrepl mishandles SIGINT under Emacs's comint
+  ;;   (TERM=dumb), particularly on macOS. The ^C character is treated as
+  ;;   literal input rather than triggering an interrupt signal. Disabling
+  ;;   pyrepl forces the classic readline-based REPL which handles signals
+  ;;   correctly. See #8391, also used by VS Code's Python extension.
+  (add-to-list 'python-shell-process-environment "PYTHON_BASIC_REPL=1"))
 
 (use-package sh-script
   :ensure nil

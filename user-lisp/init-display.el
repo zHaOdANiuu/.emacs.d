@@ -140,9 +140,15 @@
 
   (nn-fringe-scale-mode))
 
-(use-package tooltip
+(use-package goto-addr
   :ensure nil
-  :custom (tooltip-resize-echo-area t))
+  :bind
+  (:map goto-address-highlight-keymap
+   ("<mouse-2>" . ignore)
+   ("<C-mouse-1>" . goto-address-at-point))
+  :hook
+  (prog-mode . goto-address-prog-mode)
+  (text-mode . goto-address-prog-mode))
 
 (use-package display-fill-column-indicator
   :ensure nil
@@ -232,72 +238,84 @@
 (use-package rainbow-delimiters
   :hook prog-mode)
 
-(use-package olivetti
-  :hook
-  (gnus-article-mode
-   eww-mode org-mode markdown-ts-mode)
-  :custom (olivetti-mode-on-hook nil))
-
 (use-package color-picker
   :vc (:url "https://github.com/zHaOdANiuu/color-picker.el" :rev :newest)
-  :commands color-picker
-  :custom (color-picker-scale 2.0))
+  :custom (color-picker-scale 1.6))
 
 (use-package colorful-mode
   :hook prog-mode
   :custom
   (colorful-use-prefix t)
+  (colorful-prefix-string "■")
   (colorful-only-strings 'only-prog)
+  (css-fontify-colors nil)
   :config
-  (add-to-list 'global-colorful-modes 'helpful-mode)
-
   (with-eval-after-load 'web-mode
     (add-hook 'web-mode (lambda () (setq-local colorful-only-strings nil))))
 
-  (when _GUI
-    (require 'svg)
+  (setcdr (assq 'colorful-mode minor-mode-map-alist) nil)
 
+  (defvar-keymap my-colorful--color-picker-map
+    "<mouse-1>"
+    (lambda (event)
+      (interactive "e")
+      (when-let* ((ov (colorful--find-overlay))
+                  (color (overlay-get ov 'colorful--color)))
+        (if buffer-read-only
+            (progn
+              (kill-new color)
+              (message "`%s' copied." color))
+          (if (not (display-graphic-p))
+              (pcase-let* ((`(,r ,g, b) (color-name-to-rgb (read-color nil t)))
+                           (picked (color-rgb-to-hex r g b 2)))
+                (funcall replace-fn picked))
+            (dlet ((color-picker-initial-color color))
+              (color-picker
+               :style 'simple
+               :ok (lambda (picked)
+                     (with-current-buffer
+                         (window-buffer (posn-window (event-start event)))
+                       (replace-region-contents
+                        (overlay-start ov) (overlay-end ov) picked 0)
+                       (redisplay))))))))))
+
+  (when (display-graphic-p)
+    (require 'svg)
     (defun my-colorful--svg-img (color)
       (let* ((sz (frame-char-width))
              (svg (svg-create sz sz)))
         (svg-node svg 'rect
                   :x 1 :y 1 :width  (- sz 2) :height (- sz 2)
                   :fill color :stroke "#ffffff" :stroke-width "1.5")
-        (svg-image svg :ascent 'center)))
+        (svg-image svg :ascent 'center))))
 
-    (defvar-keymap my-colorful--color-picker-map
-      "<mouse-1>"
-      (lambda (event)
-        (interactive "e")
-        (let* ((pos (event-start event))
-               (xy  (posn-x-y pos))
-               (ov  (colorful--find-overlay (posn-point pos))))
-          (when ov
-            (color-picker
-             :style 'simple :display 'frame
-             :x (car xy) :y (cdr xy)
-             :ok (lambda (picked)
-                   (with-current-buffer (overlay-buffer ov)
-                     (delete-region (overlay-start ov) (overlay-end ov))
-                     (insert picked)))) ))))
+  (define-advice colorful--colorize-match
+      (:override (color beg end kind face map) my-colorful--colorize-match)
+    "Overlay match with a face from BEG to END.
+Like `colorful--colorize-match', but the prefix also carries a
+`display' SVG image generated from COLOR."
+    (let ((ov (make-overlay beg end)))
+      (overlay-put ov 'colorful--overlay t)
+      (overlay-put ov 'colorful--color-kind kind)
+      (overlay-put ov 'colorful--color color)
+      (overlay-put ov 'evaporate t)
+      (overlay-put
+       ov
+       'before-string
+       (apply
+        #'propertize
+        " "
+        `(keymap ,my-colorful--color-picker-map
+          pointer hand
+          ,@(when (display-graphic-p)
+              `(display ,(my-colorful--svg-img color))))))
+      (overlay-put ov 'face nil))))
 
-    (defun colorful--colorize-match (color beg end kind face map)
-      "Overlay match with a face from BEG to END.
-The background uses COLOR color value.  The foreground is obtained
-from `readable-foreground-color'."
-      (let ((ov (make-overlay beg end)))
-        (overlay-put ov 'colorful--overlay t)
-        (overlay-put ov 'colorful--color-kind kind)
-        (overlay-put ov 'colorful--color color)
-        (overlay-put ov 'evaporate t)
-        (overlay-put ov
-                     'before-string
-                     (propertize
-                      " "
-                      'display (my-colorful--svg-img color)
-                      'keymap my-colorful--color-picker-map
-                      'pointer 'hand))
-        (overlay-put ov 'face nil)))))
+(use-package olivetti
+  :hook
+  (gnus-article-mode
+   eww-mode org-mode markdown-ts-mode)
+  :custom (olivetti-mode-on-hook nil))
 
 (use-package nn-mode-line
   :ensure nil
@@ -346,7 +364,8 @@ from `readable-foreground-color'."
 
   (defun nn-mode-line--eglot ()
     "Eglot server name, or nil when not connected."
-    (when (eglot-current-server)
+    (when (and (fboundp 'eglot-managed-p)
+               (eglot-managed-p))
       (pcase (alist-get major-mode eglot-server-programs)
         ((and (pred stringp) name) name)
         (`(,name . ,_)             name)

@@ -292,15 +292,12 @@ When SOON is non-nil, the redraw is coalesced via a short timer."
     ("media-title"
      (when (and (stringp value) (not (string-empty-p value)))
        (simple-mpv--audio-control-state-update
-        'title (simple-mpv--audio-control-clean-title value))))
+        'title (file-name-sans-extension value))))
     ("metadata"
      (let ((author (or (simple-mpv--audio-control-metadata-lookup value "author")
                        (simple-mpv--audio-control-metadata-lookup value "artist"))))
-       (simple-mpv--audio-control-state-update
-        'author
-        (if (and (stringp author) (not (string-empty-p author)))
-            author
-          ""))))
+       (when (and (stringp author) (not (string-empty-p author)))
+         (simple-mpv--audio-control-state-update 'author author))))
     ("time-pos"
      (simple-mpv--audio-control-state-update 'time-pos (or value 0) 'soon))
     ("duration"
@@ -368,44 +365,43 @@ When SOON is non-nil, the redraw is coalesced via a short timer."
 
 (defun simple-mpv--audio-control-render ()
   "Redraw the control bar."
-  (unless (buffer-live-p simple-mpv--audio-control-buffer)
-    (cl-return-from simple-mpv--audio-control-render))
-  (with-current-buffer simple-mpv--audio-control-buffer
-    (setq tabulated-list-format
-          [("Track"    50 nil)
-           ("Controls" 50 nil)
-           ("Progress" 20 nil)
-           ("Time"     10 nil)])
-    (let* ((s simple-mpv--audio-control-state)
-           (pos (truncate (or (alist-get 'time-pos s) 0)))
-           (dur (truncate (or (alist-get 'duration s) 0)))
-           (n simple-mpv-audio-progress-width)
-           (k (floor (* n (if (> dur 0) (/ (float pos) dur) 0)))))
-      (setq tabulated-list-entries
-            `((nil
-               ,(vector
-                 (format
-                  "%s - %s"
-                  (alist-get 'title  s)
-                  (alist-get 'author s))
-                 (mapconcat
-                  (lambda (spec)
-                    (apply #'simple-mpv--audio-control-button spec))
-                  `(("🙏" "Random" simple-mpv--audio-control-random 1.3)
-                    ("👈" "Prev" simple-mpv--audio-control-last 1.3)
-                    (,(if simple-mpv--audio-control-play-flag "👌" "✋")
-                     "Play" simple-mpv--audio-control-auto-play 1.6)
-                    ("👉" "Next" simple-mpv--audio-control-next 1.3)
-                    ("🤏" "Loop" simple-mpv--audio-control-loop 1.3))
-                  " ")
-                 (concat (make-string k simple-mpv-audio-progress-filled-char)
-                         (make-string (- n k) simple-mpv-audio-progress-empty-char))
-                 (concat (simple-mpv--audio-control-button
-                          (simple-mpv--audio-control-format-time pos)
-                          "Seek" #'simple-mpv--audio-control-seek 1.0)
-                         "/"
-                         (simple-mpv--audio-control-format-time dur)))))))
-    (tabulated-list-print t)))
+  (when (buffer-live-p simple-mpv--audio-control-buffer)
+    (with-current-buffer simple-mpv--audio-control-buffer
+      (setq tabulated-list-format
+            [("Track"    50 nil)
+             ("Controls" 40 nil)
+             ("Progress" 20 nil)
+             ("Time"     10 nil)])
+      (let* ((s simple-mpv--audio-control-state)
+             (pos (truncate (or (alist-get 'time-pos s) 0)))
+             (dur (truncate (or (alist-get 'duration s) 0)))
+             (n simple-mpv-audio-progress-width)
+             (k (floor (* n (if (> dur 0) (/ (float pos) dur) 0)))))
+        (setq tabulated-list-entries
+              `((nil
+                 ,(vector
+                   (format
+                    "%s - %s"
+                    (alist-get 'title  s)
+                    (alist-get 'author s))
+                   (mapconcat
+                    (lambda (spec)
+                      (apply #'simple-mpv--audio-control-button spec))
+                    `(("🙏" "Random" simple-mpv--audio-control-random 1.3)
+                      ("👈" "Prev" simple-mpv--audio-control-last 1.3)
+                      (,(if simple-mpv--audio-control-play-flag "👌" "✋")
+                       "Play" simple-mpv--audio-control-auto-play 1.6)
+                      ("👉" "Next" simple-mpv--audio-control-next 1.3)
+                      ("🤏" "Loop" simple-mpv--audio-control-loop 1.3))
+                    " ")
+                   (concat (make-string k simple-mpv-audio-progress-filled-char)
+                           (make-string (- n k) simple-mpv-audio-progress-empty-char))
+                   (concat (simple-mpv--audio-control-button
+                            (simple-mpv--audio-control-format-time pos)
+                            "Seek" #'simple-mpv--audio-control-seek 1.0)
+                           "/"
+                           (simple-mpv--audio-control-format-time dur)))))))
+      (tabulated-list-print t))))
 
 
 ;;; Events

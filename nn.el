@@ -1,7 +1,5 @@
 ;;; -*- lexical-binding: t -*-
 (defconst _WIN32 (eq system-type 'windows-nt))
-(defconst _GUI (display-graphic-p))
-(defconst _TUI (not _GUI))
 
 (defgroup nn nil
   "Personal customization group."

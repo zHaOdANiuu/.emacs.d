@@ -2,7 +2,6 @@
 
 ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=81506
 ;; (setq w32-ime-preedit t)
-
 (put 'if-let 'byte-obsolete-info nil)
 (put 'when-let 'byte-obsolete-info nil)
 (set-default-toplevel-value 'lexical-binding nil)
@@ -19,8 +18,7 @@
                 tab-always-indent 'complete
                 fill-column 80
                 truncate-lines t
-                truncate-partial-width-windows nil
-                auto-composition-mode _GUI)
+                truncate-partial-width-windows nil)
 
   (setq native-comp-jit-compilation nil
         native-comp-deferred-compilation nil
@@ -43,6 +41,9 @@
         menu-bar-mode -1
         tool-bar-mode -1
         scroll-bar-mode -1
+        underline-line-scaling-flag t
+        overline-line-scaling-flag t
+        strike-through-line-scaling-flag t
         frame-title-format
         '(:eval (concat
                  (if (and buffer-file-name (buffer-modified-p)) "● " "")

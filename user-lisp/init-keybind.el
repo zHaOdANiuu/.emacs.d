@@ -38,6 +38,7 @@ LEVELS, SPEC and PARENT are passed to ORIG."
   :ensure nil
   :no-require t
   :bind
+  ("C-<down-mouse-1>" . nil)
   ("<escape>" . keyboard-escape-quit)
   ("C-c o f" . my-split-right-and-switch)
   ("C-c o b" . my-split-left-and-switch)
@@ -54,7 +55,7 @@ LEVELS, SPEC and PARENT are passed to ORIG."
   ("C-c C-j" . project-dired)
   ("M-w" . my-copy)
   ("C-w" . my-cut)
-  ("C-x k" . my-kill)
+  ("C-x k" . kill-current-buffer)
   ("C-x C-k" . kill-buffer)
   ("C-S-<backspace>" . my-delete-whole-line-no-kill)
   ("C-c r" . my-replace)
@@ -123,16 +124,6 @@ LEVELS, SPEC and PARENT are passed to ORIG."
   (defun my-delete-whole-line-no-kill ()
     (interactive)
     (delete-region (line-beginning-position) (line-beginning-position 2)))
-
-  (defun my-kill ()
-    (interactive)
-    (when (and (buffer-file-name)
-               (file-exists-p (buffer-file-name))
-               (buffer-modified-p))
-      (save-buffer))
-    (kill-current-buffer)
-    (when (= (count-windows) 2)
-      (delete-window)))
 
   (defun my-downcase-dwim ()
     (interactive)

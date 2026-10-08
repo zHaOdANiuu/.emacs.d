@@ -13,18 +13,17 @@
   :custom
   (project-list-file (concat nn-directory "project-list.el"))
   (project-vc-ignores
-   '("node_modules" ".git" ".svn" "vendor" "dist" "build"
+   '("node_modules" "vendor" "dist" "build"
      ".cache" ".tox" "__pycache__" "target" "out"))
   (project-vc-extra-root-markers
-   '("Cargo.toml" "package.json" "go.mod" "*.asd"))
+   '(".dir-locals.el" "Cargo.toml" "package.json" "go.mod"))
   (project-vc-include-untracked t)
   (project-vc-merge-submodules nil)
-  (project-files-relative-names t)
-  (project-search-function #'project-ripgrep))
+  (project-files-relative-names t))
 
 (use-package mule
   :ensure nil
-  :config
+  :init
   (set-charset-priority 'unicode)
   (set-default-coding-systems 'utf-8-unix)
   (set-locale-environment "en_US.UTF-8")
@@ -68,9 +67,10 @@
   (kept-old-versions 2)
   (version-control t)
   (backup-by-copying t)
+  (require-final-newline t)
   (find-file-visit-truename t)
   (find-file-suppress-same-file-warnings t)
-  (require-final-newline t)
+  (large-file-warning-threshold nil)
   (insert-directory-program (executable-find "ls")))
 
 (use-package ls-lisp
@@ -179,7 +179,7 @@ files, so this replace calls to `pp' with the much faster `prin1'."
 
 (use-package saveplace
   :ensure nil
-  :hook (nn-first-file-hook . save-place-mode))
+  :hook (nn-first-file . save-place-mode))
 
 (use-package comint
   :ensure nil
@@ -240,13 +240,20 @@ files, so this replace calls to `pp' with the much faster `prin1'."
                              0 1)))
 
   (defun my-buffer-predicate (buf)
-    "Filter out * and space-prefixed buffers unless in `nn-buffer-allow-names'."
+    "Smart Buffer fitter."
     (let ((name (buffer-name buf)))
       (or (member name nn-buffer-allow-names)
-          (let ((first (aref name 0)))
-            (and (not (= first ?*))
-                 (not (memq (buffer-local-value 'major-mode buf)
-                            '(dired-mode org-agenda-mode))) )))))
+          (and (not (= (aref name 0) ?*))
+               (let ((cur-file (buffer-file-name (current-buffer))))
+                 (with-current-buffer buf
+                   (cond
+                    ;; If fitter buffer mode is dired, check cur-buf is child file.
+                    ((eq major-mode 'dired-mode)
+                     (and cur-file
+                          (equal (file-name-as-directory default-directory)
+                                 (file-name-directory cur-file))))
+                    (t t))))))))
+
   (set-frame-parameter nil 'buffer-predicate #'my-buffer-predicate))
 
 (use-package window
@@ -294,19 +301,22 @@ files, so this replace calls to `pp' with the much faster `prin1'."
   :bind
   ("C-c h ." . my-eldoc-copy)
   ("M-<return>" . eldoc-print-current-symbol-info)
-  :custom (eldoc-documentation-strategy 'eldoc-documentation-enthusiast)
-  :config
+  :init
   (global-eldoc-mode -1)
   (defun my-eldoc-copy ()
     (interactive)
     (when-let* ((buf (eldoc-doc-buffer)))
       (kill-new (with-current-buffer buf (buffer-string)))
-      (message "Copied eldoc to kill ring"))))
+      (message "Copied eldoc to kill ring")))
+  :custom (eldoc-documentation-strategy 'eldoc-documentation-enthusiast))
 
 (use-package minibuffer
   :ensure nil
   :bind ("C-<return>" . completion-at-point)
   :hook (minibuffer-setup . cursor-intangible-mode)
+  :init
+  (minibuffer-depth-indicate-mode)
+  (minibuffer-electric-default-mode)
   :custom
   (completion-auto-help t)
   (completion-auto-select t)
@@ -323,10 +333,11 @@ files, so this replace calls to `pp' with the much faster `prin1'."
   (read-file-name-completion-ignore-case t)
   (minibuffer-visible-completions 'up-down)
   (minibuffer-prompt-properties
-   '(read-only t intangible t cursor-intangible t face minibuffer-prompt))
-  :config
-  (minibuffer-depth-indicate-mode 1)
-  (minibuffer-electric-default-mode 1))
+   '(read-only t intangible t cursor-intangible t face minibuffer-prompt)))
+
+(use-package tooltip
+  :ensure nil
+  :custom (tooltip-resize-echo-area t))
 
 (use-package help
   :ensure nil
@@ -444,6 +455,7 @@ files, so this replace calls to `pp' with the much faster `prin1'."
   (dired-chown-program (not _WIN32))
   (dired-dwim-target t)
   (dired-mouse-drag-files t)
+  (dired-do-revert-buffer t)
   (dired-auto-revert-buffer #'dired-buffer-stale-p)
   (dired-recursive-deletes 'top)
   (dired-recursive-copies 'always)
@@ -461,22 +473,27 @@ files, so this replace calls to `pp' with the much faster `prin1'."
     (not (eq revert-buffer-function #'dired-virtual-revert)))
 
   (defun my-dired-ignores-get-cur-dir (root subdir)
-    (mapcar
-     #'directory-file-name
-     (split-string
-      (shell-command-to-string
-       (format
-        "git -C %s ls-files -zoi --exclude-standard --directory -- %s"
-        root subdir))
-      "\0" t)))
+    (mapcar (lambda (p)
+              (car (split-string p "/" t)))
+            (mapcar
+             #'directory-file-name
+             (split-string
+              (shell-command-to-string
+               (format
+                "git -C %s ls-files -zoi --exclude-standard --directory -- %s"
+                root subdir))
+              "\0" t))))
 
   (defun my-dired-ignores ()
     (when-let* ((root (vc-root-dir)))
       (font-lock-add-keywords
        nil
-       `((,(regexp-opt
-            (my-dired-ignores-get-cur-dir
-             root (file-relative-name default-directory root)))
+       `((,(concat
+            "\\(?:^\\|[ \t]\\)"
+            (regexp-opt
+             (my-dired-ignores-get-cur-dir
+              root (file-relative-name default-directory root)))
+            "\\(?:/\\|$\\)")
           . 'dired-ignored))))))
 
 (use-package dired-x
@@ -653,7 +670,8 @@ files, so this replace calls to `pp' with the much faster `prin1'."
                     (name . "^Doxyfile$")
                     (name . "^config\\.toml$")))
       ("Assets" (or (name . "\\.\\(png\\|jpe?g\\|svg\\|webp\\|bpm\\|ppm\\|mp[34]\\|mov\\|avi\\|obj\\)$")))
-      ("News" (name . "^\\*Newsticker.*"))
+      ("Eww" (mode . eww-mode))
+      ("Newsticker" (name . "^\\*Newsticker.*"))
       ("Gnus" (or
                (mode . gnus-server-mode)
                (mode . gnus-group-mode)

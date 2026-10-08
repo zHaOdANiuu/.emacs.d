@@ -1,10 +1,4 @@
 ;;; -*- lexical-binding: t -*-
-(use-package goto-addr
-  :ensure nil
-  :hook
-  (prog-mode . goto-address-prog-mode)
-  (text-mode . goto-address-prog-mode))
-
 (use-package elec-pair
   :ensure nil
   :hook (nn-first-input . electric-pair-mode)
@@ -38,6 +32,16 @@
   (setf (alist-get 'buffer-read-only so-long-variable-overrides nil t) nil)
   (setq so-long-function #'turn-on-so-long-minor-mode
         so-long-revert-function #'turn-off-so-long-minor-mode))
+
+(use-package symbol-overlay
+  :bind
+  ("M-n" . symbol-overlay-jump-next)
+  ("M-p" . symbol-overlay-jump-prev)
+  ("M-r" . symbol-overlay-rename)
+  :hook prog-mode
+  :custom (symbol-overlay-idle-time 0.5))
+
+
 
 (use-package hideshow-savefold
   :ensure nil
@@ -101,7 +105,7 @@
    ("C-c ]" . outline-hide-body)
    ("<TAB>" . outline-cycle))
   :hook (outline-minor-mode . my-outline-set-buffer-local-ellipsis)
-  :config
+  :init
   ;; https://www.jamescherti.com/emacs-customize-ellipsis-outline-minor-mode/
   (defun my-outline-set-buffer-local-ellipsis ()
     (let* ((display-table (or buffer-display-table (make-display-table)))
@@ -110,6 +114,8 @@
                                    (string-trim-right nn-ellipsis)))))
       (set-display-table-slot display-table 'selective-display value)
       (setq buffer-display-table display-table))))
+
+
 
 (use-package ispell
   :ensure nil
@@ -170,6 +176,8 @@
                  (not (buffer-modified-p)))
             (flymake-start t))))))
 
+
+
 (use-package editorconfig
   :ensure nil
   :hook nn-first-file
@@ -197,6 +205,8 @@
                 (apheleia-formatters-mode-extension)
                 ".js")))))
 
+
+
 (use-package dabbrev
   :ensure nil
   :custom
@@ -214,85 +224,100 @@
   (xref-show-definitions-function #'xref-show-definitions-completing-read)
   (xref-show-xrefs-function #'xref-show-definitions-completing-read))
 
-(use-package citre
-  :bind
-  (("<f12>" . citre-jump)
-   ("S-<f12>" . citre-jump-to-reference)
-   ("M-<f12>" . citre-peek)
-   :map citre-peek-keymap
-   ("q" . keyboard-quit))
-  :custom-face
-  (citre-peek-border-face ((t :inherit font-lock-keyword-face :strike-through t :extend t)))
+(use-package etags
+  :ensure nil
   :custom
-  (citre-readtags-program (executable-find "readtags"))
-  (citre-ctags-program (executable-find "ctags"))
-  (citre-peek-fill-fringe nil)
-  (citre-completion-case-sensitive t)
-  (citre-imenu-create-tags-file-threshold (* 20 1024 1024))
-  (citre-default-create-tags-file-location 'in-dir)
-  (citre-edit-ctags-options-manually nil)
-  (citre-auto-enable-citre-mode-backends-for-remote nil)
+  (tags-revert-without-query t)
+  (tags-case-fold-search nil))
+
+(use-package fastctags
+  :vc (:url "https://github.com/redguardtoo/fastctags" :rev :newest)
+  :hook
+  (fastctags-after-update-tags . (lambda (_) (setq my-ft-ready nil)))
+  (simpcc-mode . my-fastctags-init)
+  (eglot-managed-mode . my-fastctags-exit)
+  :custom (fastctags-quiet nil)
   :config
-  (require 'citre-config)
+  ;; ctags --fields=+KS --excmd=number --tag-relative=never -R -f ~/.cache/tags/xxx.tags .
+  (defvar my-ft-kind (make-hash-table :test 'equal))
+  (defvar my-ft-ready nil)
 
-  (add-to-list 'completion-category-overrides '(citre (styles basic)))
+  (defconst my-ft-kind-map
+    '(("function"    . "function")    ("method"      . "method")
+      ("procedure"   . "function")    ("prototype"   . "function")
+      ("constructor" . "constructor") ("destructor" . "constructor")
+      ("variable"    . "variable")    ("local"       . "variable")
+      ("global"      . "variable")    ("parameter"   . "variable")
+      ("field"       . "field")       ("member"      . "field")
+      ("property"    . "property")    ("constant"    . "constant")
+      ("class"       . "class")       ("struct"      . "struct")
+      ("union"       . "struct")      ("enum"        . "enum")
+      ("enumerator"  . "enummember")  ("interface"   . "interface")
+      ("namespace"   . "module")      ("module"      . "module")
+      ("package"     . "module")      ("typedef"     . "keyword")
+      ("macro"       . "macro")       ("define"      . "macro")
+      ("file"        . "file")        ("header"      . "file")
+      ("label"       . "keyword")     ("operator"    . "operator")
+      ("exception"   . "class")))
 
-  (defvar-local nn-citre-external-tags nil
-    "List of external tags files queried when the project tags returns nothing.")
+  (defun my-ft-build ()
+    (clrhash my-ft-kind)
+    (maphash
+     (lambda (_ i)
+       (when-let* ((r (plist-get i :raw-content)))
+         (with-temp-buffer
+           (insert r)
+           (goto-char (point-min))
+           (while (re-search-forward "\r" nil t) (replace-match ""))
+           (goto-char (point-min))
+           (while (re-search-forward
+                   "^\\([^\t]+\\)\t[^\t]+\t[^\t]*;\"\t\\([^\t\r\n]+\\)" nil t)
+             (let* ((tag (match-string 1))
+                    (rest (match-string 2))
+                    (kind (car (split-string rest "[ \t]")))
+                    (old (gethash tag my-ft-kind)))
+               (when (or (not old) (string-match-p "signature:" rest))
+                 (puthash tag kind my-ft-kind)))))))
+     fastctags-tags-file-cache)
+    (setq my-ft-ready t))
 
-  (define-advice citre-tags-get-tags (:around (old-fn tagsfile &rest args) nn-ext)
-    "Fall back to `nn-citre-external-tags' when project tags returns nothing."
-    (or (apply old-fn tagsfile args)
-        (cl-loop for f in nn-citre-external-tags
-                 for ext = (expand-file-name f)
-                 when (file-exists-p ext)
-                 thereis (apply old-fn ext args))))
+  (define-advice fastctags-completion-at-point (:around (orig) my-ft-kind-a)
+    (when-let* ((r (funcall orig)))
+      (append r (list :company-kind
+                  (lambda (c)
+                    (unless my-ft-ready (my-ft-build))
+                    (let* ((name (substring-no-properties (if (consp c) (car c) c)))
+                           (kind (gethash name my-ft-kind))
+                           (mapped (cdr (assoc kind my-ft-kind-map))))
+                      (intern (or mapped "text"))))))))
 
-  ;; ctags ext-kind-full → nerd-icons-corfu key
-  ;; Also handles single-letter kind fallback.
-  (defconst nn-lsp-kind
-    '(("function" "function") ("method" "method") ("procedure" "function")
-      ("submethod" "method") ("subprogram" "function") ("subroutine" "function")
-      ("prototype" "function") ("functor" "function") ("callback" "function")
-      ("class" "class") ("struct" "struct") ("structure" "struct")
-      ("union" "struct") ("record" "class") ("component" "class")
-      ("object" "class") ("role" "class")
-      ("interface" "interface") ("trait" "interface") ("protocol" "interface")
-      ("annotation" "interface") ("implementation" "class")
-      ("enum" "enum") ("enumerator" "enummember")
-      ("variable" "variable") ("local" "variable") ("global" "variable")
-      ("parameter" "variable") ("instance" "variable") ("macroparam" "variable")
-      ("field" "field") ("member" "field") ("slot" "field")
-      ("property" "property") ("attribute" "property")
-      ("constant" "constant") ("const" "constant")
-      ("module" "module") ("namespace" "module") ("package" "module")
-      ("library" "module") ("using" "module")
-      ("type" "typeparameter") ("template" "typeparameter") ("tparam" "typeparameter")
-      ("generic" "typeparameter") ("typedef" "keyword") ("alias" "keyword")
-      ("name" "keyword") ("define" "macro") ("macro" "macro")
-      ("constructor" "constructor") ("destructor" "constructor")
-      ("event" "event") ("signal" "event") ("handler" "event")
-      ("file" "file") ("header" "file") ("script" "file")
-      ("label" "keyword") ("anchor" "keyword") ("key" "keyword")
-      ("operator" "operator") ("string" "string") ("number" "numeric")
-      ("boolean" "boolean") ("array" "array") ("exception" "class")))
+  (defvar my-fastctags-enbale nil)
 
-  (define-advice citre-capf--make-candidate (:filter-return (cand) nn-kind)
-    "Rewrite citre-kind to nerd-icons-corfu-compatible key."
-    (when-let* ((raw (citre-get-property 'kind cand))
-                (mapped (cadr (assoc-string (symbol-name raw) nn-lsp-kind 'case-fold))))
-      (citre-put-property cand 'kind (intern mapped)))
-    cand))
+  (defun my-fastctags-init ()
+    (when-let* ((proj (project-current))
+                (root (project-root proj))
+                (tags (expand-file-name "tags" root)))
+      (when (file-exists-p tags)
+        (setq my-fastctags-enbale t)
+        (add-hook 'completion-at-point-functions #'fastctags-completion-at-point nil t)
+        (add-hook 'after-save-hook #'fastctags-virtual-update-tags t t))))
+
+  (defun my-fastctags-exit ()
+    (setq my-fastctags-enbale nil)
+    (remove-hook 'completion-at-point-functions #'fastctags-completion-at-point t)
+    (remove-hook 'after-save-hook #'fastctags-virtual-update-tags t)))
 
 (use-package eglot
   :ensure nil
   :bind
-  ("<f2>" . eglot-rename)
-  ("<f12>" . xref-find-definitions)
-  ("S-<f12>" . xref-find-references)
-  ("C-<f12>" . eglot-find-implementation)
-  ("C-S-<f12>" . eglot-find-typeDefinition)
-  ("C-." . eglot-code-action-quickfix)
+  (:map eglot-managed-mode
+   ("<f2>" . eglot-rename)
+   ("<f12>" . xref-find-definitions)
+   ("S-<f12>" . xref-find-references)
+   ("C-<f12>" . eglot-find-implementation)
+   ("C-S-<f12>" . eglot-find-typeDefinition)
+   ("C-." . eglot-code-action-quickfix))
+  :hook (eglot-managed-mode . (lambda () (eldoc-mode -1)))
   :custom
   (eglot-autoshutdown t)
   (eglot-code-action-indications '(left-fringe))
@@ -341,13 +366,14 @@
         (when keys
           (list
            (match-beginning 0) (match-end 0) keys
+           :exclusive 'no
            :company-kind (lambda (_) 'snippet)
            :exit-function (lambda (_ status)
                             (when (string= status "finished")
                               (yas-expand))))))))
 
   (defun my-completion-add-yas-capf-h ()
-    (add-hook 'completion-at-point-functions #'my-yas-capf 30 t)))
+    (add-hook 'completion-at-point-functions #'my-yas-capf)))
 
 (use-package icomplete
   :ensure nil
@@ -411,47 +437,7 @@
   (corfu-left-margin-width 0)
   (corfu-right-margin-width 0)
   (global-corfu-minibuffer nil)
-  (global-corfu-modes '((not erc-mode help-mode gud-mode) t))
-  :config
-  (with-eval-after-load 'corfu
-    (defun my-close-multiple-cursors-corfu ()
-      (if multiple-cursors-mode
-          (corfu-mode -1)
-        (corfu-mode 1)))
-    (add-hook 'multiple-cursors-mode-hook #'my-close-multiple-cursors-corfu))
-
-  ;; HACK: If you want to update the visual hints after completing minibuffer
-  ;;   commands with Corfu and exiting, you have to do it manually.
-  (define-advice exit-minibuffer
-      (:before () my-corfu--insert-before-exit-minibuffer-a)
-    (when (or (and (frame-live-p corfu--frame)
-                   (frame-visible-p corfu--frame))
-              (and (featurep 'corfu-terminal)
-                   (popon-live-p corfu-terminal--popon)))
-      (when (member isearch-lazy-highlight-timer timer-idle-list)
-        (apply (timer--function isearch-lazy-highlight-timer)
-               (timer--args isearch-lazy-highlight-timer)))
-      (when (member (bound-and-true-p anzu--update-timer) timer-idle-list)
-        (apply (timer--function anzu--update-timer)
-               (timer--args anzu--update-timer)))
-      (when (member (bound-and-true-p evil--ex-search-update-timer)
-                    timer-idle-list)
-        (apply (timer--function evil--ex-search-update-timer)
-               (timer--args evil--ex-search-update-timer)))))
-
-  ;; HACK: If your dictionaries aren't set up in text-mode buffers, ispell will
-  ;;   continuously pester you about errors. This ensures it only happens once
-  ;;   per session.
-  (define-advice ispell-completion-at-point
-      (:around (fn &rest args) my-corfu--auto-disable-ispell-capf-a )
-    "If ispell isn't properly set up, only complain once per session."
-    (condition-case-unless-debug e
-        (apply fn args)
-      ('error
-       (message "Error: %s" (error-message-string e))
-       (message "Auto-disabling `text-mode-ispell-word-completion'")
-       (setq text-mode-ispell-word-completion nil)
-       (remove-hook 'completion-at-point-functions #'ispell-completion-at-point t)))))
+  (global-corfu-modes '((not erc-mode help-mode gud-mode) t)))
 
 (use-package corfu-popupinfo
   :ensure nil
@@ -470,68 +456,22 @@
     (when corfu-popupinfo-mode
       (corfu-popupinfo-mode -1))))
 
-(use-package symbol-overlay
-  :bind
-  ("M-n" . symbol-overlay-jump-next)
-  ("M-p" . symbol-overlay-jump-prev)
-  ("M-r" . symbol-overlay-rename)
-  :hook prog-mode
-  :custom (symbol-overlay-idle-time 0.5))
+
 
 (use-package multiple-cursors
   :bind
-  (("C->" . mc/mark-next-like-this)
-   ("C-<" . mc/mark-previous-like-this)
-   ("C-c C-<" . mc/mark-all-like-this)
-   ("C-M->" . mc/skip-to-next-like-this)
-   ("C-M-<" . mc/skip-to-previous-like-this)
-   :map mc/keymap
-   ("C-c M-w" . my-mc/copy)
-   ("C-c C-w" . my-mc/cat)
-   ("C-;" . mc/vertical-align-with-space)
-   ("<escape>" . multiple-cursors-mode))
+  ("C->" . mc/mark-next-like-this)
+  ("C-<" . mc/mark-previous-like-this)
+  ("C-c C-<" . mc/mark-all-like-this)
+  ("C-M->" . mc/skip-to-next-like-this)
+  ("C-M-<" . mc/skip-to-previous-like-this)
   :hook (nn-first-input . multiple-cursors-mode)
   :custom
   (mc/always-run-for-all t)
   (mc/list-file (concat nn-directory ".mc-lists.el"))
   :config
-  (add-to-list 'mc--default-cmds-to-run-once #'swiper-mc)
-
-  (defun my-mc/get-line-with-indent (beg end)
-    (save-excursion
-      (goto-char beg)
-      (concat (buffer-substring-no-properties (line-beginning-position) beg)
-              (buffer-substring-no-properties beg end))))
-
-  (defun my-mc/lines-get ()
-    (let ((pairs
-           `(,`(,(region-beginning) ,(region-end)
-                ,(my-mc/get-line-with-indent
-                  (region-beginning) (region-end))))))
-      (mc/for-each-fake-cursor
-       cursor
-       (let* ((pt (marker-position (overlay-get cursor 'point)))
-              (mk (marker-position (overlay-get cursor 'mark)))
-              (beg (min pt mk))
-              (end (max pt mk)))
-         (push `(,beg ,end ,(my-mc/get-line-with-indent beg end))
-               pairs)))
-      (sort pairs (lambda (a b) (< (nth 0 a) (nth 0 b))))))
-
-  (defun my-mc/copy ()
-    (interactive)
-    (kill-new (string-join (mapcar (lambda (r) (nth 2 r)) (my-mc/lines-get)) "\n"))
-    (mc/keyboard-quit)
-    (multiple-cursors-mode -1))
-
-  (defun my-mc/cat ()
-    (interactive)
-    (let ((pairs (my-mc/lines-get)))
-      (kill-new (string-join (mapcar (lambda (r) (nth 2 r)) pairs) "\n"))
-      (dolist (r (reverse pairs))
-        (delete-region (nth 0 r) (nth 1 r)))
-      (mc/keyboard-quit)
-      (multiple-cursors-mode -1))))
+  (with-eval-after-load 'corfu
+    (add-to-list 'mc/unsupported-minor-modes #'corfu-mode)))
 
 (use-package viper
   :ensure nil

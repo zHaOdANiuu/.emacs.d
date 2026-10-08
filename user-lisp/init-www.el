@@ -2,19 +2,39 @@
 (use-package shr
   :ensure nil
   :custom
-  (shr-use-fonts t)
+  (shr-use-fonts nil)
   (shr-width 80)
   (shr-indentation 2)
   (shr-bullet "• ")
-  (shr-cookie-policy nil)
-  (shr-href-highlight t)
-  (shr-image-animate t)
-  (shr-inhibit-images t)
-  (shr-table-corners ?┼)
-  (shr-table-horizontal-line ?─)
+  (shr-max-image-proportion 0.8)
+  (shr-table-corner ?┼)
   (shr-table-vertical-line ?│)
-  (shr-color-visible-luminance-min 60)
-  (shr-color-visible-distance-min 5))
+  (shr-table-horizontal-line ?─)
+  :config
+  (define-advice shr-heading (:around (orig dom &rest types) single-face)
+    (let ((beg (point)))
+      (apply orig dom types)
+      (put-text-property beg (point) 'face (car types)))))
+
+(use-package eww
+  :ensure nil
+  :custom
+  (eww-search-prefix "https://lite.duckduckgo.com/lite/?q=")
+  (eww-auto-rename-buffer #'my-eww-page-title-or-url)
+  :config
+  (add-to-list 'eww-url-transformers #'eww-remove-tracking)
+
+  (define-advice eww (:around (fn &rest args) myeww-open-in-fullscreen)
+    "Open EWW in fullscreen if called interactively."
+    (if (called-interactively-p 'any)
+        (let ((display-buffer-alist '(("\\*eww\\*" (display-buffer-full-frame)))))
+          (apply fn args))
+      (apply fn args)))
+
+  (defun my-eww-page-title-or-url (&rest _)
+    "Use page title as buffer name, fallback to URL."
+    (let ((prop (if (string-empty-p (plist-get eww-data :title)) :url :title)))
+      (format "*%s # eww*" (plist-get eww-data prop)))))
 
 (use-package url
   :ensure nil
@@ -28,55 +48,6 @@
 (use-package ecomplete
   :ensure nil
   :custom (ecomplete-database-file (concat nn-directory "ecompleterc")))
-
-(use-package tramp
-  :ensure nil
-  :custom
-  (remote-file-name-inhibit-cache 60)
-  (remote-file-name-inhibit-locks t)
-  (remote-file-name-inhibit-auto-save-visited t)
-  (tramp-verbose 1)
-  (tramp-copy-size-limit (* 1024 1024))
-  (tramp-use-scp-direct-remote-copying t)
-  (tramp-use-scp-direct-remote-copying t)
-  (tramp-completion-reread-directory-timeout 60)
-  :config
-  (unless _WIN32
-    (setq tramp-default-method "ssh"))
-  (connection-local-set-profile-variables
-   'remote-direct-async-process
-   '((tramp-direct-async-process . t)))
-  (connection-local-set-profiles
-   '(:application tramp :protocol "scp")
-   'remote-direct-async-process))
-
-(use-package eww
-  :ensure nil
-  :custom (eww-search-prefix "https://lite.duckduckgo.com/lite/?q=")
-  :config
-  (add-to-list 'eww-url-transformers #'eww-remove-tracking)
-
-  (define-advice eww (:around (fn &rest args) myeww-open-in-fullscreen)
-    "Open EWW in fullscreen if called interactively."
-    (if (called-interactively-p 'any)
-        (let ((display-buffer-alist '(("\\*eww\\*" (display-buffer-full-frame)))))
-          (apply fn args))
-      (apply fn args)))
-
-  (defun my-eww-page-title-or-url ()
-    "Use page title as buffer name, fallback to URL."
-    (let ((title (plist-get eww-data :title)))
-      (format "*%s # eww*" (if (string-blank-p title)
-                               (plist-get eww-data :url)
-                             title))))
-
-  (if (boundp 'eww-auto-rename-buffer)
-      (setq eww-auto-rename-buffer #'my-eww-page-title-or-url)
-    (defun my-eww--rename-buffer-h (&rest _)
-      (rename-buffer (my-eww-page-title-or-url)))
-    (add-hook 'eww-after-render-hook #'my-eww--rename-buffer-h)
-    (advice-add 'eww-back-url :after #'my-eww--rename-buffer-h)
-    (advice-add 'eww-forward-url :after #'my-eww--rename-buffer-h)))
 
 (use-package tree-widget
   :ensure nil
@@ -381,7 +352,7 @@
   (telega-chat-mode . telega-completions-setup-capf)
   (telega-image-mode . image-transform-fit-to-window)
   :custom
-  (telega-avatar-workaround-gaps-for (when _GUI '(return t)))
+  (telega-avatar-workaround-gaps-for (when (display-graphic-p) '(return t)))
   (telega-translate-to-language-by-default "zh")
   (telega-msg-save-dir "~/Downloads")
   (telega-chat-input-markups '("markdown2" "org"))
@@ -416,10 +387,10 @@
 
   (defun my-telega-proxy ()
     (telega--addProxy
-        `(:server "localhost"
-          :port ,nn-proxy-port
-          :type (:@type "proxyTypeSocks5"))
-      :enable-p 'enable))
+     `(:server "localhost"
+       :port ,nn-proxy-port
+       :type (:@type "proxyTypeSocks5"))
+     :enable-p 'enable))
 
   (advice-add 'telega-ins--msg-reaction-type :around
               (lambda (fn rt)
