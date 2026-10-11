@@ -18,9 +18,8 @@
 
 (defsubst hideshow-savefold--buffer-file (&optional fpath)
   "Resolve FPATH or return the current buffer's expanded file name."
-  (or fpath
-      (and (buffer-file-name)
-           (expand-file-name (buffer-file-name)))))
+  (when-let* ((f (or fpath (buffer-file-name))))
+    (expand-file-name f)))
 
 (defgroup hideshow-savefold nil
   "Persist hideshow folds across Emacs sessions."
@@ -33,6 +32,13 @@
   :type 'directory
   :group 'hideshow-savefold)
 
+(defcustom hideshow-savefold-min-folds 1
+  "Minimum number of folds required to persist fold data.
+If the current buffer has fewer folds than this, any previously
+saved data for the file is deleted instead of written."
+  :type 'integer
+  :group 'hideshow-savefold)
+
 (defun hideshow-savefold--attr-table-fpath (fpath)
   "Return the filesystem path of the attr-table file for FPATH."
   (let* ((fpath (expand-file-name fpath))
@@ -41,15 +47,23 @@
     (expand-file-name fpath hideshow-savefold-directory)))
 
 (defun hideshow-savefold--get-attr-table (fpath)
-  "Get the attribute hash table for file FPATH; create if absent."
+  "Get the attribute hash table for file FPATH; create if absent.
+Silently ignores corrupt on-disk data."
   (or (gethash fpath hideshow-savefold--fpath-to-attr-table)
-      (let ((table (if-let* ((apath (hideshow-savefold--attr-table-fpath fpath))
-                             ((file-exists-p apath)))
-                       (with-temp-buffer
-                         (insert-file-contents apath)
-                         (goto-char (point-min))
-                         (read (current-buffer)))
-                     (make-hash-table))))
+      (let* ((apath (hideshow-savefold--attr-table-fpath fpath))
+             (table
+              (if (file-exists-p apath)
+                  (condition-case err
+                      (with-temp-buffer
+                        (insert-file-contents apath)
+                        (goto-char (point-min))
+                        (read (current-buffer)))
+                    (error
+                     (message
+                      "hideshow-savefold: ignoring corrupt data %s (%s)"
+                      apath err)
+                     (make-hash-table)))
+                (make-hash-table))))
         (puthash fpath table hideshow-savefold--fpath-to-attr-table)
         table)))
 
@@ -70,21 +84,18 @@ Call `hideshow-savefold--write-attrs' afterwards to persist."
     (unless (file-exists-p hideshow-savefold-directory)
       (make-directory hideshow-savefold-directory t))
     (with-temp-file (hideshow-savefold--attr-table-fpath f)
-      (prin1 (gethash f hideshow-savefold--fpath-to-attr-table)
-             (current-buffer)))))
+      (let ((print-length nil)
+            (print-level nil)
+            (print-circle t)
+            (print-readably t))
+        (prin1 (gethash f hideshow-savefold--fpath-to-attr-table)
+               (current-buffer))))))
 
 (defun hideshow-savefold--set-modtime ()
   "Record the current file's modification time as an attr."
   (hideshow-savefold--set-attr
    'hideshow-savefold-modtime
    (visited-file-modtime)))
-
-(defun hideshow-savefold--file-newer-than-saved-p ()
-  "Return t if the current file is newer than the saved fold data."
-  (when-let* ((saved-modtime
-               (hideshow-savefold--get-attr
-                'hideshow-savefold-modtime)))
-    (< (float-time saved-modtime) (float-time (visited-file-modtime)))))
 
 (defun hideshow-savefold--collect-folds ()
   "Return a list of (start end kind) for all hs overlays in buffer."
@@ -95,22 +106,58 @@ Call `hideshow-savefold--write-attrs' afterwards to persist."
     (nreverse folds)))
 
 (defun hideshow-savefold--save ()
-  "Save hideshow fold data for the current buffer to disk."
-  (when (and (buffer-file-name)
-             (not (buffer-modified-p)))
-    (hideshow-savefold--set-attr hideshow-savefold--folds-attr
-                                 (hideshow-savefold--collect-folds))
-    (hideshow-savefold--set-modtime)
-    (hideshow-savefold--write-attrs)))
+  "Save hideshow fold data for the current buffer to disk.
+If the fold count is below `hideshow-savefold-min-folds', any
+previously saved data for this file is deleted instead."
+  (when-let* ((f (hideshow-savefold--buffer-file)))
+    (let ((folds (hideshow-savefold--collect-folds)))
+      (if (< (length folds) hideshow-savefold-min-folds)
+          (progn
+            (remhash f hideshow-savefold--fpath-to-attr-table)
+            (let ((apath (hideshow-savefold--attr-table-fpath f)))
+              (when (file-exists-p apath)
+                (delete-file apath))))
+        (unless (buffer-modified-p)
+          (hideshow-savefold--set-attr hideshow-savefold--folds-attr folds)
+          (hideshow-savefold--set-modtime)
+          (hideshow-savefold--write-attrs))))))
+
+(defun hideshow-savefold--file-newer-than-saved-p ()
+  "Return t if the current file is newer than the saved fold data."
+  (when-let* ((saved-modtime
+               (hideshow-savefold--get-attr
+                'hideshow-savefold-modtime))
+              (cur-modtime (visited-file-modtime))
+              ((consp cur-modtime)))
+    (< (float-time saved-modtime) (float-time cur-modtime))))
 
 (defun hideshow-savefold--restore ()
-  "Restore saved hideshow folds for the current buffer."
+  "Restore saved hideshow folds for the current buffer.
+Skips individual folds whose stored positions are out of range."
   (when (buffer-file-name)
     (unless (hideshow-savefold--file-newer-than-saved-p)
       (when-let* ((folds (hideshow-savefold--get-attr
                           hideshow-savefold--folds-attr)))
-        (dolist (fd folds)
-          (hs-make-overlay (car fd) (cadr fd) (caddr fd)))))))
+        (let ((max (point-max))
+              (min (point-min)))
+          (dolist (fd folds)
+            (pcase fd
+              (`(,beg ,end ,kind)
+               (when (and (integerp beg)
+                          (integerp end)
+                          (<= min beg)
+                          (< beg end)
+                          (<= end max)
+                          (symbolp kind))
+                 (hs-make-overlay beg end kind))))))))))
+
+(defun hideshow-savefold--setup-kill-buffer-hook ()
+  "Add save-on-kill to the buffer-local `kill-buffer-hook'."
+  (add-hook 'kill-buffer-hook #'hideshow-savefold--save nil t))
+
+(defun hideshow-savefold--teardown-kill-buffer-hook ()
+  "Remove save-on-kill from the buffer-local `kill-buffer-hook'."
+  (remove-hook 'kill-buffer-hook #'hideshow-savefold--save t))
 
 (defun hideshow-savefold--mapc-buffers (fun pred)
   "Call FUN in every live buffer where PRED returns non-nil."
@@ -122,14 +169,6 @@ Call `hideshow-savefold--write-attrs' afterwards to persist."
 (defun hideshow-savefold--hs-buffer-p ()
   "Return t if the current buffer has hs-minor-mode active."
   (bound-and-true-p hs-minor-mode))
-
-(defun hideshow-savefold--setup-kill-buffer-hook ()
-  "Add save-on-kill to the buffer-local `kill-buffer-hook'."
-  (add-hook 'kill-buffer-hook #'hideshow-savefold--save nil t))
-
-(defun hideshow-savefold--teardown-kill-buffer-hook ()
-  "Remove save-on-kill from the buffer-local `kill-buffer-hook'."
-  (remove-hook 'kill-buffer-hook #'hideshow-savefold--save t))
 
 (defun hideshow-savefold--save-all-buffers ()
   "Save fold data for every hs-minor-mode buffer."

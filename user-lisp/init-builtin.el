@@ -296,6 +296,15 @@ files, so this replace calls to `pp' with the much faster `prin1'."
       (side . bottom)
       (slot . 1)))))
 
+(use-package winner
+  :ensure nil
+  :hook (nn-first-file . winner-mode)
+  :config
+  (cl-callf append winner-boring-buffers
+    '("*Compile-Log*" "*inferior-lisp*" "*Fuzzy Completions*"
+      "*Apropos*" "*Help*" "*cvs*" "*Buffer List*" "*Ibuffer*"
+      "*esh command on file*")))
+
 (use-package eldoc
   :ensure nil
   :bind

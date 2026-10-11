@@ -5,7 +5,7 @@
   "Personal customization group."
   :prefix "nn-")
 
-(defcustom nn-directory (expand-file-name "~/.emacs.d/var/")
+(defcustom nn-directory (expand-file-name (concat user-emacs-directory "var/"))
   "Base directory for nn."
   :type 'directory
   :group 'nn)
@@ -113,6 +113,9 @@ TRIGGER-HOOK is a list of quoted hooks and/or sharp-quoted functions."
        (eq (frame-parameter (selected-frame) 'minibuffer) 't)))
 
 (defun nn-initialize ()
+  (unless (file-directory-p nn-directory)
+    (make-directory nn-directory))
+
   (setq tramp-persistency-file-name (concat nn-directory "tramp/persistency.el")
         tramp-auto-save-directory (concat nn-directory "tramp/auto-save/"))
 

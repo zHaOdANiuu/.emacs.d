@@ -78,10 +78,10 @@
   (setf (cdr (assq 'truncation fringe-indicator-alist)) '(nil nil)))
 
 (use-package nn-fringe-scale
-  ;; src url https://github.com/blahgeek/emacs-fringe-scale
   :ensure nil
   :no-require t
   :init
+  ;; src url https://github.com/blahgeek/emacs-fringe-scale
   (defgroup nn-fringe-scale nil
     "Scale fringe bitmap"
     :group 'nn-fringe-scale)
@@ -211,14 +211,19 @@
   :config
   ;; HACK: Suppress space display mapping marks in overlays.
   (set-face-attribute 'nobreak-space nil :underline nil)
-  (define-advice overlay-put (:filter-args (args) nn-bypass-whitespace-display)
-    (if-let* ((prop (nth 1 args))
-              (val (nth 2 args))
-              ((eq prop 'display))
-              ((stringp val))
-              ((string-search " " val)))
-        `(,(car args) display ,(string-replace " " "\u00a0" val))
+  (define-advice overlay-put (:filter-args (args) nn-bypass-whitespace-display--filter)
+    (if whitespace-mode
+        (let ((ov (car args))
+              (prop (nth 1 args))
+              (val (nth 2 args)))
+          (if (and (memq prop '(before-string after-string))
+                   (stringp val)
+                   (not (minibufferp (overlay-buffer ov)))
+                   (string-search " " val))
+              `(,ov ,prop ,(string-replace " " "\u00a0" val))
+            args))
       args))
+
   ;; HACK: `whitespace-mode' inundates child frames with whitespace markers, so
   ;;   disable it to fix all that visual noise.
   (defun my-whitespace--in-parent-frame-p () (null (frame-parameter nil 'parent-frame)))
@@ -260,24 +265,20 @@
     (lambda (event)
       (interactive "e")
       (when-let* ((ov (colorful--find-overlay))
-                  (color (overlay-get ov 'colorful--color)))
-        (if buffer-read-only
-            (progn
-              (kill-new color)
-              (message "`%s' copied." color))
-          (if (not (display-graphic-p))
-              (pcase-let* ((`(,r ,g, b) (color-name-to-rgb (read-color nil t)))
-                           (picked (color-rgb-to-hex r g b 2)))
-                (funcall replace-fn picked))
-            (dlet ((color-picker-initial-color color))
-              (color-picker
-               :style 'simple
-               :ok (lambda (picked)
-                     (with-current-buffer
-                         (window-buffer (posn-window (event-start event)))
-                       (replace-region-contents
-                        (overlay-start ov) (overlay-end ov) picked 0)
-                       (redisplay))))))))))
+                  (beg (overlay-start ov))
+                  (end (overlay-end ov))
+                  (buf (window-buffer (posn-window (event-start event))))
+                  (color (overlay-get ov 'colorful--color))
+                  (replace-fn (lambda (picked)
+                                (with-current-buffer buf
+                                  (replace-region-contents beg end picked 0)
+                                  (redisplay)))))
+        (if (not (display-graphic-p))
+            (pcase-let* ((`(,r ,g ,b) (color-name-to-rgb (read-color nil t)))
+                         (picked (color-rgb-to-hex r g b 2)))
+              (funcall replace-fn picked))
+          (dlet ((color-picker-initial-color color))
+            (color-picker :style 'simple :ok replace-fn))))))
 
   (when (display-graphic-p)
     (require 'svg)
@@ -304,7 +305,7 @@ Like `colorful--colorize-match', but the prefix also carries a
        'before-string
        (apply
         #'propertize
-        " "
+        "*"
         `(keymap ,my-colorful--color-picker-map
           pointer hand
           ,@(when (display-graphic-p)
@@ -320,12 +321,18 @@ Like `colorful--colorize-match', but the prefix also carries a
 (use-package nn-mode-line
   :ensure nil
   :no-require t
-  :hook ((prog-mode-hook text-mode-hook conf-mode-hook dired-mode-hook) . nn-mode-line-set)
+  :hook
+  ((prog-mode text-mode conf-mode dired-mode) . nn-mode-line-set)
   :init
   (defconst nn-mode-line--error   (nerd-icons-codicon   "nf-cod-error"))
   (defconst nn-mode-line--warning (nerd-icons-codicon   "nf-cod-warning"))
   (defconst nn-mode-line--info    (nerd-icons-codicon   "nf-cod-info"))
   (defconst nn-mode-line--git     (nerd-icons-powerline "nf-pl-branch"))
+
+  (defvar-local nn-mode-line--vc-cache nil)
+  (defvar-local nn-mode-line--flymake-cache nil)
+  (defvar-local nn-mode-line--eglot-cache nil)
+  (defvar-local nn-mode-line--coding-cache nil)
 
   (defun nn-mode-line--viper ()
     "Viper state, or nil when inactive."
@@ -337,68 +344,86 @@ Like `colorful--colorize-match', but the prefix also carries a
           ('replace-state "REPLACE")
           ('emacs-state   "EMACS")))))
 
-  (defun nn-mode-line--vc ()
-    "VC branch indicator."
+  (defvar nn-mode-line--vc-cache-table (make-hash-table :test #'equal))
+  (defun nn-mode-line--vc--refresh ()
+    "Return current Git branch, cached per workspace."
     (concat
      nn-mode-line--git
-     (if-let* ((root    (vc-root-dir))
-               (backend (vc-responsible-backend root)))
-         (let ((b (string-trim-left
-                   (substring-no-properties
-                    (vc-call-backend backend 'mode-line-string root))
-                   "[A-Za-z]+[-:] ?")))
-           (if (string-empty-p b) "?" b))
-       "!")))
+     (or
+      (when-let* ((path (or buffer-file-name default-directory))
+                  (root (locate-dominating-file path ".git")))
+        (let ((brach (gethash root nn-mode-line--vc-cache-table)))
+          (unless brach
+            (setq brach
+                  (with-temp-buffer
+                    (insert-file-contents (expand-file-name ".git/HEAD" (locate-dominating-file root ".git")))
+                    (goto-char (point-min))
+                    (when (re-search-forward "refs/heads/\\(.+\\)$" nil t)
+                      (match-string 1))))
+            (puthash root brach nn-mode-line--vc-cache-table))
+          brach))
+      "!")))
 
-  (defun nn-mode-line--flymake ()
-    "Flymake counts, or nil when off."
-    (when (bound-and-true-p flymake-mode)
-      (format
-       "%s %d %s %d %s %d"
-       nn-mode-line--error
-       (string-to-number (format-mode-line flymake-mode-line-error-counter))
-       nn-mode-line--warning
-       (string-to-number (format-mode-line flymake-mode-line-warning-counter))
-       nn-mode-line--info
-       (string-to-number (format-mode-line flymake-mode-line-note-counter)))))
+  (dolist (cmd '(set-buffer-file-coding-system
+                 revert-buffer-with-coding-system))
+    (advice-add cmd :after #'nn-mode-line-coding--refresh))
+  (defun nn-mode-line-coding--refresh (&rest _)
+    (setq nn-mode-line--coding-cache
+          (concat
+           (symbol-name buffer-file-coding-system) " "
+           (pcase (coding-system-eol-type buffer-file-coding-system)
+             (0 "LF") (1 "CRLF") (2 "CR") (_ "Unknown")))))
 
-  (defun nn-mode-line--eglot ()
-    "Eglot server name, or nil when not connected."
-    (when (and (fboundp 'eglot-managed-p)
-               (eglot-managed-p))
-      (pcase (alist-get major-mode eglot-server-programs)
-        ((and (pred stringp) name) name)
-        (`(,name . ,_)             name)
-        (_                         "lsp"))))
+  (with-eval-after-load 'flymake
+    (defun nn-mode-line--flymake-refresh (&rest _)
+      (setq nn-mode-line--flymake-cache
+            (when (bound-and-true-p flymake-mode)
+              (let ((diags (flymake-diagnostics)))
+                (format "%s %d %s %d %s %d"
+                        nn-mode-line--error
+                        (seq-count (lambda (d) (eq (flymake-diagnostic-type d) :error)) diags)
+                        nn-mode-line--warning
+                        (seq-count (lambda (d) (eq (flymake-diagnostic-type d) :warning)) diags)
+                        nn-mode-line--info
+                        (seq-count (lambda (d) (eq (flymake-diagnostic-type d) :note)) diags))))))
 
-  (defun nn-mode-line--position ()
-    "Line:column, or nil when line numbers are off."
-    (when display-line-numbers-mode
-      (format "L%s C%s" (format-mode-line "%l") (format-mode-line "%c"))))
+    (add-hook 'flymake-mode-hook #'nn-mode-line--flymake-refresh)
+    (add-hook 'flymake-diagnostics-change-functions #'nn-mode-line--flymake-refresh))
 
-  (defun nn-mode-line--mode ()
-    "Major mode name without the trailing \"-mode\"."
-    (string-remove-suffix "-mode" (symbol-name major-mode)))
+  (with-eval-after-load 'eglot
+    (defun nn-mode-line--eglot-refresh (&rest _)
+      "Refresh the Eglot server cache in the current buffer."
+      (setq nn-mode-line--eglot-cache
+            (when (and (fboundp 'eglot-managed-p)
+                       (eglot-managed-p))
+              (pcase (alist-get major-mode eglot-server-programs)
+                ((and (pred stringp) name) name)
+                (`(,name . ,_)             name)
+                (_                         "lsp")))))
 
-  (defun nn-mode-line-set ()
-    "Install `nn-mode-line-format' in the current buffer."
-    (setq-local mode-line-format nn-mode-line-format))
+    (add-hook 'eglot-managed-mode-hook #'nn-mode-line--eglot-refresh))
 
   (setq-default mode-line-format nil)
 
   (defconst nn-mode-line-format
     '("%e"
-      "  " (:eval (nn-mode-line--viper))
-      "  " (:eval (nn-mode-line--vc))
+      ;; "  " (:eval (nn-mode-line--viper))
+      "  " nn-mode-line--vc-cache
       "  " "%b"
-      "  " (:eval (nn-mode-line--flymake))
-      "  " (:eval (nn-mode-line--eglot))
+      "  " nn-mode-line--flymake-cache
+      "  " nn-mode-line--eglot-cache
       "  " mode-line-misc-info
       mode-line-format-right-align
-      "  " (:eval (nn-mode-line--position))
-      "  " (:eval (symbol-name buffer-file-coding-system))
-      "  " (:eval (if current-input-method "C" "A"))
-      "  " (:eval (nn-mode-line--mode))
-      "  ")))
+      "  " "L%l C%c"
+      "  " nn-mode-line--coding-cache
+      ;; "  " (:eval (if current-input-method "C" "A"))
+      "  " mode-name
+      "  "))
+
+  (defun nn-mode-line-set ()
+    "Install `nn-mode-line-format' in the current buffer."
+    (setq nn-mode-line--vc-cache (nn-mode-line--vc--refresh))
+    (nn-mode-line-coding--refresh)
+    (setq-local mode-line-format nn-mode-line-format)))
 
 (provide 'init-display)

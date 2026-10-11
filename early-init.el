@@ -7,7 +7,7 @@
 (set-default-toplevel-value 'lexical-binding nil)
 (run-with-idle-timer 5 t #'garbage-collect)
 (load (expand-file-name "nn.el" user-emacs-directory))
-(load (setq custom-file (expand-file-name "custom.el" user-emacs-directory)))
+(load (setq custom-file (expand-file-name "custom.el" user-emacs-directory)) 'noerror)
 (nn-initialize)
 
 (use-package emacs
@@ -33,7 +33,7 @@
         bidi-inhibit-bpa t
         bidi-display-reordering nil
         default-process-coding-system
-        (if (eq system-type 'windows-nt)
+        (if _WIN32
             `(utf-8-dos . ,locale-coding-system)
           '(utf-8-unix . utf-8-unix))
         inhibit-message t

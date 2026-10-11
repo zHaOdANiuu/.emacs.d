@@ -188,9 +188,10 @@
   :hook (find-file . my-init-smerge-mode-h)
   :config
   (defun my-init-smerge-mode-h ()
-    (save-excursion
-      (goto-char (point-min))
-      (when (re-search-forward "^<<<<<<< " nil t) (smerge-mode 1)))))
+    (when (project-current)
+      (save-excursion
+        (goto-char (point-min))
+        (when (re-search-forward "^<<<<<<< " nil t) (smerge-mode 1))))))
 
 (use-package magit
   :bind ("C-c g l" . magit-log-buffer-file)
@@ -217,10 +218,6 @@
   (magit-uniquify-buffer-names nil)
   (magit-no-confirm '(stage-all-changes unstage-all-changes))
   (magit-run-hooks-from-githooks (not _WIN32))
-  ;; (magit-status-headers-hook
-  ;;  '(magit-insert-error-header
-  ;;    magit-insert-head-branch-header
-  ;;    ))
   (magit-status-sections-hook
    '(magit-insert-error-header
      magit-insert-untracked-files

@@ -44,22 +44,17 @@ LEVELS, SPEC and PARENT are passed to ORIG."
   ("C-c o b" . my-split-left-and-switch)
   ("C-c o n" . my-split-below-and-switch)
   ("C-c o p" . my-split-above-and-switch)
-  ("C-c o <right>" . my-split-right-and-switch)
-  ("C-c o <left>" . my-split-left-and-switch)
-  ("C-c o <down>" . my-split-below-and-switch)
-  ("C-c o <up>" . my-split-above-and-switch)
   ("C-c w r" . my-surround-replace)
   ("C-c w R" . my-surround-replace-pair)
   ("C-c w w" . my-surround-word)
   ("C-c C-r" . my-switch-to-project-root)
-  ("C-c C-j" . project-dired)
+  ("C-c r" . my-replace)
+  ("C-c p" . pop-to-mark-command)
   ("M-w" . my-copy)
   ("C-w" . my-cut)
-  ("C-x k" . kill-current-buffer)
+  ("C-x k" . my-kill)
   ("C-x C-k" . kill-buffer)
   ("C-S-<backspace>" . my-delete-whole-line-no-kill)
-  ("C-c r" . my-replace)
-  ("C-c j" . pop-to-mark-command)
   ("C-," . duplicate-dwim)
   ("C-~" . my-home-dired)
   ("C-'" . imenu)
@@ -192,32 +187,18 @@ LEVELS, SPEC and PARENT are passed to ORIG."
              nil beg end)))
     (replace-string from to delimited start end))
 
-  (defun my-split-and-switch (direction)
-    (let ((buf (read-buffer
-                "Switch to buffer: "
-                (other-buffer (current-buffer) t))))
-      (pcase direction
-        ('right (select-window (split-window-right)))
-        ('below (select-window (split-window-below)))
-        ('left  (split-window-right))
-        ('above (split-window-below)))
-      (switch-to-buffer buf)))
-
-  (defun my-split-right-and-switch ()
+  (defun my-kill ()
     (interactive)
-    (my-split-and-switch 'right))
-
-  (defun my-split-left-and-switch  ()
-    (interactive)
-    (my-split-and-switch 'left))
-
-  (defun my-split-below-and-switch ()
-    (interactive)
-    (my-split-and-switch 'below))
-
-  (defun my-split-above-and-switch ()
-    (interactive)
-    (my-split-and-switch 'above)))
+    (let ((buf-name (buffer-file-name)))
+      (when (and buf-name
+                 (file-exists-p buf-name)
+                 (buffer-modified-p))
+        (save-buffer)))
+    (let ((other-buf (window-buffer (next-window))))
+      (kill-current-buffer)
+      (when (and (= (count-windows) 2)
+                 (eq (window-buffer (next-window)) other-buf))
+        (delete-window)))))
 
 (use-package nn-word-move
   :ensure nil

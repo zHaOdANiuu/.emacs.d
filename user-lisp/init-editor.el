@@ -214,109 +214,87 @@
   (dabbrev-downcase-means-case-replace nil)
   (dabbrev-case-distinction nil))
 
-(use-package xref
-  :autoload xref-show-definitions-completing-read
-  :bind
-  ("M-g ." . xref-find-definitions)
-  ("M-g ," . xref-go-back)
-  :custom
-  (xref-search-program 'ripgrep)
-  (xref-show-definitions-function #'xref-show-definitions-completing-read)
-  (xref-show-xrefs-function #'xref-show-definitions-completing-read))
-
 (use-package etags
   :ensure nil
   :custom
   (tags-revert-without-query t)
   (tags-case-fold-search nil))
 
-(use-package fastctags
-  :vc (:url "https://github.com/redguardtoo/fastctags" :rev :newest)
-  :hook
-  (fastctags-after-update-tags . (lambda (_) (setq my-ft-ready nil)))
-  (simpcc-mode . my-fastctags-init)
-  (eglot-managed-mode . my-fastctags-exit)
-  :custom (fastctags-quiet nil)
+(use-package citre
+  :bind
+  (:map citre-mode-map
+   ("<f12>"   . citre-jump)
+   ("S-<f12>" . citre-jump-to-reference)
+   ("M-<f12>" . citre-peek)
+   :map citre-peek-keymap
+   ("q" . keyboard-quit))
+  :hook ((simpcc-mode c-mode) . my-citre-h)
+  :custom-face (citre-peek-border-face ((t :inherit font-lock-keyword-face :strike-through t :extend t)))
+  :custom
+  (citre-peek-fill-fringe nil)
+  (citre-completion-case-sensitive t)
+  (citre-default-create-tags-file-location 'in-dir)
+  (citre-edit-ctags-options-manually nil)
+  :init
+  (defun my-citre-h ()
+    (when-let* ((proj (project-current)))
+      (when (file-exists-p (expand-file-name "tags" (project-root proj)))
+        (citre-mode))))
   :config
-  ;; ctags --fields=+KS --excmd=number --tag-relative=never -R -f ~/.cache/tags/xxx.tags .
-  (defvar my-ft-kind (make-hash-table :test 'equal))
-  (defvar my-ft-ready nil)
+  (defvar-local citre-extra-tags-files nil
+    "List of external tags files queried when the project tags returns nothing.")
 
-  (defconst my-ft-kind-map
-    '(("function"    . "function")    ("method"      . "method")
-      ("procedure"   . "function")    ("prototype"   . "function")
-      ("constructor" . "constructor") ("destructor" . "constructor")
-      ("variable"    . "variable")    ("local"       . "variable")
-      ("global"      . "variable")    ("parameter"   . "variable")
-      ("field"       . "field")       ("member"      . "field")
-      ("property"    . "property")    ("constant"    . "constant")
-      ("class"       . "class")       ("struct"      . "struct")
-      ("union"       . "struct")      ("enum"        . "enum")
-      ("enumerator"  . "enummember")  ("interface"   . "interface")
-      ("namespace"   . "module")      ("module"      . "module")
-      ("package"     . "module")      ("typedef"     . "keyword")
-      ("macro"       . "macro")       ("define"      . "macro")
-      ("file"        . "file")        ("header"      . "file")
-      ("label"       . "keyword")     ("operator"    . "operator")
-      ("exception"   . "class")))
+  (define-advice citre-tags-get-tags
+      (:around (old-fn tagsfile &rest args) nn-citre-tags-get-extra-tags)
+    "Fall back to `nn-citre-external-tags' when project tags returns nothing."
+    (or (apply old-fn tagsfile args)
+        (cl-loop for f in citre-extra-tags-files
+                 for ext = (expand-file-name f)
+                 when (file-exists-p ext)
+                 thereis (apply old-fn ext args))))
 
-  (defun my-ft-build ()
-    (clrhash my-ft-kind)
-    (maphash
-     (lambda (_ i)
-       (when-let* ((r (plist-get i :raw-content)))
-         (with-temp-buffer
-           (insert r)
-           (goto-char (point-min))
-           (while (re-search-forward "\r" nil t) (replace-match ""))
-           (goto-char (point-min))
-           (while (re-search-forward
-                   "^\\([^\t]+\\)\t[^\t]+\t[^\t]*;\"\t\\([^\t\r\n]+\\)" nil t)
-             (let* ((tag (match-string 1))
-                    (rest (match-string 2))
-                    (kind (car (split-string rest "[ \t]")))
-                    (old (gethash tag my-ft-kind)))
-               (when (or (not old) (string-match-p "signature:" rest))
-                 (puthash tag kind my-ft-kind)))))))
-     fastctags-tags-file-cache)
-    (setq my-ft-ready t))
+  (defconst my-citre-tag-kind
+    '(("function" "function") ("method" "method") ("procedure" "function")
+      ("submethod" "method") ("subprogram" "function") ("subroutine" "function")
+      ("prototype" "function") ("functor" "function") ("callback" "function")
+      ("class" "class") ("struct" "struct") ("structure" "struct")
+      ("union" "struct") ("record" "class") ("component" "class")
+      ("object" "class") ("role" "class") ("implementation" "class")
+      ("interface" "interface") ("trait" "interface") ("protocol" "interface")
+      ("annotation" "interface") ("enum" "enum") ("enumerator" "enummember")
+      ("variable" "variable") ("local" "variable") ("global" "variable")
+      ("parameter" "variable") ("instance" "variable") ("macroparam" "variable")
+      ("field" "field") ("member" "field") ("slot" "field")
+      ("property" "property") ("attribute" "property") ("constant" "constant")
+      ("const" "constant") ("module" "module") ("namespace" "module")
+      ("package" "module") ("library" "module") ("using" "module")
+      ("type" "typeparameter") ("template" "typeparameter") ("tparam" "typeparameter")
+      ("generic" "typeparameter") ("typedef" "keyword") ("alias" "keyword")
+      ("name" "keyword") ("define" "macro") ("macro" "macro")
+      ("constructor" "constructor") ("destructor" "constructor") ("event" "event")
+      ("signal" "event") ("handler" "event") ("file" "file")
+      ("header" "file") ("script" "file") ("label" "keyword")
+      ("anchor" "keyword") ("key" "keyword") ("operator" "operator")
+      ("string" "string") ("number" "numeric") ("boolean" "boolean")
+      ("array" "array") ("exception" "class"))
+    "Map Citre tag kinds to nerd-icons-corfu-compatible kinds.")
 
-  (define-advice fastctags-completion-at-point (:around (orig) my-ft-kind-a)
-    (when-let* ((r (funcall orig)))
-      (append r (list :company-kind
-                  (lambda (c)
-                    (unless my-ft-ready (my-ft-build))
-                    (let* ((name (substring-no-properties (if (consp c) (car c) c)))
-                           (kind (gethash name my-ft-kind))
-                           (mapped (cdr (assoc kind my-ft-kind-map))))
-                      (intern (or mapped "text"))))))))
-
-  (defvar my-fastctags-enbale nil)
-
-  (defun my-fastctags-init ()
-    (when-let* ((proj (project-current))
-                (root (project-root proj))
-                (tags (expand-file-name "tags" root)))
-      (when (file-exists-p tags)
-        (setq my-fastctags-enbale t)
-        (add-hook 'completion-at-point-functions #'fastctags-completion-at-point nil t)
-        (add-hook 'after-save-hook #'fastctags-virtual-update-tags t t))))
-
-  (defun my-fastctags-exit ()
-    (setq my-fastctags-enbale nil)
-    (remove-hook 'completion-at-point-functions #'fastctags-completion-at-point t)
-    (remove-hook 'after-save-hook #'fastctags-virtual-update-tags t)))
+  (define-advice citre-capf--make-candidate (:filter-return (cand) nn-kind)
+    "Rewrite citre-kind to nerd-icons-corfu-compatible key."
+    (when-let* ((raw (citre-get-property 'kind cand))
+                (name (if (symbolp raw) (symbol-name raw) raw))
+                ((stringp name))
+                (mapped (cadr (assoc-string name my-citre-tag-kind t))))
+      (citre-put-property cand 'kind (intern mapped)))
+    cand))
 
 (use-package eglot
   :ensure nil
   :bind
-  (:map eglot-managed-mode
-   ("<f2>" . eglot-rename)
-   ("<f12>" . xref-find-definitions)
-   ("S-<f12>" . xref-find-references)
-   ("C-<f12>" . eglot-find-implementation)
-   ("C-S-<f12>" . eglot-find-typeDefinition)
-   ("C-." . eglot-code-action-quickfix))
+  ("<f2>" . eglot-rename)
+  ("C-<f12>" . eglot-find-implementation)
+  ("C-S-<f12>" . eglot-find-type-definition)
+  ("C-." . eglot-code-action-quickfix)
   :hook (eglot-managed-mode . (lambda () (eldoc-mode -1)))
   :custom
   (eglot-autoshutdown t)
@@ -351,39 +329,54 @@
   ;; ignore jsonrpc log
   (fset #'jsonrpc--log-event #'ignore))
 
-(use-package yasnippet
-  :hook
-  (nn-first-input . yas-global-mode)
-  (yas-minor-mode . my-completion-add-yas-capf-h)
-  :init (setq yas-verbosity 2)
-  :config
-  (defun my-yas-capf ()
-    (when (thing-at-point-looking-at "\\(?:\\sw\\|\\s_\\)+")
-      (let ((keys (delete-dups
-                   (mapcan (lambda (tbl)
-                             (copy-sequence (hash-table-keys (yas--table-hash tbl))))
-                           (yas--get-snippet-tables)))))
-        (when keys
-          (list
-           (match-beginning 0) (match-end 0) keys
-           :exclusive 'no
-           :company-kind (lambda (_) 'snippet)
-           :exit-function (lambda (_ status)
-                            (when (string= status "finished")
-                              (yas-expand))))))))
+(use-package xref
+  :autoload xref-show-definitions-completing-read
+  :bind
+  ("<f12>" . xref-find-definitions)
+  ("S-<f12>" . xref-find-references)
+  ("M-g ." . xref-find-definitions)
+  ("M-g ," . xref-go-back)
+  :custom
+  (xref-search-program 'ripgrep)
+  (xref-show-definitions-function #'xref-show-definitions-completing-read)
+  (xref-show-xrefs-function #'xref-show-definitions-completing-read))
 
-  (defun my-completion-add-yas-capf-h ()
-    (add-hook 'completion-at-point-functions #'my-yas-capf)))
+(use-package cape
+  :commands cape-file cape-elisp-block cape-keyword
+  :autoload cape-wrap-noninterruptible cape-wrap-nonexclusive cape-wrap-buster cape-wrap-silent
+  :init
+  ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  ;; (add-to-list 'completion-at-point-functions #'cape-abbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-elisp-block)
+  (add-to-list 'completion-at-point-functions #'cape-keyword)
+
+  ;; Make these capfs composable.
+  (advice-add 'comint-completion-at-point :around #'cape-wrap-nonexclusive)
+  (advice-add 'eglot-completion-at-point :around #'cape-wrap-buster)
+  (advice-add 'eglot-completion-at-point :around #'cape-wrap-nonexclusive)
+  (advice-add 'pcomplete-completions-at-point :around #'cape-wrap-nonexclusive))
+
+(use-package yasnippet
+  :hook (nn-first-input . yas-global-mode)
+  :init (setq yas-verbosity 2))
+
+(use-package yasnippet-capf
+  :commands yasnippet-capf
+  :hook (eglot-managed-mode . my-eglot-capf)
+  :config
+  (add-to-list 'completion-at-point-functions #'yasnippet-capf)
+
+  (defun my-eglot-capf ()
+    (setq-local completion-at-point-functions
+                `(,(cape-capf-super
+		                #'eglot-completion-at-point
+		                #'yasnippet-capf)))))
 
 (use-package icomplete
   :ensure nil
   :bind ("C-x C-r" . my-recentf-open)
-  :custom
-  (icomplete-max-delay-chars 2)
-  (icomplete-hide-common-prefix nil)
-  (icomplete-tidy-shadowed-file-names t)
-  (icomplete-show-matches-on-no-input nil)
-  :config
+  :init
   (fido-mode 1)
   (fido-vertical-mode 1)
   (defun my-recentf-open ()
@@ -391,7 +384,12 @@
     (let ((file (completing-read "Find recent file: " recentf-list nil t)))
       (if (and file (file-exists-p file))
           (find-file file)
-        (message "File open failed")))))
+        (message "File open failed"))))
+  :custom
+  (icomplete-max-delay-chars 3)
+  (icomplete-hide-common-prefix t)
+  (icomplete-tidy-shadowed-file-names t)
+  (icomplete-show-matches-on-no-input nil))
 
 (use-package completion-preview
   :ensure nil
@@ -421,8 +419,8 @@
   :hook prog-mode
   :custom
   (corfu-auto t)
-  (corfu-auto-delay 0)
-  (corfu-auto-prefix 2)
+  (corfu-auto-delay 0.2)
+  (corfu-auto-prefix 3)
   (corfu-auto-commands
    '("self-insert-command\\'"
      c-electric-colon c-electric-lt-gt
