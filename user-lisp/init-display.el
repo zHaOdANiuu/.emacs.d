@@ -178,7 +178,7 @@
   :ensure nil
   :hook (prog-mode . show-paren-mode)
   :custom
-  (show-paren-delay 0.1)
+  (show-paren-delay 0.2)
   (show-paren-highlight-openparen t)
   (show-paren-when-point-inside-paren t)
   (show-paren-when-point-in-periphery t)
@@ -189,7 +189,7 @@
   (define-advice show-paren--show-context-in-overlay (:after (_text) no-box)
     (when show-paren--context-overlay
       (overlay-put show-paren--context-overlay
-                   'face '(:inherit default :box nil :height 0.9)))))
+                   'face '(:inherit default :box nil)))))
 
 (use-package whitespace
   :ensure nil

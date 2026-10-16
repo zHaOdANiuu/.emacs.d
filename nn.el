@@ -12,6 +12,7 @@
 
 (defcustom nn-rss-list
   '(("Xkcd" "https://xkcd.com/rss.xml")
+    ("牛牛万事屋" "https://zdn.codeberg.page/rss.xml")
     ("Sacha Chua" "https://sachachua.com/blog/category/emacs-news/feed/")
     ("Planet Emacslife" "https://planet.emacslife.com/atom.xml")
     ("Emacs TIL" "https://emacstil.com/feed.xml")

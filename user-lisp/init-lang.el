@@ -276,12 +276,13 @@ Adapted from URL `https://www.reddit.com/r/emacs/comments/d7x7x8/finally_fixing_
   :mode "\\.\\(c\\|h\\|cc\\|hh\\|cpp\\|hpp\\|cppm\\|ixx\\|rc\\)\\'"
   :config
   (setq simpcc-types
-        (append
-         simpcc-types
-         '("f16" "f32" "f64" "f128"
-           "i8" "i16" "i32" "i64"
-           "u8" "u16" "u32" "u64"
-           "char8" "char16" "char32")))
+        (append simpcc-types
+                '("f16" "f32" "f64" "f128"
+                  "i8" "i16" "i32" "i64"
+                  "u8" "u16" "u32" "u64"
+                  "char8" "char16" "char32"))
+        simpcc-font-lock-keywords (eval (car (get 'simpcc-font-lock-keywords 'standard-value))))
+
   (with-eval-after-load 'eglot
     (defvar my-clangd--query-driver
       (concat (executable-find "gcc") "," (executable-find "g++")))
@@ -404,6 +405,7 @@ As seen on: https://www.reddit.com/r/emacs/comments/1kfblch/need_help_with_addin
 (use-package web-mode
   :if (not (featurep 'mhtml-ts-mode))
   :mode "\\.[px]?html?\\'"
+  :mode "\\.hta\\'"
   :mode "\\.\\(?:tpl\\|blade\\)\\(?:\\.php\\)?\\'"
   :mode "\\.erb\\'"
   :mode "\\.[lh]?eex\\'"

@@ -13,11 +13,6 @@
   (proced-format 'medium)
   (proced-filter 'user))
 
-(use-package man
-  :ensure nil
-  :commands man
-  :custom (Man-notify-method 'pushy))
-
 (use-package webjump
   :ensure nil
   :bind ("C-c /" . my-webjump-eww)

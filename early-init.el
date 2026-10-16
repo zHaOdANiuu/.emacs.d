@@ -65,17 +65,6 @@
           w32-pipe-read-delay 0
           w32-pipe-buffer-size read-process-output-max))
 
-  (when _WIN32
-    (setq exec-suffixes '("" ".exe" ".bat")))
-
-  (defvar my-executable-find-cache (make-hash-table :test #'equal))
-  (define-advice executable-find
-      (:around (orig-fun command &optional remote) my-advice)
-    (if remote
-        (funcall orig-fun command remote)
-      (or (gethash command my-executable-find-cache)
-          (puthash command (funcall orig-fun command) my-executable-find-cache))))
-
   (remove-hook 'find-file-hook #'vc-refresh-state)
   (remove-hook 'find-file-hook #'epa-file-find-file-hook)
   :custom
@@ -131,6 +120,16 @@
   (when _WIN32
     (setenv "GIT_ASKPASS" "git-gui--askpass")
 
+    (setq exec-suffixes '("" ".exe" ".bat"))
+
+    (defvar my-executable-find-cache (make-hash-table :test #'equal))
+    (define-advice executable-find
+        (:around (orig-fun command &optional remote) my-advice)
+      (if remote
+          (funcall orig-fun command remote)
+        (or (gethash command my-executable-find-cache)
+            (puthash command (funcall orig-fun command) my-executable-find-cache))))
+
     (unless (getenv "HOME")
       (when-let* ((home (getenv "USERPROFILE")))
         (setenv "HOME" home)
@@ -138,9 +137,9 @@
 
     (when-let* ((bash (executable-find "bash")))
       (setq shell-file-name bash)
-      (setenv "MSYSTEM" "UCRT64")
       (setenv "SHELL" bash)
-      (push (file-name-directory bash) exec-path))))
+      (setenv "MSYSTEM" "UCRT64")
+      (setenv "PATH" (concat (file-name-directory bash) ";" (getenv "PATH"))))))
 
 (use-package package
   :ensure nil

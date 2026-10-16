@@ -364,9 +364,8 @@
 (use-package yasnippet-capf
   :commands yasnippet-capf
   :hook (eglot-managed-mode . my-eglot-capf)
-  :config
+  :init
   (add-to-list 'completion-at-point-functions #'yasnippet-capf)
-
   (defun my-eglot-capf ()
     (setq-local completion-at-point-functions
                 `(,(cape-capf-super
