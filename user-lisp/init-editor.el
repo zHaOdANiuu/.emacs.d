@@ -9,9 +9,10 @@
 (use-package subword
   :ensure nil
   :hook
-  (java-mode
-   js-mode typescript-ts-mode tsx-ts-mode
-   csharp-mode c++-mode simpcc-mode go-mode)
+  java-mode
+  js-mode typescript-ts-mode tsx-ts-mode
+  csharp-mode simpcc-mode go-mode
+  :hook
   ((c-mode python-mode rust-mode) . superword-mode))
 
 (use-package delsel
