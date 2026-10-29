@@ -207,7 +207,7 @@
   (whitespace-style '(face indentation tabs tab-mark spaces space-mark))
   (whitespace-display-mappings
    '((space-mark ?\ [?·] [?.])
-     (tab-mark ?\t [?→ ?\s])))
+     (tab-mark ?\t [?→ ?\t])))
   :config
   ;; HACK: Suppress space display mapping marks in overlays.
   (set-face-attribute 'nobreak-space nil :underline nil)
