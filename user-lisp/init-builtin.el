@@ -481,27 +481,20 @@ files, so this replace calls to `pp' with the much faster `prin1'."
     "Don't auto-revert in dired-virtual buffers (see `dired-virtual-revert')."
     (not (eq revert-buffer-function #'dired-virtual-revert)))
 
-  (defun my-dired-ignores-get-cur-dir (root subdir)
-    (mapcar (lambda (p)
-              (car (split-string p "/" t)))
-            (mapcar
-             #'directory-file-name
-             (split-string
-              (shell-command-to-string
-               (format
-                "git -C %s ls-files -zoi --exclude-standard --directory -- %s"
-                root subdir))
-              "\0" t))))
+  (defun my-dired-ignores-get-cur-dir ()
+    (split-string
+     (shell-command-to-string
+      (format
+       "git ls-files -zio --exclude-standard --directory -- . | tr '\\0' '\\n' | sed 's:/$::'"
+       "\n" t))))
 
   (defun my-dired-ignores ()
-    (when-let* ((root (vc-root-dir)))
+    (when (vc-root-dir)
       (font-lock-add-keywords
        nil
        `((,(concat
             "\\(?:^\\|[ \t]\\)"
-            (regexp-opt
-             (my-dired-ignores-get-cur-dir
-              root (file-relative-name default-directory root)))
+            (regexp-opt (my-dired-ignores-get-cur-dir))
             "\\(?:/\\|$\\)")
           . 'dired-ignored))))))
 
@@ -600,7 +593,7 @@ files, so this replace calls to `pp' with the much faster `prin1'."
   :ensure nil
   :hook
   (compilation-filter . ansi-color-compilation-filter)
-  (compilation-filter . nn-comint-truncate-buffer-h)
+  (compilation-filter . my-comint-truncate-buffer-h)
   :bind
   (("C-c c" . compile)
    :map compilation-mode-map
@@ -621,7 +614,7 @@ files, so this replace calls to `pp' with the much faster `prin1'."
    '("\\([a-zA-Z0-9\\.]+\\)(\\([0-9]+\\)\\(,\\([0-9]+\\)\\)?) \\(Warning:\\)?"
      1 2 (4) (5)))
 
-  (defun nn-comint-truncate-buffer-h (&optional _string)
+  (defun my-comint-truncate-buffer-h (&optional _string)
     "Rate-limit `comint-truncate-buffer' in compilation-mode buffers."
     (if (> (buffer-size)
            ;; HACK: Approximate this because counting lines is prohibitively

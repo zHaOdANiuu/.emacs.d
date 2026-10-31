@@ -66,11 +66,11 @@
                       ;; Greek letters
                       (set-fontset-font t '(#x0370 . #x03FF) spec)))
     ;; Default
-    (cl-loop for font in '("LXGW WenKai Mono" "IBM Plex Mono"
+    (cl-loop for font in '("IBM Plex Mono"
                            "JetBrains Mono" "Iosevka SS13" "Cascadia Mono")
              for spec = (font-spec :family font)
              when (find-font spec)
-             return (set-face-attribute 'default nil :family font :height 160))
+             return (set-face-attribute 'default nil :family font :height 140))
 
     ;; Font Ligature
     ;; (cl-loop for chars in '("::" "..." "->" "=>" "<=" ">=" "!==" "!=" "===" "==")

@@ -7,7 +7,7 @@
 (set-default-toplevel-value 'lexical-binding nil)
 (run-with-idle-timer 5 t #'garbage-collect)
 (load (expand-file-name "nn.el" user-emacs-directory))
-(load (setq custom-file (expand-file-name "custom.el" user-emacs-directory)) 'noerror)
+(load (setq custom-file (expand-file-name "custom.el" user-lisp-directory)) 'noerror)
 (nn-initialize)
 
 (use-package emacs
